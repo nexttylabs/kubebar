@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}} Swift Guide
+# kubebar Swift Guide
 
 ## Purpose and Precedence
 

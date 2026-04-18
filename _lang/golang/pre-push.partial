@@ -1,7 +1,0 @@
-# Go quality gate — must pass before push
-if [ -f "go.mod" ]; then
-  echo "Running Go quality gate..."
-  go vet ./... || { echo "Vet failed"; exit 1; }
-  golangci-lint run || { echo "Lint failed"; exit 1; }
-  go test -race ./... || { echo "Tests failed"; exit 1; }
-fi
