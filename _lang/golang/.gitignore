@@ -1,0 +1,8 @@
+bin/
+vendor/
+.env
+.env.local
+!.env.example
+coverage.out
+*.test
+dist/

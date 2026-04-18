@@ -1,0 +1,6 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Generated files -- hide from linguist stats
+*.lock linguist-generated=true
+*-lock.* linguist-generated=true

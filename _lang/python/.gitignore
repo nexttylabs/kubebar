@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.local
+!.env.example
+dist/
+build/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+coverage.xml
+htmlcov/

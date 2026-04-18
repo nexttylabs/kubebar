@@ -1,0 +1,16 @@
+# Build artifacts
+target/
+
+# WebAssembly output
+*.wasm
+
+# Environment
+.env
+.env.local
+!.env.example
+
+# Benchmark results
+bench-results/
+
+# Coverage reports
+coverage/

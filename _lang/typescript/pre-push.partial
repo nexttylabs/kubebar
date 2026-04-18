@@ -1,0 +1,7 @@
+# TypeScript quality gate — must pass before push
+if [ -f "pnpm-lock.yaml" ]; then
+  echo "Running TypeScript quality gate..."
+  pnpm lint || { echo "Lint failed"; exit 1; }
+  pnpm typecheck || { echo "Typecheck failed"; exit 1; }
+  pnpm test || { echo "Tests failed"; exit 1; }
+fi

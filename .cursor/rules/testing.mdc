@@ -1,0 +1,36 @@
+---
+description: Testing rules and conventions
+globs: ["src/**", "lib/**", "tests/**", "**/*test*", "**/*spec*"]
+---
+
+# Testing Rules & Conventions
+
+## Test Tiers
+
+- **Unit** — no external dependencies (no network, no database, no filesystem beyond
+  temp dirs). Fast, isolated, deterministic.
+- **Integration** — exercises real external services (database, cache, third-party API
+  sandbox). May require setup/teardown fixtures.
+- **E2E** — full system under test, driven through its public interface (HTTP, CLI,
+  UI). Validates user-facing behavior end-to-end.
+
+## Key Patterns
+
+- Place tests in dedicated test files or directories that mirror the source tree.
+- Use async test support when testing async code — do not block on futures/promises
+  inside synchronous test bodies.
+- Prefer real implementations over mocks. Mock only at boundaries you do not own
+  (external APIs, system clocks, randomness).
+- Use your language's temp-directory facilities for any test-created files. Never
+  hardcode paths — they collide in parallel runs and break across platforms.
+- Every bug fix must include a regression test that would have caught the bug.
+
+## Test Quality
+
+- No test may mutate global state. If global state is unavoidable, reset it in
+  teardown so test ordering does not matter.
+- No real network requests in unit tests. Stub or fake external endpoints.
+- Test names describe the behavior being verified, not the method under test.
+  Prefer `"returns empty list when no results match filter"` over `"test_search"`.
+- Assertions must be specific. Assert on exact values, error types, or structure —
+  not just truthiness. `assert result == expected` over `assert result`.

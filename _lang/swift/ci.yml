@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Swift Quality Gate
+    runs-on: macos-latest
+    env:
+      XCODE_WORKSPACE: ${{ vars.XCODE_WORKSPACE }}
+      XCODE_PROJECT: ${{ vars.XCODE_PROJECT }}
+      XCODE_SCHEME: ${{ vars.XCODE_SCHEME }}
+      XCODE_CONFIGURATION: ${{ vars.XCODE_CONFIGURATION }}
+      XCODE_DESTINATION: ${{ vars.XCODE_DESTINATION }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Swift quality gate
+        run: ./scripts/swift-quality-gate.sh ci

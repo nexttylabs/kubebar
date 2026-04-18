@@ -1,0 +1,12 @@
+# Rust: quality gate before push
+echo "Running cargo clippy..."
+if ! cargo clippy --all-targets -- -D warnings; then
+    echo "error: clippy found warnings. Fix them before pushing."
+    exit 1
+fi
+
+echo "Running cargo test --lib..."
+if ! cargo test --lib; then
+    echo "error: tests failed. Fix them before pushing."
+    exit 1
+fi

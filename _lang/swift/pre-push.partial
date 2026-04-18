@@ -1,0 +1,7 @@
+# Swift quality gate — must pass before push
+if [ -x "./scripts/swift-quality-gate.sh" ]; then
+  if find . -maxdepth 3 \( -name '*.xcodeproj' -o -name '*.xcworkspace' -o -name 'Package.swift' \) | grep -q .; then
+    echo "Running Swift quality gate..."
+    ./scripts/swift-quality-gate.sh local || { echo "Swift quality gate failed"; exit 1; }
+  fi
+fi

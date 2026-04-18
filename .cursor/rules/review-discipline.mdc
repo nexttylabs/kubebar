@@ -1,0 +1,59 @@
+---
+description: Code review and fix discipline
+globs: ["src/**", "lib/**", "internal/**", "pkg/**", "cmd/**", "tests/**"]
+---
+
+# Review & Fix Discipline
+
+## Fix the Pattern, Not Just the Instance
+
+When a reviewer flags a bug, search the entire codebase for all instances of the same
+pattern before marking the comment resolved. A point fix that leaves identical bugs
+elsewhere is incomplete.
+
+## Propagate Fixes to All Implementations
+
+If a core type, interface, or shared function changes, every dependent type and call
+site must also be updated in the same PR. Do not leave stale signatures or casts behind.
+
+## Regression Test with Every Fix
+
+Every bug fix must include a test that would have caught the bug. If you cannot write
+such a test, document why in the PR description.
+
+## Zero Lint Warnings Policy
+
+Fix ALL lint warnings before committing — including pre-existing warnings in files you
+touched. Leaving warnings for later means they never get fixed.
+
+## Mechanical Verification Before Committing
+
+Before pushing, run this checklist:
+
+1. Run the linter — zero warnings.
+2. Grep changed files for common anti-patterns (hardcoded secrets, TODO/FIXME without
+   issue links, disabled tests).
+3. If you fixed a pattern bug, grep the repo for other instances of the same pattern.
+
+## UTF-8 String Safety
+
+Never use byte-index slicing on user-supplied or external strings. Use your language's
+unicode-aware string operations (grapheme clusters, code points, or equivalent) to avoid
+splitting multi-byte characters.
+
+## Case-Insensitive Comparisons
+
+When comparing user-supplied strings — file paths, media types, header names, locale
+codes — normalize case before comparison. Do not assume input casing is consistent.
+
+## Sensitive Data in Logs
+
+Function parameters, return values, and intermediate state must be redacted before
+logging or broadcasting. Never log tokens, passwords, PII, or full request/response
+bodies in production log levels.
+
+## Test Temporary Files
+
+Use your language's temp-directory facilities (`mktemp`, `tempfile`, `os.tmpdir()`,
+etc.) for any files created during tests. Never hardcode paths like `/tmp/mytest` —
+they collide in parallel runs and break on other platforms.

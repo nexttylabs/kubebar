@@ -1,0 +1,36 @@
+scope:app:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "App/**"
+          - "Sources/**"
+          - "Features/**"
+          - "Modules/**"
+          - "**/*.swift"
+
+scope:tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Tests/**"
+          - "UITests/**"
+          - "**/*Tests.swift"
+          - "**/*Spec.swift"
+          - "**/*SnapshotTests.swift"
+
+scope:project:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.xcodeproj/**"
+          - "**/*.xcworkspace/**"
+          - "Package.swift"
+          - "Package.resolved"
+
+scope:scripts:
+  - changed-files:
+      - any-glob-to-any-file: "scripts/**"
+
+scope:config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".swiftlint.yml"
+          - ".swiftformat"
+          - ".xcode-version"
