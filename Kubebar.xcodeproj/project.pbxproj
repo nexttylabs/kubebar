@@ -1,0 +1,721 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */; };
+		0DF4C90F99F2163FADFDD4B4 /* NodeDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A043426B709BACA5F1E0AD /* NodeDetailsView.swift */; };
+		1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */; };
+		19EAD915DF6C79C690F35AA1 /* HealthEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9764447501D53DE91281068A /* HealthEvaluator.swift */; };
+		1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7528D0CB7EF7F022D9CD0E8D /* KubebarApp.swift */; };
+		2036039E88B11BEFBDB420EE /* KubebarCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; };
+		229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED837A9D86DC08DF17C4EAF /* MenuBarRootView.swift */; };
+		279114E96D410FFB2622B97E /* AppConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */; };
+		2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ABF8EE5A9744D188D13166D /* WatchTarget.swift */; };
+		2E7ED6B0CD1AF3FF878FA0BB /* TrackedItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */; };
+		326455E7817B371EE5EFCD27 /* WatchlistSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8240373DA431592CA2BE0AAD /* WatchlistSectionView.swift */; };
+		35EA66F6D54717A319173F66 /* KubebarCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684455D1430321334848EB7F /* AppConfigStoreTests.swift */; };
+		3C89297B5C863C683E8D33CA /* CommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A59D91E3E139CA91BC232D40 /* CommandRunner.swift */; };
+		3F8979A056EF39673CCD3B56 /* CompactCountersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C15FA43125DF9BF219851EB9 /* CompactCountersView.swift */; };
+		43A2E812863B312A3F47C289 /* ClusterHealthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */; };
+		495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB85B2A6F35FE8060AA9C798 /* ClusterHealthStateTests.swift */; };
+		4C2E73E7BD335AB4132D0698 /* WarningEventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20CFE1BB9A277F9362C714F /* WarningEventsView.swift */; };
+		52BA949618FBE1B3F59CFFA0 /* MenuBarStatusPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */; };
+		5ABA28F9AE755230D8C237F9 /* SetupFlowStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */; };
+		5AE8C85F4E8EDCB81817F86F /* RefreshCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */; };
+		5DB36E479C36A618D5CBFD02 /* KubebarCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; };
+		6AD24ACE1B08D85139E55137 /* WatchlistPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */; };
+		6AF6A15E2D4F765E4C98EE30 /* StatusSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */; };
+		7E10219D9134064745C7587E /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6AD42A08C3FCF7AFC66B5 /* MenuBarViewModel.swift */; };
+		8455B75AF69EE30EA14B7DFA /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A695AF3866AB76864159F1C9 /* SetupView.swift */; };
+		90A3769DF7A535DE88BBA88B /* MenuDisplayModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */; };
+		9519708EC07DA17E1E419E8A /* SetupFlowState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C221382EB43B27DF73F677E5 /* SetupFlowState.swift */; };
+		9B671EDA20D6DF7D94CF39C5 /* WatchlistSelectionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B1B6F7E78CC246131309D /* WatchlistSelectionStateTests.swift */; };
+		9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */; };
+		C7D835EE9941E87F99EAF0DE /* WatchlistSelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */; };
+		CB35CF597BAFC816918A11BA /* KubectlClusterReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */; };
+		DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */; };
+		E5ACFCA3A8AF5731A614DD75 /* ContextCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */; };
+		E72D650497668E687AFC0027 /* StaleBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */; };
+		ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */; };
+		F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */; };
+		F3BA3AEB1BF36707FCBA26E7 /* KubebarCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		27A4C7895D1AF6E857F1A41A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 65CAEC86A9ECE1AE94449E2A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E81D6B0A5F45689E0C56333;
+			remoteInfo = KubebarCore;
+		};
+		707EC69B605640FFA9606CA5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 65CAEC86A9ECE1AE94449E2A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E81D6B0A5F45689E0C56333;
+			remoteInfo = KubebarCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		196A30CE0622FE4A754FD57B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				35EA66F6D54717A319173F66 /* KubebarCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2FA42862C2610BCB13F802A9 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F3BA3AEB1BF36707FCBA26E7 /* KubebarCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusSummaryView.swift; sourceTree = "<group>"; };
+		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
+		09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReader.swift; sourceTree = "<group>"; };
+		16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalog.swift; sourceTree = "<group>"; };
+		2080726BE2E75B3415FEFB68 /* KubebarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KubebarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterHealthState.swift; sourceTree = "<group>"; };
+		27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuDisplayModelTests.swift; sourceTree = "<group>"; };
+		3ABF8EE5A9744D188D13166D /* WatchTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTarget.swift; sourceTree = "<group>"; };
+		3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReaderTests.swift; sourceTree = "<group>"; };
+		5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KubebarCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		684455D1430321334848EB7F /* AppConfigStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStoreTests.swift; sourceTree = "<group>"; };
+		73F6AD42A08C3FCF7AFC66B5 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
+		7528D0CB7EF7F022D9CD0E8D /* KubebarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubebarApp.swift; sourceTree = "<group>"; };
+		7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterSnapshot.swift; sourceTree = "<group>"; };
+		7ED837A9D86DC08DF17C4EAF /* MenuBarRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarRootView.swift; sourceTree = "<group>"; };
+		8240373DA431592CA2BE0AAD /* WatchlistSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSectionView.swift; sourceTree = "<group>"; };
+		8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalogTests.swift; sourceTree = "<group>"; };
+		9764447501D53DE91281068A /* HealthEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthEvaluator.swift; sourceTree = "<group>"; };
+		A59D91E3E139CA91BC232D40 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
+		A695AF3866AB76864159F1C9 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinator.swift; sourceTree = "<group>"; };
+		B20CFE1BB9A277F9362C714F /* WarningEventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarningEventsView.swift; sourceTree = "<group>"; };
+		B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackedItemDetailView.swift; sourceTree = "<group>"; };
+		B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistPickerView.swift; sourceTree = "<group>"; };
+		C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowStateTests.swift; sourceTree = "<group>"; };
+		C15FA43125DF9BF219851EB9 /* CompactCountersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactCountersView.swift; sourceTree = "<group>"; };
+		C221382EB43B27DF73F677E5 /* SetupFlowState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowState.swift; sourceTree = "<group>"; };
+		C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuDisplayModel.swift; sourceTree = "<group>"; };
+		CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaleBannerView.swift; sourceTree = "<group>"; };
+		DB85B2A6F35FE8060AA9C798 /* ClusterHealthStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterHealthStateTests.swift; sourceTree = "<group>"; };
+		DE730D4112D2CD5963295F5C /* Kubebar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kubebar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
+		E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentation.swift; sourceTree = "<group>"; };
+		E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSelectionState.swift; sourceTree = "<group>"; };
+		F0A043426B709BACA5F1E0AD /* NodeDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeDetailsView.swift; sourceTree = "<group>"; };
+		F32B1B6F7E78CC246131309D /* WatchlistSelectionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSelectionStateTests.swift; sourceTree = "<group>"; };
+		F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinatorTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D00E85865FD5A46899AA244 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DB36E479C36A618D5CBFD02 /* KubebarCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB16E3B11019BAD8EFF7B4F6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2036039E88B11BEFBDB420EE /* KubebarCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1E7C0A7778CEC6F2A9F3DC6F = {
+			isa = PBXGroup;
+			children = (
+				D2BCD599CB5852F278B05F8B /* Kubebar */,
+				ADD1935A7091124950A468D4 /* KubebarCore */,
+				EF151275E68C2051A3D006D0 /* KubebarTests */,
+				96C5613667CEFFDF937D9C19 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		65BEA123B761654EB99872DE /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C15FA43125DF9BF219851EB9 /* CompactCountersView.swift */,
+				7ED837A9D86DC08DF17C4EAF /* MenuBarRootView.swift */,
+				F0A043426B709BACA5F1E0AD /* NodeDetailsView.swift */,
+				A695AF3866AB76864159F1C9 /* SetupView.swift */,
+				CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */,
+				039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */,
+				B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */,
+				B20CFE1BB9A277F9362C714F /* WarningEventsView.swift */,
+				B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */,
+				8240373DA431592CA2BE0AAD /* WatchlistSectionView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		6A53CC16B911EA25E91802EB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DB85B2A6F35FE8060AA9C798 /* ClusterHealthStateTests.swift */,
+				03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */,
+				27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */,
+				C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */,
+				F32B1B6F7E78CC246131309D /* WatchlistSelectionStateTests.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		7336F0782032895BE48EA51F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				684455D1430321334848EB7F /* AppConfigStoreTests.swift */,
+				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
+				3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */,
+				F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		83DF995219C93DBAE4855014 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */,
+				7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */,
+				E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */,
+				C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */,
+				C221382EB43B27DF73F677E5 /* SetupFlowState.swift */,
+				E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */,
+				3ABF8EE5A9744D188D13166D /* WatchTarget.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		941D406EBB4AD367FB25FAD8 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */,
+				A59D91E3E139CA91BC232D40 /* CommandRunner.swift */,
+				16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */,
+				9764447501D53DE91281068A /* HealthEvaluator.swift */,
+				09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */,
+				B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		96C5613667CEFFDF937D9C19 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DE730D4112D2CD5963295F5C /* Kubebar.app */,
+				5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */,
+				2080726BE2E75B3415FEFB68 /* KubebarTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		ADD1935A7091124950A468D4 /* KubebarCore */ = {
+			isa = PBXGroup;
+			children = (
+				83DF995219C93DBAE4855014 /* Models */,
+				941D406EBB4AD367FB25FAD8 /* Services */,
+			);
+			path = KubebarCore;
+			sourceTree = "<group>";
+		};
+		D2BCD599CB5852F278B05F8B /* Kubebar */ = {
+			isa = PBXGroup;
+			children = (
+				7528D0CB7EF7F022D9CD0E8D /* KubebarApp.swift */,
+				73F6AD42A08C3FCF7AFC66B5 /* MenuBarViewModel.swift */,
+				65BEA123B761654EB99872DE /* Views */,
+			);
+			path = Kubebar;
+			sourceTree = "<group>";
+		};
+		EF151275E68C2051A3D006D0 /* KubebarTests */ = {
+			isa = PBXGroup;
+			children = (
+				6A53CC16B911EA25E91802EB /* Models */,
+				7336F0782032895BE48EA51F /* Services */,
+			);
+			path = KubebarTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6E81D6B0A5F45689E0C56333 /* KubebarCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49E03385768FD0A30D0A2995 /* Build configuration list for PBXNativeTarget "KubebarCore" */;
+			buildPhases = (
+				B16F38686246BE8EE5FA7D24 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KubebarCore;
+			packageProductDependencies = (
+			);
+			productName = KubebarCore;
+			productReference = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		CB8767EF3CD367D16F70DED2 /* Kubebar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 93E730E13D669E6AADE3D46A /* Build configuration list for PBXNativeTarget "Kubebar" */;
+			buildPhases = (
+				D7EE5D4497D5AC891A0E3481 /* Sources */,
+				AB16E3B11019BAD8EFF7B4F6 /* Frameworks */,
+				2FA42862C2610BCB13F802A9 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FCA91BC25C42983DAF419A43 /* PBXTargetDependency */,
+			);
+			name = Kubebar;
+			packageProductDependencies = (
+			);
+			productName = Kubebar;
+			productReference = DE730D4112D2CD5963295F5C /* Kubebar.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D0C1178C3800CBBDE303BA6A /* KubebarTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E261207FC3F346906F7BF1F0 /* Build configuration list for PBXNativeTarget "KubebarTests" */;
+			buildPhases = (
+				920DB1F4C87584F6CCE165A2 /* Sources */,
+				8D00E85865FD5A46899AA244 /* Frameworks */,
+				196A30CE0622FE4A754FD57B /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				65B81C75A6DC9C3A431B85E5 /* PBXTargetDependency */,
+			);
+			name = KubebarTests;
+			packageProductDependencies = (
+			);
+			productName = KubebarTests;
+			productReference = 2080726BE2E75B3415FEFB68 /* KubebarTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		65CAEC86A9ECE1AE94449E2A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					6E81D6B0A5F45689E0C56333 = {
+						DevelopmentTeam = "";
+					};
+					CB8767EF3CD367D16F70DED2 = {
+						DevelopmentTeam = "";
+					};
+					D0C1178C3800CBBDE303BA6A = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 827B7FDD763BC901AF5C756A /* Build configuration list for PBXProject "Kubebar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1E7C0A7778CEC6F2A9F3DC6F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CB8767EF3CD367D16F70DED2 /* Kubebar */,
+				6E81D6B0A5F45689E0C56333 /* KubebarCore */,
+				D0C1178C3800CBBDE303BA6A /* KubebarTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		920DB1F4C87584F6CCE165A2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */,
+				495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */,
+				1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */,
+				9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */,
+				52BA949618FBE1B3F59CFFA0 /* MenuBarStatusPresentationTests.swift in Sources */,
+				0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */,
+				5AE8C85F4E8EDCB81817F86F /* RefreshCoordinatorTests.swift in Sources */,
+				5ABA28F9AE755230D8C237F9 /* SetupFlowStateTests.swift in Sources */,
+				9B671EDA20D6DF7D94CF39C5 /* WatchlistSelectionStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B16F38686246BE8EE5FA7D24 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				279114E96D410FFB2622B97E /* AppConfigStore.swift in Sources */,
+				43A2E812863B312A3F47C289 /* ClusterHealthState.swift in Sources */,
+				DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */,
+				3C89297B5C863C683E8D33CA /* CommandRunner.swift in Sources */,
+				E5ACFCA3A8AF5731A614DD75 /* ContextCatalog.swift in Sources */,
+				19EAD915DF6C79C690F35AA1 /* HealthEvaluator.swift in Sources */,
+				CB35CF597BAFC816918A11BA /* KubectlClusterReader.swift in Sources */,
+				ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */,
+				90A3769DF7A535DE88BBA88B /* MenuDisplayModel.swift in Sources */,
+				F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */,
+				9519708EC07DA17E1E419E8A /* SetupFlowState.swift in Sources */,
+				2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */,
+				C7D835EE9941E87F99EAF0DE /* WatchlistSelectionState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D7EE5D4497D5AC891A0E3481 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F8979A056EF39673CCD3B56 /* CompactCountersView.swift in Sources */,
+				1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */,
+				229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */,
+				7E10219D9134064745C7587E /* MenuBarViewModel.swift in Sources */,
+				0DF4C90F99F2163FADFDD4B4 /* NodeDetailsView.swift in Sources */,
+				8455B75AF69EE30EA14B7DFA /* SetupView.swift in Sources */,
+				E72D650497668E687AFC0027 /* StaleBannerView.swift in Sources */,
+				6AF6A15E2D4F765E4C98EE30 /* StatusSummaryView.swift in Sources */,
+				2E7ED6B0CD1AF3FF878FA0BB /* TrackedItemDetailView.swift in Sources */,
+				4C2E73E7BD335AB4132D0698 /* WarningEventsView.swift in Sources */,
+				6AD24ACE1B08D85139E55137 /* WatchlistPickerView.swift in Sources */,
+				326455E7817B371EE5EFCD27 /* WatchlistSectionView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		65B81C75A6DC9C3A431B85E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E81D6B0A5F45689E0C56333 /* KubebarCore */;
+			targetProxy = 27A4C7895D1AF6E857F1A41A /* PBXContainerItemProxy */;
+		};
+		FCA91BC25C42983DAF419A43 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E81D6B0A5F45689E0C56333 /* KubebarCore */;
+			targetProxy = 707EC69B605640FFA9606CA5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0F38F56C73220D29D6572A2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		11037F9D63644EDC0677A008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		16C60CC774D2B29E3115F753 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.core;
+				PRODUCT_NAME = KubebarCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		25D19BBAFFFB9DE254DFBE9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Kubebar;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_LSUIElement = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar;
+				PRODUCT_NAME = Kubebar;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		41DBBFFA4174081C3CE886CF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Kubebar;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_LSUIElement = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar;
+				PRODUCT_NAME = Kubebar;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		50D6D9484FDB51B6F7F7EFB8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.core;
+				PRODUCT_NAME = KubebarCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		C3DE0545E5D4F34C9C091B5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.tests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		CFBF1BF75A7C4CEF82A61015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.tests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		49E03385768FD0A30D0A2995 /* Build configuration list for PBXNativeTarget "KubebarCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				16C60CC774D2B29E3115F753 /* Debug */,
+				50D6D9484FDB51B6F7F7EFB8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		827B7FDD763BC901AF5C756A /* Build configuration list for PBXProject "Kubebar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				11037F9D63644EDC0677A008 /* Debug */,
+				0F38F56C73220D29D6572A2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		93E730E13D669E6AADE3D46A /* Build configuration list for PBXNativeTarget "Kubebar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41DBBFFA4174081C3CE886CF /* Debug */,
+				25D19BBAFFFB9DE254DFBE9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E261207FC3F346906F7BF1F0 /* Build configuration list for PBXNativeTarget "KubebarTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3DE0545E5D4F34C9C091B5C /* Debug */,
+				CFBF1BF75A7C4CEF82A61015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 65CAEC86A9ECE1AE94449E2A /* Project object */;
+}

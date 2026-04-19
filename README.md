@@ -26,12 +26,26 @@ First-use setup screens and full live menu wiring are planned next.
 
 ## Build and Test
 
+Open in Xcode:
+
+```bash
+open Kubebar.xcodeproj
+```
+
+Regenerate the Xcode project after changing targets or source folders:
+
+```bash
+xcodegen generate
+```
+
 ```bash
 ./scripts/swift-quality-gate.sh local
 ```
 
 This runs:
 
+- Xcode build for the macOS menu bar app
+- Xcode tests
 - `swift build`
 - `swift test`
 
@@ -42,6 +56,7 @@ Kubebar/       SwiftUI menu bar app entry and views
 KubebarCore/   Models, display mapping, health rules, and services
 KubebarTests/  Unit tests for trusted product behavior
 docs/          Requirements, plans, and architecture notes
+project.yml    XcodeGen source for Kubebar.xcodeproj
 scripts/       Local quality checks
 ```
 
