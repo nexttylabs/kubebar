@@ -1,0 +1,86 @@
+name: Regression Test Check
+
+on:
+  pull_request:
+
+jobs:
+  regression-test:
+    name: Regression test enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for regression tests
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set -euo pipefail
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          # Is this a fix PR?
+          IS_FIX=false
+          if grep -qiE '^(fix(\(.*\))?|hotfix|bugfix):' <<< "$PR_TITLE"; then
+            IS_FIX=true
+          fi
+          if [ "$IS_FIX" = false ]; then
+            echo "Not a fix PR -- skipping."
+            exit 0
+          fi
+
+          # Skip label
+          if grep -qF ',skip-regression-check,' <<< ",$PR_LABELS,"; then
+            echo "skip-regression-check label present -- skipping."
+            exit 0
+          fi
+
+          CHANGED_FILES=$(git diff --name-only "${BASE_REF}...${HEAD_REF}")
+          if [ -z "$CHANGED_FILES" ]; then
+            exit 0
+          fi
+
+          # Exempt docs-only changes
+          ALL_EXEMPT=true
+          while IFS= read -r file; do
+            case "$file" in
+              *.md) ;;
+              *) ALL_EXEMPT=false; break ;;
+            esac
+          done <<< "$CHANGED_FILES"
+          if [ "$ALL_EXEMPT" = true ]; then
+            exit 0
+          fi
+
+          HAS_TESTS=0
+
+# Detect test files in Swift commits
+SWIFT_TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(^|/)(Tests|UITests)/.*\.swift$|(^|/)[^/]+(Tests|Spec|SnapshotTests)\.swift$' || true)
+
+if [ -n "$SWIFT_TEST_FILES" ]; then
+  HAS_TESTS=1
+else
+  SWIFT_SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.swift$' || true)
+  if [ -n "$SWIFT_SOURCE_FILES" ]; then
+    for f in $SWIFT_SOURCE_FILES; do
+      if [ -f "$f" ]; then
+        if grep -qE 'XCTestCase|QuickSpec|assertSnapshot|SnapshotTesting|import XCTest' "$f" 2>/dev/null; then
+          HAS_TESTS=1
+          break
+        fi
+      fi
+    done
+  fi
+fi
+
+          if [ "$HAS_TESTS" = "1" ]; then
+            echo "Test changes found."
+            exit 0
+          fi
+
+          echo "::warning::This PR looks like a bug fix but contains no test changes."
+          echo "::warning::Please add tests, or apply the 'skip-regression-check' label."
+          exit 1

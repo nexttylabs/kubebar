@@ -1,10 +1,12 @@
 # Kubebar Development Guide
 
-## Purpose
+## Purpose and Precedence
 
-Kubebar is a native macOS menu bar app for quickly checking Kubernetes health.
-It is not a replacement for `k9s`; it is the glanceable status tool used before
-opening deeper debugging tools.
+- `AGENTS.md` is the repo-wide quick-start contract for contributors and coding agents.
+- Kubebar is a native macOS menu bar app for quickly checking Kubernetes health.
+- It is not a replacement for `k9s`; it is the glanceable status tool used before opening deeper debugging tools.
+- If a deeper guide exists under `docs/architecture/`, treat that guide as authoritative for that area.
+- Keep this file current when project structure, quality gates, or ownership boundaries change.
 
 ## Product Rules
 
@@ -22,13 +24,27 @@ opening deeper debugging tools.
 - App-owned context is the source of truth, not the terminal's current context.
 - Prefer small value types and explicit dependency seams.
 
+## Coding Rules
+
+- No force unwraps (`!`) or `try!` in production code unless an adjacent comment explains why they are safe.
+- No `fatalError` in production paths unless it protects an impossible state and the reason is documented.
+- Prefer value types (`struct`, `enum`) unless reference semantics are required.
+- Mark UI-bound state and side effects with `@MainActor` when they must stay on the main thread.
+- Prefer `async` / `await` over callback pyramids for new asynchronous code.
+- Use explicit access control; default to `private` or `fileprivate`.
+- Make `switch` statements exhaustive for enums; avoid `default` when the enum is under your control.
+- Prefer dependency injection over singletons for services, clients, and stores.
+- Keep views thin; move formatting, mapping, and business logic into focused types.
+
 ## Build and Test
 
 ```bash
 ./scripts/swift-quality-gate.sh local
 ```
 
-The same gate runs `swift build` and `swift test`.
+The same gate runs the macOS Xcode build, Xcode tests, `swift build`, and `swift test` when those project shapes are present.
+
+If the repository has multiple workspaces, projects, or schemes, set `XCODE_WORKSPACE`, `XCODE_PROJECT`, `XCODE_SCHEME`, and `XCODE_DESTINATION` explicitly before running the quality gate.
 
 ## Project Layout
 
@@ -40,8 +56,10 @@ docs/          Requirements, plans, and architecture notes
 scripts/       Local quality checks
 ```
 
-## Before Finishing
+## Change Discipline
 
-- Run the Swift quality gate.
+- Run the Swift quality gate before finishing.
 - Update the relevant `docs/` file when product behavior changes.
 - Add or update tests for behavior changes.
+- Preserve existing defaults unless the task explicitly changes them.
+- Treat auth, secrets, config loading, persistence, build settings, CI, and public or network-facing APIs as high-risk changes.

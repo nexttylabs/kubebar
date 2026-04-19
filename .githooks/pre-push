@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+# Quality gate before push. Skip with: git push --no-verify
+set -euo pipefail
+
+echo "Running pre-push quality gate..."
+echo ""
+
 # Swift quality gate — must pass before push
 if [ -x "./scripts/swift-quality-gate.sh" ]; then
   if find . -maxdepth 3 \( -name '*.xcodeproj' -o -name '*.xcworkspace' -o -name 'Package.swift' \) | grep -q .; then
@@ -5,3 +12,6 @@ if [ -x "./scripts/swift-quality-gate.sh" ]; then
     ./scripts/swift-quality-gate.sh local || { echo "Swift quality gate failed"; exit 1; }
   fi
 fi
+
+echo ""
+echo "Quality gate passed."

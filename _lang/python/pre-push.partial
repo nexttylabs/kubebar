@@ -1,8 +1,0 @@
-# Python quality gate — must pass before push
-if [ -f "pyproject.toml" ] && grep -q '\[project\]' pyproject.toml 2>/dev/null; then
-  echo "Running Python quality gate..."
-  ruff check . || { echo "Lint failed"; exit 1; }
-  ruff format --check . || { echo "Format check failed"; exit 1; }
-  mypy . || { echo "Typecheck failed"; exit 1; }
-  pytest || { echo "Tests failed"; exit 1; }
-fi

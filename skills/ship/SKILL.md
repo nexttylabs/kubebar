@@ -1,27 +1,16 @@
 ---
-name: ship
-version: 1.0.0
-description: Use when the user wants the project's defined quality gate run before shipping, releasing, committing, or opening a pull request.
-activation:
-  patterns:
-    - "ready.*to ship"
-    - "run.*quality gate"
-    - "quality gate"
-  keywords:
-    - release
-    - ship
-    - verify
-  max_context_tokens: 1200
+description: Run the Swift iOS quality gate before shipping.
+allowed-tools:
+  - Bash(./scripts/swift-quality-gate.sh:*)
+  - Bash(swift:*)
+  - Bash(xcodebuild:*)
 ---
 
 # Ship
 
-Read the quality gate in `AGENTS.md` and run each step in order. Report the result and stop on the first failure.
+Run the Swift quality gate. Stop on the first failure and fix it before continuing.
 
-If `AGENTS.md` does not define the commands needed to verify the project, ask the user what should be run.
+1. **Build**: `./scripts/swift-quality-gate.sh local`
+2. **Docs check**: update `README.md`, `docs/`, or `CHANGELOG.md` if behavior changed
 
-## Output Format
-
-- Commands run
-- First failing step, if any
-- Final pass/fail status
+If your project has multiple workspaces, projects, or schemes, set `XCODE_WORKSPACE`, `XCODE_PROJECT`, `XCODE_SCHEME`, and `XCODE_DESTINATION` before running the quality gate.

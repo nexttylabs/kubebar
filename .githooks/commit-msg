@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Require regression tests for fix commits.
+# Bypass with [skip-regression-check] in the commit message.
+set -euo pipefail
+
+MSG_FILE="$1"
+FIRST_LINE=$(head -1 "$MSG_FILE")
+
+# Is this a fix commit?
+if ! grep -qiE '^(fix(\(.*\))?|hotfix|bugfix):' <<< "$FIRST_LINE"; then
+  exit 0
+fi
+
+# Skip marker
+if grep -qF '[skip-regression-check]' "$MSG_FILE"; then
+  exit 0
+fi
+
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -z "$CHANGED_FILES" ]; then
+  exit 0
+fi
+
+# Exempt docs-only changes
+ALL_EXEMPT=true
+while IFS= read -r file; do
+  case "$file" in
+    *.md) ;;
+    *) ALL_EXEMPT=false; break ;;
+  esac
+done <<< "$CHANGED_FILES"
+if [ "$ALL_EXEMPT" = true ]; then
+  exit 0
+fi
+
+HAS_TESTS=0
+
+# Detect test files in Swift commits
+SWIFT_TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(^|/)(Tests|UITests)/.*\.swift$|(^|/)[^/]+(Tests|Spec|SnapshotTests)\.swift$' || true)
+
+if [ -n "$SWIFT_TEST_FILES" ]; then
+  HAS_TESTS=1
+else
+  SWIFT_SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.swift$' || true)
+  if [ -n "$SWIFT_SOURCE_FILES" ]; then
+    for f in $SWIFT_SOURCE_FILES; do
+      if [ -f "$f" ]; then
+        if grep -qE 'XCTestCase|QuickSpec|assertSnapshot|SnapshotTesting|import XCTest' "$f" 2>/dev/null; then
+          HAS_TESTS=1
+          break
+        fi
+      fi
+    done
+  fi
+fi
+
+if [ "$HAS_TESTS" = "1" ]; then
+  exit 0
+fi
+
+echo ""
+echo "  REGRESSION TEST REQUIRED"
+echo ""
+echo "  This commit looks like a bug fix but has no test changes."
+echo "  Every fix should include a test that reproduces the bug."
+echo ""
+echo "  Options:"
+echo "    - Add a test that catches the bug"
+echo "    - Add [skip-regression-check] to your commit message"
+echo ""
+exit 1
