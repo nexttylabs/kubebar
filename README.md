@@ -67,7 +67,7 @@ scripts/       Local quality checks
 
 The current roadmap entry point is:
 
-- `docs/plans/2026-04-19-002-kubebar-product-roadmap.md`
+- [docs/plans/2026-04-19-002-kubebar-product-roadmap.md](docs/plans/2026-04-19-002-kubebar-product-roadmap.md)
 
 The version-1 product direction is also captured in:
 

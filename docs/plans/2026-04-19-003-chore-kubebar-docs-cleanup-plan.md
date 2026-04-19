@@ -220,8 +220,8 @@ confirm the repository remains healthy.
 
 ## Sources & References
 
-- **Origin document:** `docs/brainstorms/2026-04-19-kubebar-docs-cleanup-requirements.md`
+- **Origin document:** [2026-04-19-kubebar-docs-cleanup-requirements.md](../brainstorms/2026-04-19-kubebar-docs-cleanup-requirements.md)
 - **GitHub issue:** https://github.com/nexttylabs/kubebar/issues/2
-- **Roadmap:** `docs/plans/2026-04-19-002-kubebar-product-roadmap.md`
-- **Architecture notes:** `docs/architecture/system-overview.md`,
-  `docs/architecture/runtime-invariants.md`
+- **Roadmap:** [2026-04-19-002-kubebar-product-roadmap.md](2026-04-19-002-kubebar-product-roadmap.md)
+- **Architecture notes:** [system-overview.md](../architecture/system-overview.md),
+  [runtime-invariants.md](../architecture/runtime-invariants.md)
