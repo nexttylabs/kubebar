@@ -24,9 +24,9 @@ The first implementation plan has already produced the main app shape:
 refresh coordination, and tests. The remaining plan should therefore focus on
 operator readiness rather than recreating the foundation.
 
-The `docs/superpowers/` Swift iOS support files are template-era context. They
-are not part of the Kubebar product direction and should be archived, removed,
-or clearly separated from current product docs.
+The template-era Swift iOS support notes have been removed from active product
+docs so Kubebar's roadmap, architecture notes, and README now describe the
+current macOS menu bar app direction.
 
 ## Product Priorities
 
@@ -41,7 +41,7 @@ or clearly separated from current product docs.
 
 | Order | Issue | Purpose | Source |
 | --- | --- | --- | --- |
-| 1 | [#2 Clean up product docs and stale template notes](https://github.com/nexttylabs/kubebar/issues/2) | Keep the repo understandable as Kubebar, not a leftover template | Architecture notes, README, `docs/superpowers/` |
+| 1 | [#2 Clean up product docs and stale template notes](https://github.com/nexttylabs/kubebar/issues/2) | Keep the repo understandable as Kubebar, not a leftover template | Architecture notes, README, removed template notes |
 | 2 | [#3 Complete first-use setup and watchlist editing](https://github.com/nexttylabs/kubebar/issues/3) | Let the user choose context and watch targets without manual config | R14-R17 |
 | 3 | [#4 Expand kubectl data into actionable warning and workload reasons](https://github.com/nexttylabs/kubebar/issues/4) | Make rows explain what is wrong, not just that something is wrong | R3, R8, R9, R12 |
 | 4 | [#5 Add refresh cadence, timeout, and freshness controls](https://github.com/nexttylabs/kubebar/issues/5) | Make current/stale/failure states predictable and visible | R10-R12 |

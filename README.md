@@ -11,7 +11,7 @@ look at before opening deeper troubleshooting tools.
 
 ## Current Status
 
-The project now has the first Swift foundation:
+The project now has a working macOS menu bar foundation:
 
 - macOS SwiftUI menu bar entry
 - core health states: `OK`, `Watch`, `Bad`, `Stale`
@@ -20,9 +20,12 @@ The project now has the first Swift foundation:
 - local config persistence
 - `kubectl` command boundary and JSON snapshot reader
 - refresh coordination from config to display state
+- first-use setup and watchlist editing views
+- live menu content wired through a view model
 - tests for the most important status behavior
 
-First-use setup screens and full live menu wiring are planned next.
+The current roadmap focuses on making the setup loop, warning reasons,
+freshness controls, and operator-facing verification ready for daily use.
 
 ## Build and Test
 
@@ -62,7 +65,11 @@ scripts/       Local quality checks
 
 ## Product Direction
 
-The version-1 direction is captured in:
+The current roadmap entry point is:
+
+- [docs/plans/2026-04-19-002-kubebar-product-roadmap.md](docs/plans/2026-04-19-002-kubebar-product-roadmap.md)
+
+The version-1 product direction is also captured in:
 
 - `docs/brainstorms/2026-04-19-kubebar-watchlist-first-requirements.md`
 - `docs/plans/2026-04-19-001-feat-kubebar-watchlist-menu-plan.md`
