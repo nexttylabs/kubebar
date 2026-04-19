@@ -64,7 +64,7 @@
 - Symptoms: The Swift test-detection block is outside the `run: |` indentation level, which makes the workflow file structurally invalid or changes the intended script body.
 - Files: `.github/workflows/regression-test-check.yml`
 - Trigger: GitHub Actions loads the `Regression Test Check` workflow for a pull request.
-- Workaround: Fix indentation for the lines beginning with `# Detect test files in Swift commits` through the matching `fi`.
+- Workaround: Use the `skip-regression-check` label on the pull request to bypass the failing check until the indentation is corrected.
 
 **Overflow watchlist entry is inert text:**
 - Symptoms: The menu shows "View all tracked" when hidden items exist, but it is a `Text` view with no action or expanded list.
