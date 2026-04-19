@@ -14,6 +14,7 @@
 		1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7528D0CB7EF7F022D9CD0E8D /* KubebarApp.swift */; };
 		2036039E88B11BEFBDB420EE /* KubebarCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; };
 		229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED837A9D86DC08DF17C4EAF /* MenuBarRootView.swift */; };
+		2673AA6352855DBB0B87599A /* CommandRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */; };
 		279114E96D410FFB2622B97E /* AppConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */; };
 		2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ABF8EE5A9744D188D13166D /* WatchTarget.swift */; };
 		2E7ED6B0CD1AF3FF878FA0BB /* TrackedItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */; };
@@ -112,6 +113,7 @@
 		A695AF3866AB76864159F1C9 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinator.swift; sourceTree = "<group>"; };
 		B20CFE1BB9A277F9362C714F /* WarningEventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarningEventsView.swift; sourceTree = "<group>"; };
+		B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunnerTests.swift; sourceTree = "<group>"; };
 		B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackedItemDetailView.swift; sourceTree = "<group>"; };
 		B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistPickerView.swift; sourceTree = "<group>"; };
 		C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowStateTests.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 			isa = PBXGroup;
 			children = (
 				684455D1430321334848EB7F /* AppConfigStoreTests.swift */,
+				B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */,
 				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
 				3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */,
 				F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */,
@@ -372,6 +375,7 @@
 			files = (
 				3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */,
 				495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */,
+				2673AA6352855DBB0B87599A /* CommandRunnerTests.swift in Sources */,
 				1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */,
 				9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */,
 				52BA949618FBE1B3F59CFFA0 /* MenuBarStatusPresentationTests.swift in Sources */,

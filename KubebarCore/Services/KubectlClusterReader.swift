@@ -12,14 +12,10 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     }
 
     public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
-        let nodes = try decodeNodes(try runKubectl(contextName: contextName, arguments: ["get", "nodes", "-o", "json"]))
-        let pods = try decodePods(try runKubectl(contextName: contextName, arguments: ["get", "pods", "--all-namespaces", "-o", "json"]))
-        let warningEventCount = try decodeEventCount(
-            try runKubectl(
-                contextName: contextName,
-                arguments: ["get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
-            )
-        )
+        let rawSnapshot = try readRawSnapshot(contextName: contextName)
+        let nodes = try decodeNodes(rawSnapshot.nodes)
+        let pods = try decodePods(rawSnapshot.pods)
+        let warningEventCount = try decodeEventCount(rawSnapshot.warningEvents)
 
         return ClusterSnapshot(
             contextName: contextName,
@@ -31,6 +27,44 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         )
     }
 
+    private func readRawSnapshot(contextName: String) throws -> RawKubectlSnapshot {
+        let results = LockedKubectlResults()
+        let group = DispatchGroup()
+
+        for read in KubectlRead.allCases {
+            group.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    let output = try runKubectl(contextName: contextName, arguments: read.arguments)
+                    results.set(.success(output), for: read)
+                } catch let error as KubectlCommandError {
+                    results.set(.failure(error), for: read)
+                } catch {
+                    results.set(.failure(.failed(error.localizedDescription)), for: read)
+                }
+                group.leave()
+            }
+        }
+
+        group.wait()
+
+        let outputs = try Dictionary(
+            uniqueKeysWithValues: KubectlRead.allCases.map { read in
+                guard let result = results.result(for: read) else {
+                    throw KubectlCommandError.failed("kubectl failed")
+                }
+
+                return (read, try result.get())
+            }
+        )
+
+        return RawKubectlSnapshot(
+            nodes: outputs[.nodes] ?? "",
+            pods: outputs[.pods] ?? "",
+            warningEvents: outputs[.warningEvents] ?? ""
+        )
+    }
+
     private func runKubectl(contextName: String, arguments: [String]) throws -> String {
         let result: CommandResult
         do {
@@ -39,6 +73,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             )
         } catch CommandRunnerError.timedOut {
             throw KubectlCommandError.failed("kubectl timed out")
+        } catch CommandRunnerError.launchFailed {
+            throw KubectlCommandError.failed("kubectl could not be launched")
         }
 
         guard result.exitCode == 0 else {
@@ -96,6 +132,46 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             state: running == matchingPods.count ? .ok : .bad,
             reason: reason
         )
+    }
+}
+
+private enum KubectlRead: CaseIterable, Hashable, Sendable {
+    case nodes
+    case pods
+    case warningEvents
+
+    var arguments: [String] {
+        switch self {
+        case .nodes:
+            return ["get", "nodes", "-o", "json"]
+        case .pods:
+            return ["get", "pods", "--all-namespaces", "-o", "json"]
+        case .warningEvents:
+            return ["get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
+        }
+    }
+}
+
+private struct RawKubectlSnapshot: Sendable {
+    let nodes: String
+    let pods: String
+    let warningEvents: String
+}
+
+private final class LockedKubectlResults: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [KubectlRead: Result<String, KubectlCommandError>] = [:]
+
+    func set(_ result: Result<String, KubectlCommandError>, for read: KubectlRead) {
+        lock.lock()
+        storage[read] = result
+        lock.unlock()
+    }
+
+    func result(for read: KubectlRead) -> Result<String, KubectlCommandError>? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage[read]
     }
 }
 

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum KubectlCommandError: Error, Equatable {
+public enum KubectlCommandError: Error, Equatable, Sendable {
     case failed(String)
 }
 

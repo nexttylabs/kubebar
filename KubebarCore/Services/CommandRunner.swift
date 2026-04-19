@@ -28,7 +28,7 @@ public protocol CommandRunning: Sendable {
     func run(_ request: CommandRequest) throws -> CommandResult
 }
 
-public enum CommandRunnerError: Error, Equatable {
+public enum CommandRunnerError: Error, Equatable, Sendable {
     case launchFailed
     case timedOut
 }
@@ -41,6 +41,9 @@ public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
         let stdout = Pipe()
         let stderr = Pipe()
         let finished = DispatchSemaphore(value: 0)
+        let outputReaders = DispatchGroup()
+        let stdoutData = LockedDataBuffer()
+        let stderrData = LockedDataBuffer()
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = [request.executable] + request.arguments
@@ -57,19 +60,50 @@ public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
             throw CommandRunnerError.launchFailed
         }
 
+        outputReaders.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            stdoutData.set(stdout.fileHandleForReading.readDataToEndOfFile())
+            outputReaders.leave()
+        }
+
+        outputReaders.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            stderrData.set(stderr.fileHandleForReading.readDataToEndOfFile())
+            outputReaders.leave()
+        }
+
         let timeout = DispatchTime.now() + request.timeoutSeconds
         if finished.wait(timeout: timeout) == .timedOut {
             process.terminate()
             process.waitUntilExit()
+            outputReaders.wait()
             throw CommandRunnerError.timedOut
         }
 
         process.waitUntilExit()
+        outputReaders.wait()
 
         return CommandResult(
-            stdout: String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "",
-            stderr: String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "",
+            stdout: String(data: stdoutData.data, encoding: .utf8) ?? "",
+            stderr: String(data: stderrData.data, encoding: .utf8) ?? "",
             exitCode: process.terminationStatus
         )
+    }
+}
+
+private final class LockedDataBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage = Data()
+
+    var data: Data {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage
+    }
+
+    func set(_ data: Data) {
+        lock.lock()
+        storage = data
+        lock.unlock()
     }
 }

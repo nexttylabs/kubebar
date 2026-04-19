@@ -38,6 +38,24 @@ struct KubectlClusterReaderTests {
             try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date())
         }
     }
+
+    @Test("reads independent kubectl resources concurrently")
+    func readsIndependentKubectlResourcesConcurrently() throws {
+        let runner = SlowRecordingCommandRunner(results: [
+            ["--context", "prod", "get", "nodes", "-o", "json"]: CommandResult(stdout: nodesJSON, stderr: "", exitCode: 0),
+            ["--context", "prod", "get", "pods", "--all-namespaces", "-o", "json"]: CommandResult(stdout: podsJSON, stderr: "", exitCode: 0),
+            ["--context", "prod", "get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]: CommandResult(stdout: warningEventsJSON, stderr: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        _ = try reader.readSnapshot(
+            contextName: "prod",
+            watchTargets: [.workload(namespace: "api", name: "checkout")],
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(runner.maximumConcurrentRequests > 1)
+    }
 }
 
 private final class FakeMultiCommandRunner: CommandRunning, @unchecked Sendable {
@@ -49,6 +67,44 @@ private final class FakeMultiCommandRunner: CommandRunning, @unchecked Sendable 
 
     func run(_ request: CommandRequest) throws -> CommandResult {
         results[request.arguments] ?? CommandResult(stdout: "", stderr: "unexpected command", exitCode: 1)
+    }
+}
+
+private final class SlowRecordingCommandRunner: CommandRunning, @unchecked Sendable {
+    private let results: [[String]: CommandResult]
+    private let lock = NSLock()
+    private var activeRequests = 0
+    private var observedMaximumConcurrentRequests = 0
+
+    init(results: [[String]: CommandResult]) {
+        self.results = results
+    }
+
+    var maximumConcurrentRequests: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observedMaximumConcurrentRequests
+    }
+
+    func run(_ request: CommandRequest) throws -> CommandResult {
+        incrementActiveRequests()
+        Thread.sleep(forTimeInterval: 0.05)
+        decrementActiveRequests()
+
+        return results[request.arguments] ?? CommandResult(stdout: "", stderr: "unexpected command", exitCode: 1)
+    }
+
+    private func incrementActiveRequests() {
+        lock.lock()
+        activeRequests += 1
+        observedMaximumConcurrentRequests = max(observedMaximumConcurrentRequests, activeRequests)
+        lock.unlock()
+    }
+
+    private func decrementActiveRequests() {
+        lock.lock()
+        activeRequests -= 1
+        lock.unlock()
     }
 }
 
