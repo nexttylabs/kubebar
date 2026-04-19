@@ -1,81 +1,65 @@
-# kubebar Swift Guide
+# Kubebar Development Guide
 
 ## Purpose and Precedence
 
 - `AGENTS.md` is the repo-wide quick-start contract for contributors and coding agents.
-- If a deeper guide exists in a subdirectory or under `docs/architecture/`, treat that guide as authoritative for that area.
+- Kubebar is a native macOS menu bar app for quickly checking Kubernetes health.
+- It is not a replacement for `k9s`; it is the glanceable status tool used before opening deeper debugging tools.
+- If a deeper guide exists under `docs/architecture/`, treat that guide as authoritative for that area.
 - Keep this file current when project structure, quality gates, or ownership boundaries change.
 
-## Architecture Mental Model
+## Product Rules
 
-- Keep app entry points and scene wiring thin; move feature logic into the target or module that owns it.
-- Keep domain logic separate from UI, persistence, and external service adapters.
-- Extend existing feature modules, protocols, and dependency seams before adding one-off flows.
+- Keep the menu bar icon categorical: `OK`, `Watch`, `Bad`, or `Stale`.
+- Keep the dropdown watchlist-first.
+- Keep first-screen watchlist rows capped at `3-5` items.
+- Never let stale data look healthy or current.
+- Keep deep troubleshooting out of version 1.
 
-## Where to Work
+## Architecture Rules
 
-- App and feature code: `App/`, `Sources/`, or target-owned source folders
-- Shared modules: `Sources/` or framework targets
-- Unit tests: `Tests/`
-- UI tests: `UITests/`
-- Tooling and automation: `scripts/`
-- Architecture notes and longer specs: `docs/`
-
-## Build & Quality Gate
-
-```bash
-./scripts/swift-quality-gate.sh local
-```
-
-For Swift Package-only repositories, the same script runs `swift build` and `swift test`.
-For Xcode-based iOS repositories, it runs `xcodebuild build` and `xcodebuild test`.
+- UI renders `MenuDisplayModel`; it must not decide cluster health directly.
+- `HealthEvaluator` is the single source of truth for severity.
+- External reads must go through an injectable boundary.
+- App-owned context is the source of truth, not the terminal's current context.
+- Prefer small value types and explicit dependency seams.
 
 ## Coding Rules
 
-- No force unwraps (`!`) or `try!` in production code unless an adjacent comment explains why they are safe
-- No `fatalError` in production paths unless it protects an impossible state and the reason is documented
-- Prefer value types (`struct`, `enum`) unless reference semantics are required
-- Mark UI-bound state and side effects with `@MainActor` when they must stay on the main thread
-- Prefer `async` / `await` over callback pyramids for new asynchronous code
-- Use explicit access control; default to `private` or `fileprivate`
-- Make `switch` statements exhaustive for enums; avoid `default` when the enum is under your control
-- Prefer dependency injection over singletons for services, clients, and stores
-- Keep views and view controllers thin; move formatting, mapping, and business logic into focused types
+- No force unwraps (`!`) or `try!` in production code unless an adjacent comment explains why they are safe.
+- No `fatalError` in production paths unless it protects an impossible state and the reason is documented.
+- Prefer value types (`struct`, `enum`) unless reference semantics are required.
+- Mark UI-bound state and side effects with `@MainActor` when they must stay on the main thread.
+- Prefer `async` / `await` over callback pyramids for new asynchronous code.
+- Use explicit access control; default to `private` or `fileprivate`.
+- Make `switch` statements exhaustive for enums; avoid `default` when the enum is under your control.
+- Prefer dependency injection over singletons for services, clients, and stores.
+- Keep views thin; move formatting, mapping, and business logic into focused types.
 
-## Project Structure
-
-```text
-App/            App target sources when present
-Sources/        Shared modules or package sources
-Tests/          Unit and integration tests
-UITests/        UI or end-to-end tests
-Resources/      Bundled assets and fixtures
-scripts/        Tooling and automation
-```
-
-## Dependencies
-
-```bash
-swift package resolve
-```
-
-- Commit `Package.resolved` when your project uses Swift Package Manager
-- Treat `SwiftLint` as optional unless the project explicitly adopts it
-
-## Change Discipline
-
-- If behavior changes, update the relevant docs, specs, README, or changelog in the same branch.
-- Preserve existing defaults unless the task explicitly changes them.
-- Treat auth, secrets, config loading, persistence, build settings, CI, and public or network-facing APIs as high-risk changes. Call out compatibility and rollback risk when they move.
-
-## Before Finishing
-
-Run and confirm all pass cleanly:
+## Build and Test
 
 ```bash
 ./scripts/swift-quality-gate.sh local
 ```
 
-Also confirm whether the change requires updates in `docs/`, `README.md`, or `CHANGELOG.md`.
+The same gate runs the macOS Xcode build, Xcode tests, `swift build`, and `swift test` when those project shapes are present.
 
-If your repository has multiple workspaces, projects, or schemes, set `XCODE_WORKSPACE`, `XCODE_PROJECT`, `XCODE_SCHEME`, and `XCODE_DESTINATION` explicitly before running the quality gate.
+If the repository has multiple workspaces, projects, or schemes, set `XCODE_WORKSPACE`, `XCODE_PROJECT`, `XCODE_SCHEME`, and `XCODE_DESTINATION` explicitly before running the quality gate.
+
+## Project Layout
+
+```text
+Kubebar/       SwiftUI menu bar app entry and views
+KubebarCore/   Models, display mapping, health rules, and services
+KubebarTests/  Unit tests for trusted product behavior
+docs/          Requirements, plans, and architecture notes
+scripts/       Local quality checks
+```
+
+## Change Discipline
+
+- Run the Swift quality gate before finishing.
+- Update the relevant `docs/` file when product behavior changes.
+- Add or update tests for behavior changes.
+- Preserve existing defaults unless the task explicitly changes them.
+- Treat auth, secrets, config loading, persistence, build settings, CI, and public or network-facing APIs as high-risk changes.

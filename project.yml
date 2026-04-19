@@ -1,0 +1,62 @@
+name: Kubebar
+
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  Kubebar:
+    type: application
+    platform: macOS
+    sources:
+      - path: Kubebar
+    dependencies:
+      - target: KubebarCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextty.kubebar
+        PRODUCT_NAME: Kubebar
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Kubebar
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_LSUIElement: YES
+
+  KubebarCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: KubebarCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextty.kubebar.core
+        PRODUCT_NAME: KubebarCore
+        GENERATE_INFOPLIST_FILE: YES
+
+  KubebarTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: KubebarTests
+    dependencies:
+      - target: KubebarCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextty.kubebar.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Kubebar:
+    build:
+      targets:
+        Kubebar: all
+        KubebarCore: all
+    test:
+      targets:
+        - KubebarTests

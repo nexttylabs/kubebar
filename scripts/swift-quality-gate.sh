@@ -6,8 +6,8 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 CONFIGURATION="${XCODE_CONFIGURATION:-Debug}"
-DEFAULT_DESTINATION='platform=iOS Simulator,name=iPhone 16'
-DESTINATION="${XCODE_DESTINATION:-$DEFAULT_DESTINATION}"
+DESTINATION="${XCODE_DESTINATION:-platform=macOS}"
+DERIVED_DATA_PATH="${XCODE_DERIVED_DATA_PATH:-DerivedData}"
 
 find_candidates() {
   local pattern="$1"
@@ -121,8 +121,7 @@ run_xcode_checks() {
     container_flag="-project"
     container_path="$project"
   else
-    echo "No Xcode workspace or project found. Set XCODE_WORKSPACE or XCODE_PROJECT, or add Package.swift for package-only repositories." >&2
-    return 1
+    return 0
   fi
 
   scheme="$(choose_scheme "$container_flag" "$container_path")"
@@ -132,19 +131,21 @@ run_xcode_checks() {
   echo "Using build configuration: $CONFIGURATION"
   echo "Using test destination: $DESTINATION"
 
-  echo "Running Swift build check"
-  xcodebuild "$container_flag" "$container_path" \
-    -scheme "$scheme" \
-    -configuration "$CONFIGURATION" \
-    -sdk iphonesimulator \
-    build \
-    CODE_SIGNING_ALLOWED=NO
-
-  echo "Running Swift test check"
+  echo "Running Xcode build check"
   xcodebuild "$container_flag" "$container_path" \
     -scheme "$scheme" \
     -configuration "$CONFIGURATION" \
     -destination "$DESTINATION" \
+    -derivedDataPath "$DERIVED_DATA_PATH" \
+    build \
+    CODE_SIGNING_ALLOWED=NO
+
+  echo "Running Xcode test check"
+  xcodebuild "$container_flag" "$container_path" \
+    -scheme "$scheme" \
+    -configuration "$CONFIGURATION" \
+    -destination "$DESTINATION" \
+    -derivedDataPath "$DERIVED_DATA_PATH" \
     test \
     CODE_SIGNING_ALLOWED=NO
 }
@@ -152,12 +153,17 @@ run_xcode_checks() {
 main() {
   echo "Swift quality gate mode: $MODE"
 
-  if [ -f "Package.swift" ] && ! find . -maxdepth 3 \( -name '*.xcworkspace' -o -name '*.xcodeproj' \) | grep -q .; then
+  run_xcode_checks
+
+  if [ -f "Package.swift" ]; then
     run_swift_package_checks
     return 0
   fi
 
-  run_xcode_checks
+  if ! find . -maxdepth 3 \( -name '*.xcworkspace' -o -name '*.xcodeproj' \) | grep -q .; then
+    echo "No Xcode workspace/project or Package.swift found." >&2
+    return 1
+  fi
 }
 
 main

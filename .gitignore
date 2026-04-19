@@ -1,12 +1,13 @@
-DerivedData/
+.DS_Store
 .build/
 .swiftpm/
+DerivedData/
 Packages/
 xcuserdata/
+*.xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
 *.moved-aside
-.DS_Store
 .env
 .env.local
 !.env.example
