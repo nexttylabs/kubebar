@@ -41,6 +41,9 @@ private struct WatchlistRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(item.title))
+                    .accessibilityLabel(item.title)
                 Text(item.reason)
                     .font(.caption)
                     .foregroundStyle(.secondary)

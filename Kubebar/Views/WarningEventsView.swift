@@ -13,9 +13,14 @@ struct WarningEventsView: View {
                 .foregroundStyle(.secondary)
 
             ForEach(sectionNotices) { notice in
-                Text("\(notice.title) unavailable: \(notice.reason)")
+                let noticeText = "\(notice.title) unavailable: \(notice.reason)"
+                Text(noticeText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(noticeText))
+                    .accessibilityLabel(noticeText)
             }
 
             if summaries.isEmpty {
@@ -27,10 +32,15 @@ struct WarningEventsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(summary.summary)
                             .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(summary.summary))
+                            .accessibilityLabel(summary.summary)
 
                         if let message = summary.message {
                             Text(message)
                                 .lineLimit(2)
+                                .help(Text(message))
+                                .accessibilityLabel(message)
                         }
                     }
                     .font(.caption)

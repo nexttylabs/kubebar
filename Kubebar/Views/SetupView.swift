@@ -64,7 +64,12 @@ struct SetupView: View {
                 Picker("Cluster context", selection: selectedContextBinding) {
                     Text("Select a context").tag(Optional<String>.none)
                     ForEach(state.availableContexts, id: \.self) { context in
-                        Text(context).tag(Optional(context))
+                        Text(context)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(context))
+                            .accessibilityLabel(context)
+                            .tag(Optional(context))
                     }
                 }
                 .pickerStyle(.menu)
