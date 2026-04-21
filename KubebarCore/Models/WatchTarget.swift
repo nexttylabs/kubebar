@@ -64,10 +64,23 @@ public struct TrackedItemStatus: Equatable, Sendable {
     public let target: WatchTarget
     public let state: ClusterHealthState
     public let reason: String
+    public let affectedPodCount: Int?
+    public let examplePodNames: [String]
+    public let latestWarning: WarningEventRecord?
 
-    public init(target: WatchTarget, state: ClusterHealthState, reason: String) {
+    public init(
+        target: WatchTarget,
+        state: ClusterHealthState,
+        reason: String,
+        affectedPodCount: Int? = nil,
+        examplePodNames: [String] = [],
+        latestWarning: WarningEventRecord? = nil
+    ) {
         self.target = target
         self.state = state
         self.reason = reason
+        self.affectedPodCount = affectedPodCount
+        self.examplePodNames = examplePodNames
+        self.latestWarning = latestWarning
     }
 }

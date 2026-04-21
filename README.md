@@ -22,6 +22,7 @@ The project now has a working macOS menu bar foundation:
 - refresh coordination from config to display state
 - first-use setup and watchlist editing views
 - live menu content wired through a view model
+- warning event summaries and workload reasons
 - tests for the most important status behavior
 
 The current roadmap focuses on making the setup loop, warning reasons,

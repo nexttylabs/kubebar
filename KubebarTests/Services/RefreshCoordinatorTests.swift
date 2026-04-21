@@ -50,6 +50,32 @@ struct RefreshCoordinatorTests {
         #expect(result.display.staleBanner?.lastUpdated == "2m ago")
     }
 
+    @Test("partial warning event failure stays fresh and visible")
+    func partialWarningEventFailureStaysFreshAndVisible() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 1, total: 1)),
+            podsSection: .available(PodSummary(running: 1, total: 1)),
+            warningEventsSection: .unavailable(reason: "invalid event JSON"),
+            workloadsSection: .available([
+                .init(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let coordinator = RefreshCoordinator(reader: FakeClusterReader(result: .success(snapshot)))
+
+        let result = coordinator.refresh(
+            config: AppConfig(selectedContext: "prod", watchTargets: [.workload(namespace: "api", name: "checkout")]),
+            previousSnapshot: nil,
+            now: Date(timeIntervalSince1970: 120)
+        )
+
+        #expect(result.snapshot == snapshot)
+        #expect(result.display.state == .watch)
+        #expect(result.display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
+        #expect(result.display.staleBanner == nil)
+    }
+
     @Test("missing setup returns unavailable display")
     func missingSetupReturnsUnavailableDisplay() {
         let coordinator = RefreshCoordinator(reader: FakeClusterReader(result: .failure(KubectlCommandError.failed("should not run"))))

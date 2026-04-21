@@ -22,6 +22,18 @@ public struct CommandResult: Equatable, Sendable {
         self.stderr = stderr
         self.exitCode = exitCode
     }
+
+    public init(output: String, error: String, exitCode: Int32) {
+        self.init(stdout: output, stderr: error, exitCode: exitCode)
+    }
+
+    public var standardOutput: String {
+        stdout
+    }
+
+    public var standardError: String {
+        stderr
+    }
 }
 
 public protocol CommandRunning: Sendable {
