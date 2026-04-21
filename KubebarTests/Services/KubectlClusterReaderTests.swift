@@ -27,6 +27,41 @@ struct KubectlClusterReaderTests {
         #expect(snapshot.trackedItems.first?.reason == "1/2 pods running")
     }
 
+    @Test("legacy snapshot initializer preserves warning count and available sections")
+    func legacySnapshotInitializerPreservesWarningCountAndAvailableSections() throws {
+        let trackedItem = TrackedItemStatus(
+            target: .workload(namespace: "api", name: "checkout"),
+            state: .watch,
+            reason: "latest warning: BackOff",
+            affectedPodCount: 1,
+            examplePodNames: ["checkout-7f9d"],
+            latestWarning: WarningEventRecord(
+                reason: "BackOff",
+                namespace: "api",
+                objectKind: "Pod",
+                objectName: "checkout-7f9d",
+                message: "Back-off restarting failed container",
+                observedAt: Date(timeIntervalSince1970: 90),
+                count: 2
+            )
+        )
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 1, total: 1),
+            podSummary: PodSummary(running: 1, total: 1),
+            warningEventCount: 1,
+            trackedItems: [trackedItem],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(snapshot.warningEventCount == 1)
+        #expect(snapshot.nodesSection.value == NodeSummary(ready: 1, total: 1))
+        #expect(snapshot.podsSection.value == PodSummary(running: 1, total: 1))
+        #expect(snapshot.warningEventsSection.value == [])
+        #expect(snapshot.workloadsSection.value == [trackedItem])
+        #expect(snapshot.sectionFailures == [])
+    }
+
     @Test("kubectl command failure reports stderr")
     func kubectlCommandFailureReportsStderr() {
         let runner = FakeMultiCommandRunner(results: [
