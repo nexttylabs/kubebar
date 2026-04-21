@@ -54,22 +54,21 @@ struct WarningEventsView: View {
     }
 
     private var accessibilitySummary: String {
-        if !sectionNotices.isEmpty {
-            let notices = sectionNotices.map { "\($0.title) unavailable: \($0.reason)" }
-            return (["Warning events"] + notices).joined(separator: ", ")
-        }
+        var parts = ["Warning events"]
+        parts += sectionNotices.map { "\($0.title) unavailable: \($0.reason)" }
 
         if summaries.isEmpty {
             let text = count == "0" ? "No current warning events" : "\(count) warning events need review"
-            return "Warning events, \(text)"
+            parts.append(text)
+            return parts.joined(separator: ", ")
         }
 
-        let rows = summaries.map { summary in
+        parts += summaries.map { summary in
             if let message = summary.message {
                 return "\(summary.summary), \(message)"
             }
             return summary.summary
         }
-        return (["Warning events"] + rows).joined(separator: ", ")
+        return parts.joined(separator: ", ")
     }
 }
