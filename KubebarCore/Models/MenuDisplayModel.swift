@@ -104,6 +104,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
     public let state: ClusterHealthState
     public let contextName: String
     public let healthSentence: String
+    public let primaryStatusReason: String
     public let lastUpdated: String
     public let counters: MenuCounters
     public let warningEventSummaries: [WarningEventDisplay]
@@ -116,6 +117,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
         state: ClusterHealthState,
         contextName: String,
         healthSentence: String,
+        primaryStatusReason: String? = nil,
         lastUpdated: String,
         counters: MenuCounters,
         visibleWatchItems: [WatchItemDisplay],
@@ -127,6 +129,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
         self.state = state
         self.contextName = contextName
         self.healthSentence = healthSentence
+        self.primaryStatusReason = primaryStatusReason ?? healthSentence
         self.lastUpdated = lastUpdated
         self.counters = counters
         self.warningEventSummaries = warningEventSummaries

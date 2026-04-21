@@ -48,6 +48,7 @@ public struct HealthEvaluator: Sendable {
             state: .stale,
             contextName: "Not configured",
             healthSentence: "Cluster status is unavailable",
+            primaryStatusReason: failure?.reason ?? "No previous cluster data",
             lastUpdated: "never",
             counters: MenuCounters(nodes: "-", pods: "-", warningEvents: "-"),
             visibleWatchItems: [],
@@ -70,12 +71,14 @@ public struct HealthEvaluator: Sendable {
         let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
         let warningEventSummaries = makeWarningEventSummaries(from: snapshot.warningEventsSection.value ?? [], now: now)
         let sectionNotices = makeSectionNotices(from: snapshot.sectionFailures)
+        let staleReason = failureReason ?? freshnessReason
         let lastUpdated = relativeAge(from: snapshot.capturedAt, to: now)
 
         return MenuDisplayModel(
             state: resolvedState,
             contextName: snapshot.contextName,
             healthSentence: healthSentence(for: resolvedState, visibleItems: visibleItems),
+            primaryStatusReason: primaryStatusReason(for: resolvedState, snapshot: snapshot, visibleItems: Array(visibleItems), warningEventSummaries: warningEventSummaries, sectionNotices: sectionNotices, staleReason: staleReason),
             lastUpdated: lastUpdated,
             counters: menuCounters(from: snapshot),
             visibleWatchItems: Array(visibleItems),
@@ -83,7 +86,7 @@ public struct HealthEvaluator: Sendable {
             staleBanner: staleBanner(
                 for: resolvedState,
                 snapshot: snapshot,
-                failureReason: failureReason ?? freshnessReason,
+                failureReason: staleReason,
                 now: now
             ),
             warningEventSummaries: warningEventSummaries,
@@ -260,6 +263,55 @@ public struct HealthEvaluator: Sendable {
         case .stale:
             return "Last cluster status is stale"
         }
+    }
+
+    private func primaryStatusReason(for state: ClusterHealthState, snapshot: ClusterSnapshot, visibleItems: [WatchItemDisplay], warningEventSummaries: [WarningEventDisplay], sectionNotices: [SectionAvailabilityDisplay], staleReason: String?) -> String {
+        switch state {
+        case .ok:
+            return "Cluster looks healthy"
+        case .bad:
+            if let reason = visibleItems.first(where: { $0.state == .bad })?.reason {
+                return reason
+            }
+
+            if let nodeDeficit = nodeDeficit(from: snapshot), nodeDeficit > 0 {
+                return "\(nodeDeficit) nodes not ready"
+            }
+
+            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
+                return "\(podDeficit) pods not running"
+            }
+
+            return "Cluster needs attention"
+        case .watch:
+            if let reason = visibleItems.first(where: { $0.state == .watch })?.reason {
+                return reason
+            }
+
+            if let sectionReason = sectionNotices.first?.reason {
+                return sectionReason
+            }
+
+            if snapshot.warningEventCount > 0 {
+                return "\(snapshot.warningEventCount) warning events"
+            }
+
+            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
+                return "\(podDeficit) pods not running"
+            }
+
+            return "Cluster has warnings"
+        case .stale:
+            return staleReason ?? "Last cluster status is stale"
+        }
+    }
+
+    private func nodeDeficit(from snapshot: ClusterSnapshot) -> Int? {
+        snapshot.nodesSection.value.map { max(0, $0.total - $0.ready) }
+    }
+
+    private func podDeficit(from snapshot: ClusterSnapshot) -> Int? {
+        snapshot.podsSection.value.map { max(0, $0.total - $0.running) }
     }
 
     private func staleBanner(
