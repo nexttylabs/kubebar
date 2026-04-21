@@ -91,8 +91,8 @@ struct MenuDisplayModelTests {
         #expect(display.hiddenWatchItemCount == 2)
     }
 
-    @Test("long watch item titles truncate consistently")
-    func longWatchItemTitlesTruncateConsistently() {
+    @Test("long watch item titles stay full for middle truncation")
+    func longWatchItemTitlesStayFullForMiddleTruncation() {
         let snapshot = ClusterSnapshot(
             contextName: "prod",
             nodeSummary: NodeSummary(ready: 3, total: 3),
@@ -110,7 +110,38 @@ struct MenuDisplayModelTests {
 
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
-        #expect(display.visibleWatchItems.first?.title == "production-namespace/checkout-api-with-a-…")
+        #expect(display.visibleWatchItems.first?.title == "production-namespace/checkout-api-with-a-very-long-name")
+    }
+
+    @Test("similar long watch item titles keep suffix differences")
+    func similarLongWatchItemTitlesKeepSuffixDifferences() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 2, total: 2),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .workload(namespace: "production-namespace", name: "checkout-api-with-shared-long-prefix-api"),
+                    state: .ok,
+                    reason: "ready"
+                ),
+                TrackedItemStatus(
+                    target: .workload(namespace: "production-namespace", name: "checkout-worker-with-shared-long-prefix-worker"),
+                    state: .ok,
+                    reason: "ready"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let titles = display.visibleWatchItems.map(\.title)
+
+        #expect(titles == [
+            "production-namespace/checkout-api-with-shared-long-prefix-api",
+            "production-namespace/checkout-worker-with-shared-long-prefix-worker"
+        ])
     }
 
     @Test("failed refresh keeps previous data but marks it stale")
