@@ -20,4 +20,41 @@ struct RefreshGateTests {
 
         #expect(gate.begin() == true)
     }
+
+    @Test("invalidating while in flight rejects the old ticket and queues one refresh")
+    func invalidatingWhileInFlightRejectsOldTicketAndQueuesOneRefresh() {
+        var gate = RefreshGate()
+        let original = AppConfig(selectedContext: "prod", watchTargets: [.namespace("api")])
+        let updated = AppConfig(selectedContext: "stage", watchTargets: [.namespace("web")])
+        let ticket = gate.begin(config: original)
+
+        #expect(ticket != nil)
+        guard let ticket else {
+            return
+        }
+
+        gate.invalidate()
+        gate.requestPendingRefresh()
+
+        #expect(gate.shouldApply(ticket, currentConfig: original) == false)
+        #expect(gate.shouldApply(ticket, currentConfig: updated) == false)
+        #expect(gate.finishAndConsumePendingRefresh() == true)
+        #expect(gate.finishAndConsumePendingRefresh() == false)
+    }
+
+    @Test("ticket does not apply after config changes")
+    func ticketDoesNotApplyAfterConfigChanges() {
+        var gate = RefreshGate()
+        let original = AppConfig(selectedContext: "prod", watchTargets: [.namespace("api")])
+        let updated = AppConfig(selectedContext: "prod", watchTargets: [.namespace("web")])
+        let ticket = gate.begin(config: original)
+
+        #expect(ticket != nil)
+        guard let ticket else {
+            return
+        }
+
+        #expect(gate.shouldApply(ticket, currentConfig: original) == true)
+        #expect(gate.shouldApply(ticket, currentConfig: updated) == false)
+    }
 }
