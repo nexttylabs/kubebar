@@ -25,6 +25,7 @@ struct MenuDisplayModelTests {
         #expect(display.counters.pods == "12/12")
         #expect(display.counters.warningEvents == "0")
         #expect(display.healthSentence == "Cluster looks healthy")
+        #expect(display.lastUpdated == "20s ago")
     }
 
     @Test("bad tracked items become first-screen attention")
@@ -113,9 +114,37 @@ struct MenuDisplayModelTests {
 
         #expect(display.state == .stale)
         #expect(display.contextName == "prod")
+        #expect(display.lastUpdated == "2m ago")
         #expect(display.staleBanner?.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "kubectl timed out")
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
+    }
+
+    @Test("old healthy snapshot becomes stale after freshness window")
+    func oldHealthySnapshotBecomesStaleAfterFreshnessWindow() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(
+            snapshot: snapshot,
+            now: Date(timeIntervalSince1970: 221),
+            staleAfterSeconds: 120
+        )
+
+        #expect(display.state == .stale)
+        #expect(display.contextName == "prod")
+        #expect(display.counters.nodes == "3/3")
+        #expect(display.visibleWatchItems.first?.title == "api/checkout")
+        #expect(display.lastUpdated == "2m ago")
+        #expect(display.staleBanner?.reason == "Last refresh is too old")
     }
 
     @Test("watch item detail defaults to row reason")

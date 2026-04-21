@@ -21,51 +21,83 @@ public struct HealthEvaluator: Sendable {
         snapshot: ClusterSnapshot?,
         previousSnapshot: ClusterSnapshot? = nil,
         failure: RefreshFailure? = nil,
-        now: Date
+        now: Date,
+        staleAfterSeconds: Int? = nil
     ) -> MenuDisplayModel {
         if let snapshot {
-            return displayModel(from: snapshot, stateOverride: nil, failure: failure, now: now)
+            return displayModel(
+                from: snapshot,
+                stateOverride: nil,
+                failureReason: failure?.reason,
+                now: now,
+                staleAfterSeconds: staleAfterSeconds
+            )
         }
 
         if let previousSnapshot {
-            return displayModel(from: previousSnapshot, stateOverride: .stale, failure: failure, now: now)
+            return displayModel(
+                from: previousSnapshot,
+                stateOverride: .stale,
+                failureReason: failure?.reason,
+                now: now,
+                staleAfterSeconds: staleAfterSeconds
+            )
         }
 
         return MenuDisplayModel(
             state: .stale,
             contextName: "Not configured",
             healthSentence: "Cluster status is unavailable",
+            lastUpdated: "never",
             counters: MenuCounters(nodes: "-", pods: "-", warningEvents: "-"),
             visibleWatchItems: [],
             hiddenWatchItemCount: 0,
-            staleBanner: StaleBannerDisplay(lastUpdated: "never", reason: failure?.reason ?? "No cluster data")
+            staleBanner: StaleBannerDisplay(lastUpdated: "never", reason: failure?.reason ?? "No previous cluster data")
         )
     }
 
     private func displayModel(
         from snapshot: ClusterSnapshot,
         stateOverride: ClusterHealthState?,
-        failure: RefreshFailure?,
-        now: Date
+        failureReason: String?,
+        now: Date,
+        staleAfterSeconds: Int?
     ) -> MenuDisplayModel {
         let sortedItems = sortByAttention(snapshot.trackedItems)
         let visibleItems = sortedItems.prefix(visibleWatchItemLimit).map { makeDisplayItem($0, now: now) }
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
-        let resolvedState = stateOverride ?? evaluateState(snapshot)
+        let freshnessReason = staleAgeOutReason(for: snapshot, now: now, staleAfterSeconds: staleAfterSeconds)
+        let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
         let warningEventSummaries = makeWarningEventSummaries(from: snapshot.warningEventsSection.value ?? [], now: now)
         let sectionNotices = makeSectionNotices(from: snapshot.sectionFailures)
+        let lastUpdated = relativeAge(from: snapshot.capturedAt, to: now)
 
         return MenuDisplayModel(
             state: resolvedState,
             contextName: snapshot.contextName,
             healthSentence: healthSentence(for: resolvedState, visibleItems: visibleItems),
+            lastUpdated: lastUpdated,
             counters: menuCounters(from: snapshot),
             visibleWatchItems: Array(visibleItems),
             hiddenWatchItemCount: hiddenCount,
-            staleBanner: staleBanner(for: resolvedState, snapshot: snapshot, failure: failure, now: now),
+            staleBanner: staleBanner(
+                for: resolvedState,
+                snapshot: snapshot,
+                failureReason: failureReason ?? freshnessReason,
+                now: now
+            ),
             warningEventSummaries: warningEventSummaries,
             sectionNotices: sectionNotices
         )
+    }
+
+    private func staleAgeOutReason(for snapshot: ClusterSnapshot, now: Date, staleAfterSeconds: Int?) -> String? {
+        guard let staleAfterSeconds else {
+            return nil
+        }
+
+        let ageSeconds = max(0, Int(now.timeIntervalSince(snapshot.capturedAt)))
+        return ageSeconds > staleAfterSeconds ? "Last refresh is too old" : nil
     }
 
     private func evaluateState(_ snapshot: ClusterSnapshot) -> ClusterHealthState {
@@ -233,7 +265,7 @@ public struct HealthEvaluator: Sendable {
     private func staleBanner(
         for state: ClusterHealthState,
         snapshot: ClusterSnapshot,
-        failure: RefreshFailure?,
+        failureReason: String?,
         now: Date
     ) -> StaleBannerDisplay? {
         guard state == .stale else {
@@ -242,7 +274,7 @@ public struct HealthEvaluator: Sendable {
 
         return StaleBannerDisplay(
             lastUpdated: relativeAge(from: snapshot.capturedAt, to: now),
-            reason: failure?.reason ?? "Refresh failed"
+            reason: failureReason ?? "Refresh failed"
         )
     }
 

@@ -27,6 +27,8 @@ public struct RefreshCoordinator: Sendable {
             )
         }
 
+        let staleAfterSeconds = config.refreshIntervalSeconds * 2
+
         do {
             let snapshot = try reader.readSnapshot(
                 contextName: contextName,
@@ -36,7 +38,11 @@ public struct RefreshCoordinator: Sendable {
 
             return RefreshResult(
                 snapshot: snapshot,
-                display: evaluator.evaluate(snapshot: snapshot, now: now)
+                display: evaluator.evaluate(
+                    snapshot: snapshot,
+                    now: now,
+                    staleAfterSeconds: staleAfterSeconds
+                )
             )
         } catch {
             return RefreshResult(
@@ -45,7 +51,8 @@ public struct RefreshCoordinator: Sendable {
                     snapshot: nil,
                     previousSnapshot: previousSnapshot,
                     failure: RefreshFailure(reason: failureReason(from: error)),
-                    now: now
+                    now: now,
+                    staleAfterSeconds: staleAfterSeconds
                 )
             )
         }

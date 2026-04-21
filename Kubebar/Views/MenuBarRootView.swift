@@ -64,6 +64,11 @@ struct MenuBarRootView: View {
             .pickerStyle(.menu)
             .frame(width: 96)
 
+            Text("Last updated \(display.lastUpdated)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
             Spacer()
         }
     }
