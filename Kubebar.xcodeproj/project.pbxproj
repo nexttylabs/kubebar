@@ -35,6 +35,8 @@
 		53858EF300E94362C9BF167D /* RefreshCadenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12938B9D8A040BCC4053F8EA /* RefreshCadenceTests.swift */; };
 		5ABA28F9AE755230D8C237F9 /* SetupFlowStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */; };
 		5AE8C85F4E8EDCB81817F86F /* RefreshCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */; };
+		1A9C6E7F2B3D4A508C6D7E8F /* RefreshGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8A4B7C2D9E1F306A5B8C91 /* RefreshGate.swift */; };
+		3C9E8A7B5D4F6C012E3B7D8A /* RefreshGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8D7F6A4C3E5B901D2A6C7E /* RefreshGateTests.swift */; };
 		5DB36E479C36A618D5CBFD02 /* KubebarCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; };
 		5E6A247402FBE3920DB60EAD /* WorkloadKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD883B4C9F8DBC5EF2A2A75A /* WorkloadKind.swift */; };
 		6AD24ACE1B08D85139E55137 /* WatchlistPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */; };
@@ -103,10 +105,12 @@
 		039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusSummaryView.swift; sourceTree = "<group>"; };
 		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
 		09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReader.swift; sourceTree = "<group>"; };
+		0F8A4B7C2D9E1F306A5B8C91 /* RefreshGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshGate.swift; sourceTree = "<group>"; };
 		12938B9D8A040BCC4053F8EA /* RefreshCadenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCadenceTests.swift; sourceTree = "<group>"; };
 		16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalog.swift; sourceTree = "<group>"; };
 		2080726BE2E75B3415FEFB68 /* KubebarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KubebarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		20E8238EC6973A206D38B11D /* MenuRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuRuntimeState.swift; sourceTree = "<group>"; };
+		2B8D7F6A4C3E5B901D2A6C7E /* RefreshGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshGateTests.swift; sourceTree = "<group>"; };
 		256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterHealthState.swift; sourceTree = "<group>"; };
 		27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuDisplayModelTests.swift; sourceTree = "<group>"; };
 		3ABF8EE5A9744D188D13166D /* WatchTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTarget.swift; sourceTree = "<group>"; };
@@ -219,6 +223,7 @@
 				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
 				3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */,
 				F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */,
+				2B8D7F6A4C3E5B901D2A6C7E /* RefreshGateTests.swift */,
 				68E80FACFC916D53A5004BFF /* WatchTargetCatalogTests.swift */,
 			);
 			path = Services;
@@ -251,6 +256,7 @@
 				9764447501D53DE91281068A /* HealthEvaluator.swift */,
 				09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */,
 				B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */,
+				0F8A4B7C2D9E1F306A5B8C91 /* RefreshGate.swift */,
 				FD651CCDAAD62B4E7C090D6F /* WatchTargetCatalog.swift */,
 			);
 			path = Services;
@@ -410,6 +416,7 @@
 				2CDAFBC7CB5608475636A49F /* MenuRuntimeStateTests.swift in Sources */,
 				53858EF300E94362C9BF167D /* RefreshCadenceTests.swift in Sources */,
 				5AE8C85F4E8EDCB81817F86F /* RefreshCoordinatorTests.swift in Sources */,
+				3C9E8A7B5D4F6C012E3B7D8A /* RefreshGateTests.swift in Sources */,
 				5ABA28F9AE755230D8C237F9 /* SetupFlowStateTests.swift in Sources */,
 				4C818D44CA17CB017E0A5379 /* WatchTargetCatalogTests.swift in Sources */,
 				EA3A58433537560B8EFFE763 /* WatchTargetTests.swift in Sources */,
@@ -433,6 +440,7 @@
 				43A6EE04D05E8CCF4CAD47D1 /* MenuRuntimeState.swift in Sources */,
 				A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */,
 				F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */,
+				1A9C6E7F2B3D4A508C6D7E8F /* RefreshGate.swift in Sources */,
 				9519708EC07DA17E1E419E8A /* SetupFlowState.swift in Sources */,
 				2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */,
 				0ABC7D9044D83EA481BBB112 /* WatchTargetCatalog.swift in Sources */,

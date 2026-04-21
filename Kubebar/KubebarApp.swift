@@ -12,6 +12,7 @@ struct KubebarApp: App {
                 setupState: $viewModel.setupState,
                 isShowingSetup: viewModel.isShowingSetup,
                 refreshCadence: viewModel.refreshCadence,
+                isRefreshing: viewModel.isRefreshing,
                 onRefresh: viewModel.refreshNow,
                 onEditWatchlist: viewModel.openSetup,
                 onCompleteSetup: viewModel.completeSetup,

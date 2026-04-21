@@ -17,6 +17,7 @@ final class MenuBarViewModel: ObservableObject {
     }
     @Published private(set) var isShowingSetup: Bool
     @Published private(set) var refreshCadence: RefreshCadence
+    @Published private(set) var isRefreshing: Bool
 
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
@@ -28,6 +29,7 @@ final class MenuBarViewModel: ObservableObject {
     private var isPublishingRuntimeState: Bool
     private var refreshLoopTask: Task<Void, Never>?
     private var watchTargetLoadTask: Task<Void, Never>?
+    private var refreshGate: RefreshGate
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -54,6 +56,8 @@ final class MenuBarViewModel: ObservableObject {
         self.setupState = runtimeState.setupState
         self.isShowingSetup = runtimeState.isShowingSetup
         self.refreshCadence = runtimeState.setupState.refreshCadence
+        self.isRefreshing = false
+        self.refreshGate = RefreshGate()
         self.display = Self.initialDisplay(for: config, now: now)
 
         if runtimeState.isShowingSetup {
@@ -74,11 +78,21 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func refreshNow() {
+        guard refreshGate.begin() else {
+            return
+        }
+
+        isRefreshing = true
         let config = config
         let previousSnapshot = snapshot
         let refreshCoordinator = refreshCoordinator
 
         Task {
+            defer {
+                refreshGate.finish()
+                isRefreshing = false
+            }
+
             let result = await Task.detached(priority: .userInitiated) {
                 refreshCoordinator.refresh(config: config, previousSnapshot: previousSnapshot, now: Date())
             }.value

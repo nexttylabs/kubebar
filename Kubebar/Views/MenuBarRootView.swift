@@ -6,6 +6,7 @@ struct MenuBarRootView: View {
     @Binding var setupState: SetupFlowState
     let isShowingSetup: Bool
     let refreshCadence: RefreshCadence
+    let isRefreshing: Bool
     let onRefresh: () -> Void
     let onEditWatchlist: () -> Void
     let onCompleteSetup: () -> Void
@@ -76,6 +77,7 @@ struct MenuBarRootView: View {
     private var actions: some View {
         HStack {
             Button("Retry now", action: onRefresh)
+                .disabled(isRefreshing)
             Spacer()
             Button("Edit watchlist", action: onEditWatchlist)
         }
