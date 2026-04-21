@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol WatchTargetCataloging: Sendable {
-    func listCandidates(contextName: String) throws -> WatchlistCandidates
+    func listCandidates(contextName: String) async throws -> WatchlistCandidates
 }
 
 public struct WatchTargetCatalog: WatchTargetCataloging, Sendable {
@@ -11,32 +11,63 @@ public struct WatchTargetCatalog: WatchTargetCataloging, Sendable {
         self.runner = runner
     }
 
-    public func listCandidates(contextName: String) throws -> WatchlistCandidates {
-        let namespaces = try decodeNamespaces(runKubectl(contextName: contextName, arguments: ["get", "namespaces", "-o", "json"]))
-        let workloads = try WorkloadKind.allCases.flatMap { kind in
-            try decodeWorkloads(
-                runKubectl(
-                    contextName: contextName,
-                    arguments: ["get", kind.kubectlResource, "--all-namespaces", "-o", "json"]
-                ),
-                kind: kind
+    public func listCandidates(contextName: String) async throws -> WatchlistCandidates {
+        try Task.checkCancellation()
+
+        return try await withThrowingTaskGroup(of: DiscoveryResult.self) { group in
+            group.addTask {
+                try Task.checkCancellation()
+                let json = try runKubectl(contextName: contextName, arguments: ["get", "namespaces", "-o", "json"])
+                try Task.checkCancellation()
+                return .namespaces(try decodeNamespaces(json))
+            }
+
+            for kind in WorkloadKind.allCases {
+                group.addTask {
+                    try Task.checkCancellation()
+                    let json = try runKubectl(
+                        contextName: contextName,
+                        arguments: ["get", kind.kubectlResource, "--all-namespaces", "-o", "json"]
+                    )
+                    try Task.checkCancellation()
+                    return .workloads(try decodeWorkloads(json, kind: kind))
+                }
+            }
+
+            var namespaces: [String] = []
+            var workloads: [WatchlistCandidate] = []
+
+            do {
+                for try await result in group {
+                    switch result {
+                    case let .namespaces(values):
+                        namespaces = values
+                    case let .workloads(values):
+                        workloads.append(contentsOf: values)
+                    }
+                }
+            } catch {
+                group.cancelAll()
+                throw error
+            }
+
+            try Task.checkCancellation()
+
+            return WatchlistCandidates(
+                namespaces: namespaces.sorted(),
+                workloads: workloads.sorted { left, right in
+                    if left.namespace != right.namespace {
+                        return left.namespace < right.namespace
+                    }
+
+                    if left.kind?.displayName != right.kind?.displayName {
+                        return (left.kind?.displayName ?? "") < (right.kind?.displayName ?? "")
+                    }
+
+                    return left.name < right.name
+                }
             )
         }
-
-        return WatchlistCandidates(
-            namespaces: namespaces.sorted(),
-            workloads: workloads.sorted { left, right in
-                if left.namespace != right.namespace {
-                    return left.namespace < right.namespace
-                }
-
-                if left.kind?.displayName != right.kind?.displayName {
-                    return (left.kind?.displayName ?? "") < (right.kind?.displayName ?? "")
-                }
-
-                return left.name < right.name
-            }
-        )
     }
 
     private func runKubectl(contextName: String, arguments: [String]) throws -> String {
@@ -88,6 +119,11 @@ public struct WatchTargetCatalog: WatchTargetCataloging, Sendable {
             throw KubectlCommandError.failed("invalid target JSON")
         }
     }
+}
+
+private enum DiscoveryResult: Sendable {
+    case namespaces([String])
+    case workloads([WatchlistCandidate])
 }
 
 private struct NamespaceList: Decodable {

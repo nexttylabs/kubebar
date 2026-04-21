@@ -27,6 +27,7 @@ final class MenuBarViewModel: ObservableObject {
     private var runtimeState: MenuRuntimeState
     private var isPublishingRuntimeState: Bool
     private var refreshLoopTask: Task<Void, Never>?
+    private var watchTargetLoadTask: Task<Void, Never>?
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -69,6 +70,7 @@ final class MenuBarViewModel: ObservableObject {
 
     deinit {
         refreshLoopTask?.cancel()
+        watchTargetLoadTask?.cancel()
     }
 
     func refreshNow() {
@@ -116,6 +118,9 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func selectSetupContext(_ context: String?) {
+        watchTargetLoadTask?.cancel()
+        watchTargetLoadTask = nil
+
         let contextToLoad = runtimeState.selectContext(context)
         publishRuntimeState()
 
@@ -198,15 +203,26 @@ final class MenuBarViewModel: ObservableObject {
 
     private func loadWatchTargets(for context: String) {
         let watchTargetCatalog = watchTargetCatalog
+        watchTargetLoadTask?.cancel()
         runtimeState.beginTargetLoading(for: context)
         publishRuntimeState()
 
-        Task {
-            let result = await Task.detached(priority: .userInitiated) {
-                Result {
-                    try watchTargetCatalog.listCandidates(contextName: context)
-                }
-            }.value
+        watchTargetLoadTask = Task {
+            let result: Result<WatchlistCandidates, Error>
+
+            do {
+                let candidates = try await watchTargetCatalog.listCandidates(contextName: context)
+                try Task.checkCancellation()
+                result = .success(candidates)
+            } catch is CancellationError {
+                return
+            } catch {
+                result = .failure(error)
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
 
             switch result {
             case let .success(candidates):

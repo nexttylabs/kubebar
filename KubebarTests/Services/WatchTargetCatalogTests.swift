@@ -5,7 +5,7 @@ import Testing
 @Suite("Watch target catalog")
 struct WatchTargetCatalogTests {
     @Test("lists namespaces and supported workload candidates")
-    func listsNamespacesAndSupportedWorkloadCandidates() throws {
+    func listsNamespacesAndSupportedWorkloadCandidates() async throws {
         let runner = RecordingCommandRunner(results: [
             ["--context", "prod", "get", "namespaces", "-o", "json"]: CommandResult(stdout: namespacesJSON, stderr: "", exitCode: 0),
             ["--context", "prod", "get", "deployments", "--all-namespaces", "-o", "json"]: CommandResult(stdout: deploymentJSON, stderr: "", exitCode: 0),
@@ -15,7 +15,7 @@ struct WatchTargetCatalogTests {
         ])
         let catalog = WatchTargetCatalog(runner: runner)
 
-        let candidates = try catalog.listCandidates(contextName: "prod")
+        let candidates = try await catalog.listCandidates(contextName: "prod")
 
         #expect(candidates.namespaces == ["api", "monitoring"])
         #expect(candidates.workloads.map(\.displayTitle) == [
@@ -35,26 +35,26 @@ struct WatchTargetCatalogTests {
     }
 
     @Test("non zero kubectl exit reports stderr")
-    func nonZeroKubectlExitReportsStderr() {
+    func nonZeroKubectlExitReportsStderr() async {
         let runner = RecordingCommandRunner(results: [
             ["--context", "prod", "get", "namespaces", "-o", "json"]: CommandResult(stdout: "", stderr: "forbidden", exitCode: 1)
         ])
         let catalog = WatchTargetCatalog(runner: runner)
 
-        #expect(throws: KubectlCommandError.failed("forbidden")) {
-            try catalog.listCandidates(contextName: "prod")
+        await #expect(throws: KubectlCommandError.failed("forbidden")) {
+            try await catalog.listCandidates(contextName: "prod")
         }
     }
 
     @Test("malformed JSON reports target parse failure")
-    func malformedJSONReportsTargetParseFailure() {
+    func malformedJSONReportsTargetParseFailure() async {
         let runner = RecordingCommandRunner(results: [
             ["--context", "prod", "get", "namespaces", "-o", "json"]: CommandResult(stdout: "{", stderr: "", exitCode: 0)
         ])
         let catalog = WatchTargetCatalog(runner: runner)
 
-        #expect(throws: KubectlCommandError.failed("invalid target JSON")) {
-            try catalog.listCandidates(contextName: "prod")
+        await #expect(throws: KubectlCommandError.failed("invalid target JSON")) {
+            try await catalog.listCandidates(contextName: "prod")
         }
     }
 }

@@ -80,9 +80,9 @@ struct WatchlistPickerView: View {
             emptyMessage: "Watch individual workloads when one service needs regular attention.",
             hasItems: !state.availableWorkloads.isEmpty
         ) {
-            ForEach(workloadNamespaces, id: \.self) { namespace in
-                DisclosureGroup(namespace) {
-                    ForEach(workloads(in: namespace), id: \.self) { workload in
+            ForEach(groupedWorkloads, id: \.key) { group in
+                DisclosureGroup(group.key) {
+                    ForEach(group.value, id: \.self) { workload in
                         Toggle(
                             workload.displayTitle,
                             isOn: binding(for: workload.target)
@@ -143,20 +143,9 @@ struct WatchlistPickerView: View {
         )
     }
 
-    private var workloadNamespaces: [String] {
-        Array(Set(state.availableWorkloads.map(\.namespace))).sorted()
-    }
-
-    private func workloads(in namespace: String) -> [WatchlistCandidate] {
-        state.availableWorkloads
-            .filter { $0.namespace == namespace }
-            .sorted { left, right in
-                if left.kind?.displayName != right.kind?.displayName {
-                    return (left.kind?.displayName ?? "") < (right.kind?.displayName ?? "")
-                }
-
-                return left.name < right.name
-            }
+    private var groupedWorkloads: [(key: String, value: [WatchlistCandidate])] {
+        Dictionary(grouping: state.availableWorkloads, by: { $0.namespace })
+            .sorted { $0.key < $1.key }
     }
 }
 
