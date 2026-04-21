@@ -22,6 +22,11 @@ These are the rules Kubebar must keep true at runtime.
 - Kubebar uses `kubectl` only for the saved context and the status/setup reads
   needed by the menu.
 - Kubebar does not query Kubernetes Secrets.
+- Warning summaries are capped at 3, grouped by reason plus involved object,
+  and show only reason, location, age, count, and short message.
+- Partial section failures must be visible as unavailable and must not make
+  unavailable data look healthy.
+- Menu views must not show raw kubectl output.
 - Kubebar keeps config and displayed cluster status local to the app.
 
 ## Freshness Rules
@@ -47,6 +52,8 @@ These are the rules Kubebar must keep true at runtime.
 - Historical Job objects are not default setup candidates.
 - Candidate discovery failure must preserve selected targets and show a retry
   path.
+- Tracked item details are limited to state, reason, affected pod count, 1-3
+  example pod names, and latest related warning.
 
 ## Failure Rules
 
