@@ -152,4 +152,137 @@ struct MenuDisplayModelTests {
         #expect(single.summary == "BackOff api/pod/checkout 2m ago")
         #expect(repeated.summary == "BackOff x4 api/pod/checkout 2m ago")
     }
+
+    @Test("duplicate warning events group into one warning summaries row")
+    func duplicateWarningEventsGroupIntoOneWarningSummaryRow() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 90), count: 1, message: "older warning"),
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 3, message: "newest warning")
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.warningEventSummaries.count == 1)
+        #expect(display.warningEventSummaries.first?.occurrenceCount == 4)
+        #expect(display.warningEventSummaries.first?.summary == "BackOff x4 api/pod/checkout 2m ago")
+        #expect(display.warningEventSummaries.first?.message == "newest warning")
+    }
+
+    @Test("warning summaries are capped at three rows")
+    func warningSummariesAreCappedAtThreeRows() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 100), count: 1),
+                warningEvent(reason: "FailedScheduling", objectName: "checkout-b", observedAt: Date(timeIntervalSince1970: 90), count: 1),
+                warningEvent(reason: "Unhealthy", objectName: "checkout-c", observedAt: Date(timeIntervalSince1970: 80), count: 1),
+                warningEvent(reason: "Pulled", objectName: "checkout-d", observedAt: Date(timeIntervalSince1970: 70), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.warningEventSummaries.count == 3)
+    }
+
+    @Test("long warning message is shortened before display")
+    func longWarningMessageIsShortenedBeforeDisplay() {
+        let longWarning = String(repeating: "a", count: 140)
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 1, message: longWarning)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.warningEventSummaries.first?.message?.count == 96)
+        #expect(display.warningEventSummaries.first?.message != longWarning)
+    }
+
+    @Test("tracked item detail.examplePodNames are capped at three")
+    func trackedItemDetailExamplePodNamesAreCappedAtThree() {
+        let item = TrackedItemStatus(
+            target: .workload(namespace: "api", name: "checkout"),
+            state: .bad,
+            reason: "5 pods restarting",
+            affectedPodCount: 5,
+            examplePodNames: ["checkout-a", "checkout-b", "checkout-c", "checkout-d", "checkout-e"]
+        )
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 7, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([item]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.visibleWatchItems.first?.detail.examplePodNames == ["checkout-a", "checkout-b", "checkout-c"])
+    }
+
+    @Test("tracked item detail includes affected pod count and latest warning")
+    func trackedItemDetailIncludesAffectedPodCountAndLatestWarning() {
+        let latestWarning = warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 2, message: "newest warning")
+        let item = TrackedItemStatus(
+            target: .workload(namespace: "api", name: "checkout"),
+            state: .bad,
+            reason: "2 pods restarting",
+            affectedPodCount: 2,
+            examplePodNames: ["checkout-a", "checkout-b"],
+            latestWarning: latestWarning
+        )
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 10, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([item]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.visibleWatchItems.first?.detail.affectedPodCount == 2)
+        #expect(display.visibleWatchItems.first?.detail.latestWarning?.reason == "BackOff")
+        #expect(display.visibleWatchItems.first?.detail.latestWarning?.occurrenceCount == 2)
+    }
+}
+
+private func warningEvent(
+    reason: String,
+    namespace: String? = "api",
+    objectKind: String? = "Pod",
+    objectName: String? = "checkout",
+    observedAt: Date?,
+    count: Int,
+    message: String? = nil
+) -> WarningEventRecord {
+    WarningEventRecord(
+        reason: reason,
+        namespace: namespace,
+        objectKind: objectKind,
+        objectName: objectName,
+        message: message,
+        observedAt: observedAt,
+        count: count
+    )
 }
