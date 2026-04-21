@@ -12,16 +12,20 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     }
 
     public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
-        let rawSnapshot = readRawSnapshot(contextName: contextName)
+        let rawSnapshot = readRawSnapshot(contextName: contextName, watchTargets: watchTargets)
         let nodesSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodes)
         let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
         let podsSection = mappedSection(podRecordsSection) { pods in
             PodSummary(running: pods.filter(\.isRunning).count, total: pods.count)
         }
         let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
-        let workloadsSection = mappedSection(podRecordsSection) { pods in
-            watchTargets.map { target in trackedStatus(for: target, pods: pods) }
-        }
+        let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
+        let workloadsSection = trackedItemsSection(
+            podRecordsSection: podRecordsSection,
+            workloadSelectorsSection: workloadSelectorsSection,
+            warningEvents: warningEventsSection.value ?? [],
+            watchTargets: watchTargets
+        )
 
         guard nodesSection.isAvailable || podsSection.isAvailable || warningEventsSection.isAvailable || workloadsSection.isAvailable else {
             throw KubectlCommandError.failed(
@@ -43,11 +47,12 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         )
     }
 
-    private func readRawSnapshot(contextName: String) -> RawKubectlSnapshot {
+    private func readRawSnapshot(contextName: String, watchTargets: [WatchTarget]) -> RawKubectlSnapshot {
+        let reads = KubectlRead.reads(for: watchTargets)
         let results = LockedKubectlResults()
         let group = DispatchGroup()
 
-        for read in KubectlRead.allCases {
+        for read in reads {
             group.enter()
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
@@ -65,7 +70,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         group.wait()
 
         let outputs = Dictionary(
-            uniqueKeysWithValues: KubectlRead.allCases.map { read in
+            uniqueKeysWithValues: reads.map { read in
                 (read, results.result(for: read) ?? .failure(.failed("kubectl failed")))
             }
         )
@@ -150,18 +155,147 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
     }
 
-    private func trackedStatus(for target: WatchTarget, pods: [PodRecord]) -> TrackedItemStatus {
-        let matchingPods = pods.filter { pod in
-            switch target {
-            case let .namespace(namespace):
-                pod.metadata.namespace == namespace
-            case let .workload(namespace, name, _):
-                pod.metadata.namespace == namespace && pod.matchesWorkload(named: name)
+    private func decodeWorkloadMetadata(_ json: String, kind: WorkloadKind) throws -> [WorkloadMetadataRecord] {
+        do {
+            return try JSONDecoder()
+                .decode(WorkloadMetadataList.self, from: Data(json.utf8))
+                .items
+                .map { $0.with(kind: kind) }
+        } catch {
+            throw KubectlCommandError.failed("invalid workload JSON")
+        }
+    }
+
+    private func decodeWorkloadSelectors(
+        from rawSnapshot: RawKubectlSnapshot,
+        watchTargets: [WatchTarget]
+    ) -> SnapshotSection<[WorkloadIdentity: [String: String]]> {
+        var selectors: [WorkloadIdentity: [String: String]] = [:]
+
+        for kind in selectorBackedKinds(for: watchTargets) {
+            let section = decodedSection(rawSnapshot.result(for: .workload(kind))) { json in
+                try decodeWorkloadMetadata(json, kind: kind)
+            }
+
+            switch section {
+            case let .available(records):
+                for record in records {
+                    guard let matchLabels = record.spec.selector?.matchLabels, !matchLabels.isEmpty else {
+                        continue
+                    }
+
+                    selectors[record.identity] = matchLabels
+                }
+            case let .unavailable(reason):
+                return .unavailable(reason: reason)
             }
         }
 
+        return .available(selectors)
+    }
+
+    private func selectorBackedKinds(for watchTargets: [WatchTarget]) -> [WorkloadKind] {
+        let targetKinds = Set(watchTargets.compactMap { target -> WorkloadKind? in
+            guard case let .workload(_, _, kind) = target, kind.supportsSelectorMetadata else {
+                return nil
+            }
+
+            return kind
+        })
+
+        return WorkloadKind.allCases.filter { targetKinds.contains($0) }
+    }
+
+    private func trackedItemsSection(
+        podRecordsSection: SnapshotSection<[PodRecord]>,
+        workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
+        warningEvents: [WarningEventRecord],
+        watchTargets: [WatchTarget]
+    ) -> SnapshotSection<[TrackedItemStatus]> {
+        guard let pods = podRecordsSection.value else {
+            return .unavailable(reason: podRecordsSection.unavailableReason ?? "invalid pod JSON")
+        }
+
+        guard let workloadSelectors = workloadSelectorsSection.value else {
+            return .unavailable(reason: workloadSelectorsSection.unavailableReason ?? "invalid workload JSON")
+        }
+
+        return .available(
+            watchTargets.map { target in
+                trackedStatus(
+                    for: target,
+                    pods: pods,
+                    warningEvents: warningEvents,
+                    workloadSelectors: workloadSelectors
+                )
+            }
+        )
+    }
+
+    private func trackedStatus(
+        for target: WatchTarget,
+        pods: [PodRecord],
+        warningEvents: [WarningEventRecord],
+        workloadSelectors: [WorkloadIdentity: [String: String]]
+    ) -> TrackedItemStatus {
+        let matchingPods = pods.filter { pod in
+            pod.matches(target: target, workloadSelectors: workloadSelectors)
+        }
+        let latestWarning = latestRelatedWarning(for: target, matchingPods: matchingPods, warningEvents: warningEvents)
+
         guard !matchingPods.isEmpty else {
-            return TrackedItemStatus(target: target, state: .bad, reason: "no matching pods")
+            return TrackedItemStatus(
+                target: target,
+                state: .bad,
+                reason: "no matching pods",
+                affectedPodCount: 0,
+                latestWarning: latestWarning
+            )
+        }
+
+        let failedPods = matchingPods.filter(\.isFailed)
+        if !failedPods.isEmpty {
+            return TrackedItemStatus(
+                target: target,
+                state: .bad,
+                reason: podReason(count: failedPods.count, suffix: "failed"),
+                affectedPodCount: failedPods.count,
+                examplePodNames: examplePodNames(from: failedPods),
+                latestWarning: latestWarning
+            )
+        }
+
+        let restartingPods = matchingPods.filter(\.isRestarting)
+        if !restartingPods.isEmpty {
+            return TrackedItemStatus(
+                target: target,
+                state: .bad,
+                reason: podReason(count: restartingPods.count, suffix: "restarting"),
+                affectedPodCount: restartingPods.count,
+                examplePodNames: examplePodNames(from: restartingPods),
+                latestWarning: latestWarning
+            )
+        }
+
+        let notReadyPods = matchingPods.filter(\.isNotReady)
+        if !notReadyPods.isEmpty {
+            return TrackedItemStatus(
+                target: target,
+                state: .watch,
+                reason: podReason(count: notReadyPods.count, suffix: "not ready"),
+                affectedPodCount: notReadyPods.count,
+                examplePodNames: examplePodNames(from: notReadyPods),
+                latestWarning: latestWarning
+            )
+        }
+
+        if let latestWarning {
+            return TrackedItemStatus(
+                target: target,
+                state: .watch,
+                reason: "latest warning: \(latestWarning.reason)",
+                latestWarning: latestWarning
+            )
         }
 
         let running = matchingPods.filter(\.isRunning).count
@@ -171,6 +305,53 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             state: running == matchingPods.count ? .ok : .bad,
             reason: reason
         )
+    }
+
+    private func podReason(count: Int, suffix: String) -> String {
+        count == 1 ? "1 pod \(suffix)" : "\(count) pods \(suffix)"
+    }
+
+    private func examplePodNames(from pods: [PodRecord]) -> [String] {
+        Array(pods.map(\.metadata.name).sorted().prefix(3))
+    }
+
+    private func latestRelatedWarning(
+        for target: WatchTarget,
+        matchingPods: [PodRecord],
+        warningEvents: [WarningEventRecord]
+    ) -> WarningEventRecord? {
+        switch target {
+        case let .namespace(namespace):
+            return newestWarning(warningEvents.filter { $0.namespace == namespace })
+        case let .workload(namespace, name, kind):
+            let matchingPodNames = Set(matchingPods.map(\.metadata.name))
+            let podWarnings = warningEvents.filter { event in
+                event.namespace == namespace && event.objectName.map { matchingPodNames.contains($0) } == true
+            }
+
+            if let newestPodWarning = newestWarning(podWarnings) {
+                return newestPodWarning
+            }
+
+            return newestWarning(warningEvents.filter { event in
+                event.namespace == namespace &&
+                    event.objectName == name &&
+                    event.objectKind == kind.displayName
+            })
+        }
+    }
+
+    private func newestWarning(_ warningEvents: [WarningEventRecord]) -> WarningEventRecord? {
+        warningEvents.max { left, right in
+            let leftDate = left.observedAt ?? .distantPast
+            let rightDate = right.observedAt ?? .distantPast
+
+            if leftDate != rightDate {
+                return leftDate < rightDate
+            }
+
+            return left.reason < right.reason
+        }
     }
 
     private func makeWarningEventRecord(_ event: EventRecord) -> WarningEventRecord {
@@ -263,10 +444,22 @@ private extension KubectlCommandError {
     }
 }
 
-private enum KubectlRead: CaseIterable, Hashable, Sendable {
+private extension WorkloadKind {
+    var supportsSelectorMetadata: Bool {
+        switch self {
+        case .deployment, .statefulSet, .daemonSet:
+            true
+        case .cronJob:
+            false
+        }
+    }
+}
+
+private enum KubectlRead: Hashable, Sendable {
     case nodes
     case pods
     case warningEvents
+    case workload(WorkloadKind)
 
     var arguments: [String] {
         switch self {
@@ -276,7 +469,23 @@ private enum KubectlRead: CaseIterable, Hashable, Sendable {
             return ["get", "pods", "--all-namespaces", "-o", "json"]
         case .warningEvents:
             return ["get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
+        case let .workload(kind):
+            return ["get", kind.kubectlResource, "--all-namespaces", "-o", "json"]
         }
+    }
+
+    static func reads(for watchTargets: [WatchTarget]) -> [KubectlRead] {
+        var reads: [KubectlRead] = [.nodes, .pods, .warningEvents]
+        let targetKinds = Set(watchTargets.compactMap { target -> WorkloadKind? in
+            guard case let .workload(_, _, kind) = target, kind.supportsSelectorMetadata else {
+                return nil
+            }
+
+            return kind
+        })
+
+        reads += WorkloadKind.allCases.filter { targetKinds.contains($0) }.map(KubectlRead.workload)
+        return reads
     }
 }
 
@@ -335,10 +544,15 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         let namespace: String
         let name: String
         let labels: [String: String]?
+        let ownerReferences: [OwnerReference]?
     }
 
     struct Status: Decodable, Equatable, Sendable {
-        let phase: String
+        let phase: String?
+        let reason: String?
+        let message: String?
+        let conditions: [PodCondition]?
+        let containerStatuses: [ContainerStatus]?
     }
 
     let metadata: Metadata
@@ -348,11 +562,108 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         status.phase == "Running"
     }
 
-    func matchesWorkload(named name: String) -> Bool {
+    var isFailed: Bool {
+        status.phase == "Failed"
+    }
+
+    var isRestarting: Bool {
+        status.containerStatuses?.contains { status in
+            (status.restartCount ?? 0) > 0 ||
+                status.state?.waiting?.reason == "CrashLoopBackOff"
+        } ?? false
+    }
+
+    var isNotReady: Bool {
+        if status.phase == "Pending" || status.phase == "Unknown" {
+            return true
+        }
+
+        if status.conditions?.contains(where: { condition in
+            (condition.type == "Ready" || condition.type == "ContainersReady") && condition.status != "True"
+        }) == true {
+            return true
+        }
+
+        return status.containerStatuses?.contains { $0.ready == false } ?? false
+    }
+
+    func matches(target: WatchTarget, workloadSelectors: [WorkloadIdentity: [String: String]]) -> Bool {
+        switch target {
+        case let .namespace(namespace):
+            metadata.namespace == namespace
+        case let .workload(namespace, name, kind):
+            metadata.namespace == namespace && matchesWorkload(namespace: namespace, name: name, kind: kind, workloadSelectors: workloadSelectors)
+        }
+    }
+
+    private func matchesWorkload(
+        namespace: String,
+        name: String,
+        kind: WorkloadKind,
+        workloadSelectors: [WorkloadIdentity: [String: String]]
+    ) -> Bool {
+        let identity = WorkloadIdentity(namespace: namespace, name: name, kind: kind)
+        if let selector = workloadSelectors[identity], matches(selector: selector) {
+            return true
+        }
+
+        return matchesWorkload(named: name) || hasOwnerReference(named: name, kind: kind)
+    }
+
+    private func matches(selector: [String: String]) -> Bool {
+        guard !selector.isEmpty else {
+            return false
+        }
+
+        return selector.allSatisfy { key, value in
+            metadata.labels?[key] == value
+        }
+    }
+
+    private func matchesWorkload(named name: String) -> Bool {
         metadata.name == name ||
             metadata.labels?["app.kubernetes.io/name"] == name ||
             metadata.labels?["app"] == name
     }
+
+    private func hasOwnerReference(named name: String, kind: WorkloadKind) -> Bool {
+        metadata.ownerReferences?.contains { owner in
+            owner.kind == kind.displayName && owner.name == name ||
+                kind == .cronJob && owner.kind == "Job" && owner.name.hasPrefix("\(name)-")
+        } ?? false
+    }
+}
+
+private struct OwnerReference: Decodable, Equatable, Sendable {
+    let kind: String
+    let name: String
+}
+
+private struct PodCondition: Decodable, Equatable, Sendable {
+    let type: String
+    let status: String
+}
+
+private struct ContainerStatus: Decodable, Equatable, Sendable {
+    let ready: Bool?
+    let restartCount: Int?
+    let state: ContainerState?
+    let lastState: ContainerState?
+}
+
+private struct ContainerState: Decodable, Equatable, Sendable {
+    let waiting: ContainerStateWaiting?
+    let terminated: ContainerStateTerminated?
+}
+
+private struct ContainerStateWaiting: Decodable, Equatable, Sendable {
+    let reason: String?
+    let message: String?
+}
+
+private struct ContainerStateTerminated: Decodable, Equatable, Sendable {
+    let reason: String?
+    let message: String?
 }
 
 private struct EventList: Decodable {
@@ -388,4 +699,59 @@ private struct EventRecord: Decodable {
     let deprecatedCount: Int?
     let deprecatedLastTimestamp: String?
     let series: Series?
+}
+
+private struct WorkloadIdentity: Equatable, Hashable, Sendable {
+    let namespace: String
+    let name: String
+    let kind: WorkloadKind
+}
+
+private struct WorkloadMetadataList: Decodable {
+    let items: [WorkloadMetadataRecord]
+}
+
+private struct WorkloadMetadataRecord: Decodable, Equatable, Sendable {
+    struct Metadata: Decodable, Equatable, Sendable {
+        let namespace: String
+        let name: String
+    }
+
+    struct Spec: Decodable, Equatable, Sendable {
+        let selector: Selector?
+    }
+
+    struct Selector: Decodable, Equatable, Sendable {
+        let matchLabels: [String: String]?
+    }
+
+    let metadata: Metadata
+    let spec: Spec
+    private let kind: WorkloadKind?
+
+    var identity: WorkloadIdentity {
+        WorkloadIdentity(namespace: metadata.namespace, name: metadata.name, kind: kind ?? .deployment)
+    }
+
+    func with(kind: WorkloadKind) -> WorkloadMetadataRecord {
+        WorkloadMetadataRecord(metadata: metadata, spec: spec, kind: kind)
+    }
+
+    private init(metadata: Metadata, spec: Spec, kind: WorkloadKind) {
+        self.metadata = metadata
+        self.spec = spec
+        self.kind = kind
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case metadata
+        case spec
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.metadata = try container.decode(Metadata.self, forKey: .metadata)
+        self.spec = try container.decode(Spec.self, forKey: .spec)
+        self.kind = nil
+    }
 }

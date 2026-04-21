@@ -213,9 +213,9 @@ struct KubectlClusterReaderTests {
         let item = snapshot.trackedItems.first
 
         #expect(item?.state == .bad)
-        #expect(item?.reason == "1 pod failed")
-        #expect(item?.affectedPodCount == 1)
-        #expect(item?.examplePodNames == ["checkout-failed"])
+        #expect(item?.reason == "2 pods failed")
+        #expect(item?.affectedPodCount == 2)
+        #expect(item?.examplePodNames == ["checkout-failed", "checkout-failed-b"])
     }
 
     @Test("restarting reason uses affected pod count")
@@ -245,7 +245,7 @@ struct KubectlClusterReaderTests {
         #expect(item?.state == .watch)
         #expect(item?.reason == "3 pods not ready")
         #expect(item?.affectedPodCount == 3)
-        #expect(item?.examplePodNames == ["checkout-pending", "checkout-unready", "checkout-unknown"])
+        #expect(item?.examplePodNames == ["checkout-pending", "checkout-unknown", "checkout-unready"])
     }
 
     @Test("warning-only target uses latest warning prefix")
@@ -475,6 +475,15 @@ private let failedRestartingAndNotReadyPodsJSON = """
         "phase": "Failed",
         "containerStatuses": [
           {"ready": false, "restartCount": 3, "state": {"terminated": {"reason": "Error"}}}
+        ]
+      }
+    },
+    {
+      "metadata": {"namespace": "api", "name": "checkout-failed-b", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "status": {
+        "phase": "Failed",
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Error"}}}
         ]
       }
     },
