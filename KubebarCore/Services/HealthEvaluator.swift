@@ -53,35 +53,57 @@ public struct HealthEvaluator: Sendable {
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let resolvedState = stateOverride ?? evaluateState(snapshot)
         let warningEventSummaries = makeWarningEventSummaries(from: snapshot.warningEventsSection.value ?? [], now: now)
+        let sectionNotices = makeSectionNotices(from: snapshot.sectionFailures)
 
         return MenuDisplayModel(
             state: resolvedState,
             contextName: snapshot.contextName,
             healthSentence: healthSentence(for: resolvedState, visibleItems: visibleItems),
-            counters: MenuCounters(
-                nodes: "\(snapshot.nodeSummary.ready)/\(snapshot.nodeSummary.total)",
-                pods: "\(snapshot.podSummary.running)/\(snapshot.podSummary.total)",
-                warningEvents: "\(snapshot.warningEventCount)"
-            ),
+            counters: menuCounters(from: snapshot),
             visibleWatchItems: Array(visibleItems),
             hiddenWatchItemCount: hiddenCount,
             staleBanner: staleBanner(for: resolvedState, snapshot: snapshot, failure: failure, now: now),
-            warningEventSummaries: warningEventSummaries
+            warningEventSummaries: warningEventSummaries,
+            sectionNotices: sectionNotices
         )
     }
 
     private func evaluateState(_ snapshot: ClusterSnapshot) -> ClusterHealthState {
-        if snapshot.nodeSummary.ready < snapshot.nodeSummary.total || snapshot.trackedItems.contains(where: { $0.state == .bad }) {
+        if snapshot.nodesSection.value.map({ $0.ready < $0.total }) == true ||
+            snapshot.trackedItems.contains(where: { $0.state == .bad }) {
             return .bad
         }
 
-        if snapshot.podSummary.running < snapshot.podSummary.total ||
-            snapshot.warningEventCount > 0 ||
-            snapshot.trackedItems.contains(where: { $0.state == .watch }) {
+        if snapshot.podsSection.value.map({ $0.running < $0.total }) == true ||
+            snapshot.warningEventsSection.value.map({ !$0.isEmpty }) == true ||
+            snapshot.trackedItems.contains(where: { $0.state == .watch }) ||
+            !snapshot.sectionFailures.isEmpty {
             return .watch
         }
 
         return .ok
+    }
+
+    private func menuCounters(from snapshot: ClusterSnapshot) -> MenuCounters {
+        MenuCounters(
+            nodes: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total)" } ?? "-",
+            pods: snapshot.podsSection.value.map { "\($0.running)/\($0.total)" } ?? "-",
+            warningEvents: snapshot.warningEventsSection.value.map { _ in "\(snapshot.warningEventCount)" } ?? "-"
+        )
+    }
+
+    private func makeSectionNotices(from sectionFailures: [SnapshotSectionFailure]) -> [SectionAvailabilityDisplay] {
+        sectionFailures.map { failure in
+            SectionAvailabilityDisplay(
+                id: failure.section.rawValue,
+                title: failure.section.displayName,
+                reason: sanitizedSectionReason(failure.reason)
+            )
+        }
+    }
+
+    private func sanitizedSectionReason(_ value: String) -> String {
+        normalizedText(value) ?? "Section unavailable"
     }
 
     private func sortByAttention(_ items: [TrackedItemStatus]) -> [TrackedItemStatus] {
