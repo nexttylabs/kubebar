@@ -117,4 +117,39 @@ struct MenuDisplayModelTests {
         #expect(display.staleBanner?.reason == "kubectl timed out")
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
     }
+
+    @Test("watch item detail defaults to row reason")
+    func watchItemDetailDefaultsToRowReason() {
+        let item = WatchItemDisplay(
+            id: "api/checkout",
+            title: "api/checkout",
+            state: .watch,
+            reason: "1 pod not ready"
+        )
+
+        #expect(item.detail.reason == "1 pod not ready")
+    }
+
+    @Test("warning event display summary includes occurrence count only when repeated")
+    func warningEventDisplaySummaryIncludesOccurrenceCountOnlyWhenRepeated() {
+        let single = WarningEventDisplay(
+            id: "single",
+            reason: "BackOff",
+            location: "api/pod/checkout",
+            age: "2m ago",
+            occurrenceCount: 1,
+            message: nil
+        )
+        let repeated = WarningEventDisplay(
+            id: "repeated",
+            reason: "BackOff",
+            location: "api/pod/checkout",
+            age: "2m ago",
+            occurrenceCount: 4,
+            message: nil
+        )
+
+        #expect(single.summary == "BackOff api/pod/checkout 2m ago")
+        #expect(repeated.summary == "BackOff x4 api/pod/checkout 2m ago")
+    }
 }
