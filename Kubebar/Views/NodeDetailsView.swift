@@ -13,5 +13,8 @@ struct NodeDetailsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Node details, \(summary) nodes ready")
+        .focusable()
     }
 }

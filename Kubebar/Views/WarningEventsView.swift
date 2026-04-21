@@ -48,5 +48,28 @@ struct WarningEventsView: View {
                 }
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .focusable()
+    }
+
+    private var accessibilitySummary: String {
+        if !sectionNotices.isEmpty {
+            let notices = sectionNotices.map { "\($0.title) unavailable: \($0.reason)" }
+            return (["Warning events"] + notices).joined(separator: ", ")
+        }
+
+        if summaries.isEmpty {
+            let text = count == "0" ? "No current warning events" : "\(count) warning events need review"
+            return "Warning events, \(text)"
+        }
+
+        let rows = summaries.map { summary in
+            if let message = summary.message {
+                return "\(summary.summary), \(message)"
+            }
+            return summary.summary
+        }
+        return (["Warning events"] + rows).joined(separator: ", ")
     }
 }

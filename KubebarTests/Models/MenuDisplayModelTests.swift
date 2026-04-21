@@ -198,6 +198,7 @@ struct MenuDisplayModelTests {
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
         #expect(display.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "Last refresh is too old")
+        #expect(display.primaryStatusReason == "Last refresh is too old")
     }
 
     @Test("watch item detail defaults to row reason")
