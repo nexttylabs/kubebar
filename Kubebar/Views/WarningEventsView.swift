@@ -23,8 +23,8 @@ struct WarningEventsView: View {
                     .accessibilityLabel(noticeText)
             }
 
-            if summaries.isEmpty {
-                Text(count == "0" ? "No current warning events" : "\(count) warning events need review")
+            if summaries.isEmpty, let emptySummaryText {
+                Text(emptySummaryText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -48,9 +48,22 @@ struct WarningEventsView: View {
                 }
             }
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
         .focusable()
+    }
+
+    private var emptySummaryText: String? {
+        switch count {
+        case "0":
+            return "No current warning events"
+        case "1":
+            return "1 warning event needs review"
+        case "-":
+            return sectionNotices.isEmpty ? "Warning event count unavailable" : nil
+        default:
+            return "\(count) warning events need review"
+        }
     }
 
     private var accessibilitySummary: String {
@@ -58,8 +71,9 @@ struct WarningEventsView: View {
         parts += sectionNotices.map { "\($0.title) unavailable: \($0.reason)" }
 
         if summaries.isEmpty {
-            let text = count == "0" ? "No current warning events" : "\(count) warning events need review"
-            parts.append(text)
+            if let emptySummaryText {
+                parts.append(emptySummaryText)
+            }
             return parts.joined(separator: ", ")
         }
 

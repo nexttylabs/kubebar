@@ -78,10 +78,10 @@ public struct HealthEvaluator: Sendable {
             state: resolvedState,
             contextName: snapshot.contextName,
             healthSentence: healthSentence(for: resolvedState, visibleItems: visibleItems),
-            primaryStatusReason: primaryStatusReason(for: resolvedState, snapshot: snapshot, visibleItems: Array(visibleItems), warningEventSummaries: warningEventSummaries, sectionNotices: sectionNotices, staleReason: staleReason),
+            primaryStatusReason: primaryStatusReason(for: resolvedState, snapshot: snapshot, visibleItems: visibleItems, sectionNotices: sectionNotices, staleReason: staleReason),
             lastUpdated: lastUpdated,
             counters: menuCounters(from: snapshot),
-            visibleWatchItems: Array(visibleItems),
+            visibleWatchItems: visibleItems,
             hiddenWatchItemCount: hiddenCount,
             staleBanner: staleBanner(
                 for: resolvedState,
@@ -265,7 +265,7 @@ public struct HealthEvaluator: Sendable {
         }
     }
 
-    private func primaryStatusReason(for state: ClusterHealthState, snapshot: ClusterSnapshot, visibleItems: [WatchItemDisplay], warningEventSummaries: [WarningEventDisplay], sectionNotices: [SectionAvailabilityDisplay], staleReason: String?) -> String {
+    private func primaryStatusReason(for state: ClusterHealthState, snapshot: ClusterSnapshot, visibleItems: [WatchItemDisplay], sectionNotices: [SectionAvailabilityDisplay], staleReason: String?) -> String {
         switch state {
         case .ok:
             return "Cluster looks healthy"
@@ -275,11 +275,11 @@ public struct HealthEvaluator: Sendable {
             }
 
             if let nodeDeficit = nodeDeficit(from: snapshot), nodeDeficit > 0 {
-                return "\(nodeDeficit) nodes not ready"
+                return countLabel(nodeDeficit, singular: "node", plural: "nodes", suffix: "not ready")
             }
 
             if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
-                return "\(podDeficit) pods not running"
+                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not running")
             }
 
             return "Cluster needs attention"
@@ -293,17 +293,23 @@ public struct HealthEvaluator: Sendable {
             }
 
             if snapshot.warningEventCount > 0 {
-                return "\(snapshot.warningEventCount) warning events"
+                return countLabel(snapshot.warningEventCount, singular: "warning event", plural: "warning events")
             }
 
             if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
-                return "\(podDeficit) pods not running"
+                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not running")
             }
 
             return "Cluster has warnings"
         case .stale:
             return staleReason ?? "Last cluster status is stale"
         }
+    }
+
+    private func countLabel(_ count: Int, singular: String, plural: String, suffix: String? = nil) -> String {
+        let noun = count == 1 ? singular : plural
+        let suffixText = suffix.map { " \($0)" } ?? ""
+        return "\(count) \(noun)\(suffixText)"
     }
 
     private func nodeDeficit(from snapshot: ClusterSnapshot) -> Int? {

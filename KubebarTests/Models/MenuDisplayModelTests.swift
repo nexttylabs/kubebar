@@ -71,6 +71,59 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "2 warning events")
     }
 
+    @Test("single not ready node uses singular primary status reason")
+    func singleNotReadyNodeUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .bad)
+        #expect(display.primaryStatusReason == "1 node not ready")
+    }
+
+    @Test("single not running pod uses singular primary status reason")
+    func singleNotRunningPodUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 11, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "1 pod not running")
+    }
+
+    @Test("single warning event uses singular primary status reason")
+    func singleWarningEventUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "1 warning event")
+    }
+
     @Test("first screen caps watchlist and reports overflow")
     func firstScreenCapsWatchlistAndReportsOverflow() {
         let items = (1...7).map { index in
