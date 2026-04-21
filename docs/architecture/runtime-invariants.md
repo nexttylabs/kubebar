@@ -19,6 +19,10 @@ These are the rules Kubebar must keep true at runtime.
   shell context.
 - `CommandRunner` remains an injectable boundary so reads can be tested without
   shelling out.
+- Kubebar uses `kubectl` only for the saved context and the status/setup reads
+  needed by the menu.
+- Kubebar does not query Kubernetes Secrets.
+- Kubebar keeps config and displayed cluster status local to the app.
 
 ## Freshness Rules
 
@@ -50,3 +54,4 @@ These are the rules Kubebar must keep true at runtime.
   failures.
 - A refresh failure must never silently clear the last good data.
 - Warning and failure states must not rely on color alone.
+- Stale or failed reads must use distinct icon semantics from `OK`.

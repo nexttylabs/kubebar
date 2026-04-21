@@ -5,8 +5,18 @@ import KubebarCore
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     @Published private(set) var display: MenuDisplayModel
-    @Published var setupState: SetupFlowState
+    @Published var setupState: SetupFlowState {
+        didSet {
+            guard !isPublishingRuntimeState else {
+                return
+            }
+
+            runtimeState.setupState = setupState
+            refreshCadence = setupState.refreshCadence
+        }
+    }
     @Published private(set) var isShowingSetup: Bool
+    @Published private(set) var refreshCadence: RefreshCadence
 
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
@@ -14,6 +24,9 @@ final class MenuBarViewModel: ObservableObject {
     private let watchTargetCatalog: any WatchTargetCataloging
     private var config: AppConfig
     private var snapshot: ClusterSnapshot?
+    private var runtimeState: MenuRuntimeState
+    private var isPublishingRuntimeState: Bool
+    private var refreshLoopTask: Task<Void, Never>?
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -34,22 +47,28 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         self.snapshot = nil
-        self.setupState = SetupFlowState(
-            selectedContext: config.selectedContext,
-            watchlist: WatchlistSelectionState(selectedTargets: Set(config.watchTargets))
-        )
-        self.isShowingSetup = config.needsSetup
+        let runtimeState = MenuRuntimeState(config: config)
+        self.runtimeState = runtimeState
+        self.isPublishingRuntimeState = false
+        self.setupState = runtimeState.setupState
+        self.isShowingSetup = runtimeState.isShowingSetup
+        self.refreshCadence = runtimeState.setupState.refreshCadence
         self.display = Self.initialDisplay(for: config, now: now)
 
-        if config.needsSetup {
-            loadContexts()
+        if runtimeState.isShowingSetup {
+            loadContextsIfNeeded()
 
-            if let selectedContext = setupState.selectedContext {
+            if let selectedContext = runtimeState.targetContextToLoad {
                 loadWatchTargets(for: selectedContext)
             }
         } else {
             refreshNow()
+            startRefreshLoopIfConfigured()
         }
+    }
+
+    deinit {
+        refreshLoopTask?.cancel()
     }
 
     func refreshNow() {
@@ -68,49 +87,72 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func openSetup() {
-        isShowingSetup = true
-        loadContexts()
+        runtimeState.openSetup()
+        publishRuntimeState()
+        loadContextsIfNeeded()
 
-        if let selectedContext = setupState.selectedContext {
+        if let selectedContext = runtimeState.targetContextToLoad {
             loadWatchTargets(for: selectedContext)
         }
     }
 
     func completeSetup() {
-        guard let selectedContext = setupState.selectedContext, !setupState.watchlist.selectedTargets.isEmpty else {
+        guard let completedConfig = runtimeState.completedConfig() else {
             return
         }
 
-        config = AppConfig(
-            selectedContext: selectedContext,
-            watchTargets: Array(setupState.watchlist.selectedTargets).sorted { $0.displayTitle < $1.displayTitle },
-            refreshIntervalSeconds: config.refreshIntervalSeconds
-        )
+        config = completedConfig
 
         do {
             try configStore.save(config)
-            isShowingSetup = false
+            runtimeState.completeSetupSaved()
+            publishRuntimeState()
             refreshNow()
+            startRefreshLoopIfConfigured()
         } catch {
-            setupState.configurationMessage = "Could not save setup. Try again."
+            runtimeState.markConfigurationSaveFailed("Could not save setup. Try again.")
+            publishRuntimeState()
         }
     }
 
     func selectSetupContext(_ context: String?) {
-        setupState.selectedContext = context
-        setupState.watchlist.clearAvailableTargets()
+        let contextToLoad = runtimeState.selectContext(context)
+        publishRuntimeState()
 
-        guard let context else {
-            setupState.targetLoadingState = .idle
+        contextToLoad.map(loadWatchTargets)
+    }
+
+    func selectRefreshCadence(_ cadence: RefreshCadence) {
+        runtimeState.selectRefreshCadence(cadence)
+        publishRuntimeState()
+
+        guard !isShowingSetup else {
             return
         }
 
-        loadWatchTargets(for: context)
+        config = AppConfig(
+            selectedContext: config.selectedContext,
+            watchTargets: config.watchTargets,
+            refreshIntervalSeconds: cadence.seconds
+        )
+
+        do {
+            try configStore.save(config)
+            startRefreshLoopIfConfigured()
+        } catch {
+            display = HealthEvaluator().evaluate(
+                snapshot: nil,
+                previousSnapshot: snapshot,
+                failure: RefreshFailure(reason: "Could not save refresh cadence"),
+                now: Date()
+            )
+        }
     }
 
     func retryWatchTargetLoad() {
-        guard let selectedContext = setupState.selectedContext else {
-            setupState.targetLoadingState = .idle
+        guard let selectedContext = runtimeState.targetContextToLoad else {
+            runtimeState.setupState.targetLoadingState = .idle
+            publishRuntimeState()
             return
         }
 
@@ -137,7 +179,11 @@ final class MenuBarViewModel: ObservableObject {
         )
     }
 
-    private func loadContexts() {
+    private func loadContextsIfNeeded() {
+        guard runtimeState.shouldLoadContexts else {
+            return
+        }
+
         let contextCatalog = contextCatalog
 
         Task {
@@ -145,13 +191,15 @@ final class MenuBarViewModel: ObservableObject {
                 (try? contextCatalog.listContexts()) ?? []
             }.value
 
-            setupState.availableContexts = contexts
+            runtimeState.setupState.availableContexts = contexts
+            publishRuntimeState()
         }
     }
 
     private func loadWatchTargets(for context: String) {
         let watchTargetCatalog = watchTargetCatalog
-        setupState.targetLoadingState = .loading
+        runtimeState.beginTargetLoading(for: context)
+        publishRuntimeState()
 
         Task {
             let result = await Task.detached(priority: .userInitiated) {
@@ -160,16 +208,42 @@ final class MenuBarViewModel: ObservableObject {
                 }
             }.value
 
-            guard setupState.selectedContext == context else {
-                return
-            }
-
             switch result {
             case let .success(candidates):
-                setupState.watchlist.replaceAvailableTargets(candidates)
-                setupState.targetLoadingState = .idle
+                runtimeState.applyTargetLoadSuccess(candidates, for: context)
             case let .failure(error):
-                setupState.targetLoadingState = .failed(Self.failureReason(from: error))
+                runtimeState.applyTargetLoadFailure(Self.failureReason(from: error), for: context)
+            }
+
+            publishRuntimeState()
+        }
+    }
+
+    private func startRefreshLoopIfConfigured() {
+        refreshLoopTask?.cancel()
+        refreshLoopTask = nil
+
+        guard !config.needsSetup else {
+            return
+        }
+
+        let intervalNanoseconds = UInt64(config.refreshCadence.seconds) * 1_000_000_000
+
+        refreshLoopTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: intervalNanoseconds)
+                } catch {
+                    return
+                }
+
+                guard !Task.isCancelled else {
+                    return
+                }
+
+                await MainActor.run {
+                    self?.refreshNow()
+                }
             }
         }
     }
@@ -180,5 +254,13 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         return error.localizedDescription
+    }
+
+    private func publishRuntimeState() {
+        isPublishingRuntimeState = true
+        setupState = runtimeState.setupState
+        isShowingSetup = runtimeState.isShowingSetup
+        refreshCadence = runtimeState.setupState.refreshCadence
+        isPublishingRuntimeState = false
     }
 }

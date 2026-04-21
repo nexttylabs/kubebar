@@ -25,6 +25,7 @@ struct SetupView: View {
                 header
                 contextPicker
                 watchlistPicker
+                refreshCadencePicker
                 footer
             }
             .padding(20)
@@ -77,6 +78,24 @@ struct SetupView: View {
             loadingState: state.targetLoadingState,
             onRetryTargets: onRetryTargets
         )
+    }
+
+    private var refreshCadencePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Refresh cadence")
+                .font(.headline)
+
+            Text(state.refreshCadenceHelpText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Picker("Refresh cadence", selection: $state.refreshCadence) {
+                ForEach(RefreshCadence.allCases) { cadence in
+                    Text(cadence.label).tag(cadence)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
     }
 
     private var footer: some View {

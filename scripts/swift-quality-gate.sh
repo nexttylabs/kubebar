@@ -21,11 +21,13 @@ list_schemes() {
   local container_path="$2"
 
   xcodebuild -list -json "$container_flag" "$container_path" 2>/dev/null | \
-    tr -d '\n' | \
-    sed -E 's/.*"schemes"[[:space:]]*:[[:space:]]*\[([^]]*)\].*/\1/' | \
-    tr ',' '\n' | \
-    sed -E 's/^[[:space:]]*"([^"]+)"[[:space:]]*$/\1/' | \
-    sed '/^[[:space:]]*$/d'
+    ruby -rjson -e '
+      input = STDIN.read
+      exit if input.strip.empty?
+      data = JSON.parse(input)
+      container = data["workspace"] || data["project"] || {}
+      puts Array(container["schemes"])
+    '
 }
 
 choose_scheme() {
@@ -69,8 +71,8 @@ run_swift_package_checks() {
 run_xcode_checks() {
   local workspaces=()
   local projects=()
-  local workspace
-  local project
+  local workspace=""
+  local project=""
   local container_flag
   local container_path
   local scheme
@@ -83,35 +85,39 @@ run_xcode_checks() {
     [ -n "$item" ] && projects+=("$item")
   done < <(find_candidates '*.xcodeproj')
 
-  if [ -n "${XCODE_WORKSPACE:-}" ]; then
-    workspace="$XCODE_WORKSPACE"
-  elif [ "${#workspaces[@]}" -eq 1 ]; then
-    workspace="${workspaces[0]}"
-  elif [ "${#workspaces[@]}" -gt 1 ]; then
-    echo "Multiple workspaces found. Set XCODE_WORKSPACE explicitly." >&2
-    printf 'Candidates:\n' >&2
-    printf '  %s\n' "${workspaces[@]}" >&2
-    return 1
-  else
-    workspace=""
-  fi
-
-  if [ -n "${XCODE_PROJECT:-}" ]; then
-    project="$XCODE_PROJECT"
-  elif [ "${#projects[@]}" -eq 1 ]; then
-    project="${projects[0]}"
-  elif [ "${#projects[@]}" -gt 1 ]; then
-    echo "Multiple projects found. Set XCODE_PROJECT explicitly." >&2
-    printf 'Candidates:\n' >&2
-    printf '  %s\n' "${projects[@]}" >&2
-    return 1
-  else
-    project=""
-  fi
-
-  if [ -n "$workspace" ] && [ -n "${XCODE_PROJECT:-}" ]; then
+  if [ -n "${XCODE_WORKSPACE:-}" ] && [ -n "${XCODE_PROJECT:-}" ]; then
     echo "Set either XCODE_WORKSPACE or XCODE_PROJECT, not both." >&2
     return 1
+  fi
+
+  if [ -n "${XCODE_WORKSPACE:-}" ]; then
+    workspace="$XCODE_WORKSPACE"
+    project=""
+  elif [ -n "${XCODE_PROJECT:-}" ]; then
+    workspace=""
+    project="$XCODE_PROJECT"
+  else
+    if [ "${#workspaces[@]}" -eq 1 ]; then
+      workspace="${workspaces[0]}"
+    elif [ "${#workspaces[@]}" -gt 1 ]; then
+      echo "Multiple workspaces found. Set XCODE_WORKSPACE explicitly." >&2
+      printf 'Candidates:\n' >&2
+      printf '  %s\n' "${workspaces[@]}" >&2
+      return 1
+    else
+      workspace=""
+    fi
+
+    if [ "${#projects[@]}" -eq 1 ] && [ -z "$workspace" ]; then
+      project="${projects[0]}"
+    elif [ "${#projects[@]}" -gt 1 ] && [ -z "$workspace" ]; then
+      echo "Multiple projects found. Set XCODE_PROJECT explicitly." >&2
+      printf 'Candidates:\n' >&2
+      printf '  %s\n' "${projects[@]}" >&2
+      return 1
+    else
+      project=""
+    fi
   fi
 
   if [ -n "$workspace" ]; then

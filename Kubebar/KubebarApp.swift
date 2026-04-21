@@ -11,10 +11,12 @@ struct KubebarApp: App {
                 display: viewModel.display,
                 setupState: $viewModel.setupState,
                 isShowingSetup: viewModel.isShowingSetup,
+                refreshCadence: viewModel.refreshCadence,
                 onRefresh: viewModel.refreshNow,
                 onEditWatchlist: viewModel.openSetup,
                 onCompleteSetup: viewModel.completeSetup,
                 onSelectContext: viewModel.selectSetupContext,
+                onSelectRefreshCadence: viewModel.selectRefreshCadence,
                 onRetryTargets: viewModel.retryWatchTargetLoad
             )
         } label: {

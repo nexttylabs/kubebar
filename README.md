@@ -27,6 +27,16 @@ The project now has a working macOS menu bar foundation:
 The current roadmap focuses on making the setup loop, warning reasons,
 freshness controls, and operator-facing verification ready for daily use.
 
+## Local Reads and Privacy
+
+Kubebar uses the saved context in its own config, not the terminal's current
+context. It calls `kubectl` only for the status and setup reads needed by the
+menu, such as namespaces, workload candidates, node/pod status, and warning
+events.
+
+Kubebar does not query Kubernetes Secrets. If a command fails, the menu keeps
+old data only as a clearly marked stale state with a retry path.
+
 ## Build and Test
 
 Open in Xcode:
@@ -51,6 +61,15 @@ This runs:
 - Xcode tests
 - `swift build`
 - `swift test`
+
+Run the built menu bar app and verify that the process starts:
+
+```bash
+./scripts/compile-and-run.sh
+```
+
+This reuses the quality gate, opens the built Debug app, and prints the
+running Kubebar process ID.
 
 ## Project Layout
 

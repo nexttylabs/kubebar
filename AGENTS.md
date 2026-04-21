@@ -44,6 +44,12 @@
 
 The same gate runs the macOS Xcode build, Xcode tests, `swift build`, and `swift test` when those project shapes are present.
 
+Use the local visible-app smoke test when you need to confirm the built menu bar app can actually launch:
+
+```bash
+./scripts/compile-and-run.sh
+```
+
 If the repository has multiple workspaces, projects, or schemes, set `XCODE_WORKSPACE`, `XCODE_PROJECT`, `XCODE_SCHEME`, and `XCODE_DESTINATION` explicitly before running the quality gate.
 
 ## Project Layout

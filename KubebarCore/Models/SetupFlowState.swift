@@ -12,19 +12,22 @@ public struct SetupFlowState: Equatable, Sendable {
     public var watchlist: WatchlistSelectionState
     public var targetLoadingState: WatchTargetLoadingState
     public var configurationMessage: String?
+    public var refreshCadence: RefreshCadence
 
     public init(
         selectedContext: String? = nil,
         availableContexts: [String] = [],
         watchlist: WatchlistSelectionState = WatchlistSelectionState(),
         targetLoadingState: WatchTargetLoadingState = .idle,
-        configurationMessage: String? = nil
+        configurationMessage: String? = nil,
+        refreshCadence: RefreshCadence = .default
     ) {
         self.selectedContext = selectedContext
         self.availableContexts = availableContexts
         self.watchlist = watchlist
         self.targetLoadingState = targetLoadingState
         self.configurationMessage = configurationMessage
+        self.refreshCadence = refreshCadence
     }
 
     public var isConfigured: Bool {
@@ -86,6 +89,10 @@ public struct SetupFlowState: Equatable, Sendable {
 
     public var emptyWatchlistActionTitle: String {
         "Add watch target"
+    }
+
+    public var refreshCadenceHelpText: String {
+        "Refresh every \(refreshCadence.label)."
     }
 
     public mutating func selectContext(_ context: String?) {
