@@ -154,7 +154,7 @@ public struct HealthEvaluator: Sendable {
     private func makeDisplayItem(_ item: TrackedItemStatus, now: Date) -> WatchItemDisplay {
         WatchItemDisplay(
             id: item.target.displayTitle,
-            title: shortened(item.target.displayTitle),
+            title: item.target.displayTitle,
             state: item.state,
             reason: item.reason,
             detail: WatchItemDetailDisplay(
@@ -343,14 +343,6 @@ public struct HealthEvaluator: Sendable {
         }
 
         return "\(minutes / 60)h ago"
-    }
-
-    private func shortened(_ value: String, limit: Int = 42) -> String {
-        guard value.count > limit else {
-            return value
-        }
-
-        return String(value.prefix(limit - 1)) + "…"
     }
 
     private func shortenedWarningMessage(_ value: String?) -> String? {
