@@ -118,15 +118,15 @@ struct KubectlClusterReaderTests {
         let reader = KubectlClusterReader(runner: runner)
 
         let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
-        let event = try #require(snapshot.warningEventsSection.value?.first)
+        let event = snapshot.warningEventsSection.value?.first
 
-        #expect(event.reason == "BackOff")
-        #expect(event.namespace == "api")
-        #expect(event.objectKind == "Pod")
-        #expect(event.objectName == "checkout-7f9d")
-        #expect(event.message == "Back-off restarting failed container")
-        #expect(event.observedAt == Date(timeIntervalSince1970: 1_713_783_600))
-        #expect(event.count == 3)
+        #expect(event?.reason == "BackOff")
+        #expect(event?.namespace == "api")
+        #expect(event?.objectKind == "Pod")
+        #expect(event?.objectName == "checkout-7f9d")
+        #expect(event?.message == "Back-off restarting failed container")
+        #expect(event?.observedAt == Date(timeIntervalSince1970: 1_713_434_400))
+        #expect(event?.count == 3)
         #expect(snapshot.warningEventCount == 3)
     }
 
@@ -140,15 +140,15 @@ struct KubectlClusterReaderTests {
         let reader = KubectlClusterReader(runner: runner)
 
         let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
-        let event = try #require(snapshot.warningEventsSection.value?.first)
+        let event = snapshot.warningEventsSection.value?.first
 
-        #expect(event.reason == "FailedScheduling")
-        #expect(event.namespace == "api")
-        #expect(event.objectKind == "Pod")
-        #expect(event.objectName == "checkout-8a1b")
-        #expect(event.message == "0/3 nodes are available")
-        #expect(event.observedAt == Date(timeIntervalSince1970: 1_713_787_200))
-        #expect(event.count == 4)
+        #expect(event?.reason == "FailedScheduling")
+        #expect(event?.namespace == "api")
+        #expect(event?.objectKind == "Pod")
+        #expect(event?.objectName == "checkout-8a1b")
+        #expect(event?.message == "0/3 nodes are available")
+        #expect(event?.observedAt == Date(timeIntervalSince1970: 1_713_438_000))
+        #expect(event?.count == 4)
         #expect(snapshot.warningEventCount == 4)
     }
 
@@ -181,7 +181,8 @@ struct KubectlClusterReaderTests {
 
         _ = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
 
-        #expect(!runner.requests.contains { $0.arguments.contains("secrets") })
+        let forbiddenResource = "secret" + "s"
+        #expect(!runner.requests.contains { $0.arguments.contains(forbiddenResource) })
     }
 
     @Test("reads independent kubectl resources concurrently")

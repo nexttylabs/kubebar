@@ -12,22 +12,38 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     }
 
     public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
-        let rawSnapshot = try readRawSnapshot(contextName: contextName)
-        let nodes = try decodeNodes(rawSnapshot.nodes)
-        let pods = try decodePods(rawSnapshot.pods)
-        let warningEventCount = try decodeEventCount(rawSnapshot.warningEvents)
+        let rawSnapshot = readRawSnapshot(contextName: contextName)
+        let nodesSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodes)
+        let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
+        let podsSection = mappedSection(podRecordsSection) { pods in
+            PodSummary(running: pods.filter(\.isRunning).count, total: pods.count)
+        }
+        let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
+        let workloadsSection = mappedSection(podRecordsSection) { pods in
+            watchTargets.map { target in trackedStatus(for: target, pods: pods) }
+        }
+
+        guard nodesSection.isAvailable || podsSection.isAvailable || warningEventsSection.isAvailable || workloadsSection.isAvailable else {
+            throw KubectlCommandError.failed(
+                nodesSection.unavailableReason ??
+                    podsSection.unavailableReason ??
+                    warningEventsSection.unavailableReason ??
+                    workloadsSection.unavailableReason ??
+                    "kubectl failed"
+            )
+        }
 
         return ClusterSnapshot(
             contextName: contextName,
-            nodeSummary: nodes,
-            podSummary: PodSummary(running: pods.filter(\.isRunning).count, total: pods.count),
-            warningEventCount: warningEventCount,
-            trackedItems: watchTargets.map { target in trackedStatus(for: target, pods: pods) },
+            nodesSection: nodesSection,
+            podsSection: podsSection,
+            warningEventsSection: warningEventsSection,
+            workloadsSection: workloadsSection,
             capturedAt: now
         )
     }
 
-    private func readRawSnapshot(contextName: String) throws -> RawKubectlSnapshot {
+    private func readRawSnapshot(contextName: String) -> RawKubectlSnapshot {
         let results = LockedKubectlResults()
         let group = DispatchGroup()
 
@@ -48,21 +64,13 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
 
         group.wait()
 
-        let outputs = try Dictionary(
+        let outputs = Dictionary(
             uniqueKeysWithValues: KubectlRead.allCases.map { read in
-                guard let result = results.result(for: read) else {
-                    throw KubectlCommandError.failed("kubectl failed")
-                }
-
-                return (read, try result.get())
+                (read, results.result(for: read) ?? .failure(.failed("kubectl failed")))
             }
         )
 
-        return RawKubectlSnapshot(
-            nodes: outputs[.nodes] ?? "",
-            pods: outputs[.pods] ?? "",
-            warningEvents: outputs[.warningEvents] ?? ""
-        )
+        return RawKubectlSnapshot(results: outputs)
     }
 
     private func runKubectl(contextName: String, arguments: [String]) throws -> String {
@@ -78,11 +86,39 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
 
         guard result.exitCode == 0 else {
-            let message = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw KubectlCommandError.failed(message.isEmpty ? "kubectl failed" : message)
+            throw KubectlCommandError.failed(displaySafeFailureReason(result.standardError))
         }
 
-        return result.stdout
+        return result.standardOutput
+    }
+
+    private func decodedSection<Value: Equatable & Sendable>(
+        _ result: Result<String, KubectlCommandError>?,
+        decode: (String) throws -> Value
+    ) -> SnapshotSection<Value> {
+        guard let result else {
+            return .unavailable(reason: "kubectl failed")
+        }
+
+        do {
+            return .available(try decode(try result.get()))
+        } catch let error as KubectlCommandError {
+            return .unavailable(reason: displaySafeFailureReason(error.reason))
+        } catch {
+            return .unavailable(reason: displaySafeFailureReason(error.localizedDescription))
+        }
+    }
+
+    private func mappedSection<Input: Equatable & Sendable, Output: Equatable & Sendable>(
+        _ section: SnapshotSection<Input>,
+        transform: (Input) -> Output
+    ) -> SnapshotSection<Output> {
+        switch section {
+        case let .available(value):
+            .available(transform(value))
+        case let .unavailable(reason):
+            .unavailable(reason: reason)
+        }
     }
 
     private func decodeNodes(_ json: String) throws -> NodeSummary {
@@ -103,9 +139,12 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
     }
 
-    private func decodeEventCount(_ json: String) throws -> Int {
+    private func decodeWarningEvents(_ json: String) throws -> [WarningEventRecord] {
         do {
-            return try JSONDecoder().decode(EventList.self, from: Data(json.utf8)).items.count
+            return try JSONDecoder()
+                .decode(EventList.self, from: Data(json.utf8))
+                .items
+                .map(makeWarningEventRecord)
         } catch {
             throw KubectlCommandError.failed("invalid event JSON")
         }
@@ -133,6 +172,95 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             reason: reason
         )
     }
+
+    private func makeWarningEventRecord(_ event: EventRecord) -> WarningEventRecord {
+        let object = event.involvedObject ?? event.regarding
+        let reason = normalizedText(event.reason) ?? "Unknown"
+        let count = max(1, event.series?.count ?? event.deprecatedCount ?? event.count ?? 1)
+
+        return WarningEventRecord(
+            reason: reason,
+            namespace: normalizedText(object?.namespace) ?? normalizedText(event.metadata?.namespace),
+            objectKind: normalizedText(object?.kind),
+            objectName: normalizedText(object?.name),
+            message: normalizedText(event.message) ?? normalizedText(event.note),
+            observedAt: parsedTimestamp([
+                event.series?.lastObservedTime,
+                event.deprecatedLastTimestamp,
+                event.lastTimestamp,
+                event.eventTime,
+                event.metadata?.creationTimestamp
+            ]),
+            count: count
+        )
+    }
+
+    private func parsedTimestamp(_ values: [String?]) -> Date? {
+        for value in values.compactMap({ normalizedText($0) }) {
+            if let date = parsedTimestamp(value) {
+                return date
+            }
+        }
+
+        return nil
+    }
+
+    private func parsedTimestamp(_ value: String) -> Date? {
+        let standardFormatter = ISO8601DateFormatter()
+        if let date = standardFormatter.date(from: value) {
+            return date
+        }
+
+        let fractionalFormatter = ISO8601DateFormatter()
+        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractionalFormatter.date(from: value)
+    }
+
+    private func normalizedText(_ value: String?) -> String? {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let text, !text.isEmpty else {
+            return nil
+        }
+
+        return text
+    }
+
+    private func displaySafeFailureReason(_ raw: String) -> String {
+        let firstLine = raw
+            .split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty } ?? "kubectl failed"
+        let homeRedacted = firstLine
+            .replacingOccurrences(of: NSHomeDirectory(), with: "~")
+            .replacingOccurrences(of: #"/Users/[^/\s]+"#, with: "~", options: .regularExpression)
+        let lowercased = homeRedacted.lowercased()
+        let sensitiveMarkers = [
+            "token",
+            "password",
+            "client-key-data",
+            "client-certificate-data",
+            "certificate-authority-data"
+        ]
+
+        guard !sensitiveMarkers.contains(where: { lowercased.contains($0) }) else {
+            return "kubectl failed"
+        }
+
+        guard homeRedacted.count > 96 else {
+            return homeRedacted
+        }
+
+        return String(homeRedacted.prefix(96))
+    }
+}
+
+private extension KubectlCommandError {
+    var reason: String {
+        switch self {
+        case let .failed(reason):
+            reason
+        }
+    }
 }
 
 private enum KubectlRead: CaseIterable, Hashable, Sendable {
@@ -153,9 +281,11 @@ private enum KubectlRead: CaseIterable, Hashable, Sendable {
 }
 
 private struct RawKubectlSnapshot: Sendable {
-    let nodes: String
-    let pods: String
-    let warningEvents: String
+    let results: [KubectlRead: Result<String, KubectlCommandError>]
+
+    func result(for read: KubectlRead) -> Result<String, KubectlCommandError>? {
+        results[read]
+    }
 }
 
 private final class LockedKubectlResults: @unchecked Sendable {
@@ -200,14 +330,14 @@ private struct PodList: Decodable {
     let items: [PodRecord]
 }
 
-private struct PodRecord: Decodable {
-    struct Metadata: Decodable {
+private struct PodRecord: Decodable, Equatable, Sendable {
+    struct Metadata: Decodable, Equatable, Sendable {
         let namespace: String
         let name: String
         let labels: [String: String]?
     }
 
-    struct Status: Decodable {
+    struct Status: Decodable, Equatable, Sendable {
         let phase: String
     }
 
@@ -226,7 +356,36 @@ private struct PodRecord: Decodable {
 }
 
 private struct EventList: Decodable {
-    struct EventRecord: Decodable {}
-
     let items: [EventRecord]
+}
+
+private struct EventRecord: Decodable {
+    struct Metadata: Decodable {
+        let namespace: String?
+        let creationTimestamp: String?
+    }
+
+    struct ObjectReference: Decodable {
+        let kind: String?
+        let namespace: String?
+        let name: String?
+    }
+
+    struct Series: Decodable {
+        let count: Int?
+        let lastObservedTime: String?
+    }
+
+    let metadata: Metadata?
+    let reason: String?
+    let message: String?
+    let note: String?
+    let involvedObject: ObjectReference?
+    let regarding: ObjectReference?
+    let lastTimestamp: String?
+    let eventTime: String?
+    let count: Int?
+    let deprecatedCount: Int?
+    let deprecatedLastTimestamp: String?
+    let series: Series?
 }
