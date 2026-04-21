@@ -27,6 +27,8 @@ public struct RefreshCoordinator: Sendable {
             )
         }
 
+        let staleAfterSeconds = config.refreshIntervalSeconds * 2
+
         do {
             let snapshot = try reader.readSnapshot(
                 contextName: contextName,
@@ -36,16 +38,23 @@ public struct RefreshCoordinator: Sendable {
 
             return RefreshResult(
                 snapshot: snapshot,
-                display: evaluator.evaluate(snapshot: snapshot, now: now)
+                display: evaluator.evaluate(
+                    snapshot: snapshot,
+                    now: now,
+                    staleAfterSeconds: staleAfterSeconds
+                )
             )
         } catch {
+            let reason = previousSnapshot == nil ? "No previous cluster data" : failureReason(from: error)
+
             return RefreshResult(
                 snapshot: previousSnapshot,
                 display: evaluator.evaluate(
                     snapshot: nil,
                     previousSnapshot: previousSnapshot,
-                    failure: RefreshFailure(reason: failureReason(from: error)),
-                    now: now
+                    failure: RefreshFailure(reason: reason),
+                    now: now,
+                    staleAfterSeconds: staleAfterSeconds
                 )
             )
         }

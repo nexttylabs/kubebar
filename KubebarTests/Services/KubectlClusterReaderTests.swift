@@ -77,6 +77,32 @@ struct KubectlClusterReaderTests {
         }
     }
 
+    @Test("kubectl timeout reports short timeout reason")
+    func kubectlTimeoutReportsShortTimeoutReason() {
+        let reader = KubectlClusterReader(runner: ThrowingCommandRunner(error: CommandRunnerError.timedOut))
+
+        #expect(throws: KubectlCommandError.failed("kubectl timed out")) {
+            try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date())
+        }
+    }
+
+    @Test("kubectl command failure falls back for empty or unsafe stderr")
+    func kubectlCommandFailureFallsBackForEmptyOrUnsafeStderr() {
+        let emptyStderrReader = KubectlClusterReader(
+            runner: RecordingCommandRunner(result: CommandResult(output: "", error: "", exitCode: 1))
+        )
+        let unsafeStderrReader = KubectlClusterReader(
+            runner: RecordingCommandRunner(result: CommandResult(output: "", error: "token expired for cluster", exitCode: 1))
+        )
+
+        #expect(throws: KubectlCommandError.failed("kubectl failed")) {
+            try emptyStderrReader.readSnapshot(contextName: "prod", watchTargets: [], now: Date())
+        }
+        #expect(throws: KubectlCommandError.failed("kubectl failed")) {
+            try unsafeStderrReader.readSnapshot(contextName: "prod", watchTargets: [], now: Date())
+        }
+    }
+
     @Test("empty warning event list is available")
     func emptyWarningEventListIsAvailable() throws {
         let runner = FakeMultiCommandRunner(results: [
@@ -345,6 +371,14 @@ private final class RecordingCommandRunner: CommandRunning, @unchecked Sendable 
         recordedRequests.append(request)
         lock.unlock()
         return result
+    }
+}
+
+private struct ThrowingCommandRunner: CommandRunning {
+    let error: Error
+
+    func run(_ request: CommandRequest) throws -> CommandResult {
+        throw error
     }
 }
 

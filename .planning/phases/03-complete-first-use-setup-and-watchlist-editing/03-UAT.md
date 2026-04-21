@@ -8,15 +8,15 @@ source:
   - 03-04-SUMMARY.md
   - 03-05-SUMMARY.md
 started: 2026-04-20T14:28:06Z
-updated: 2026-04-21T01:27:08Z
+updated: 2026-04-21T10:43:25Z
 ---
 
 ## Current Test
 
-number: 1
-name: First-use setup loads real watch targets
+number: 3
+name: Edit watchlist updates saved choices
 expected: |
-  Open setup, choose a Kubernetes context, and see loading followed by namespace choices plus namespace-grouped workload choices.
+  Click Edit watchlist from the menu, change the selected namespace/workload choices, finish setup again, and see the menu refresh using the updated watchlist.
 awaiting: user response
 
 ## Tests
@@ -29,7 +29,14 @@ severity: major
 
 ### 2. Finish setup saves selected watchlist and refreshes
 expected: Select at least one namespace or workload. Finish setup becomes enabled. Clicking Finish setup closes setup and the menu refreshes using the saved context and selected watchlist.
-result: [pending]
+result: blocked
+blocked_by: other
+reason: Computer Use could not access or operate the Kubebar menu bar extra.
+evidence:
+  - "./scripts/compile-and-run.sh completed successfully and launched DerivedData/Build/Products/Debug/Kubebar.app"
+  - "Swift test run passed with 74 tests in 14 suites"
+  - "Computer Use timed out reading Kubebar, com.nextty.kubebar, SystemUIServer, and com.apple.controlcenter"
+  - "Computer Use could read Finder normally, so the blocker is the menu bar extra accessibility path"
 
 ### 3. Edit watchlist updates saved choices
 expected: Click Edit watchlist from the menu, change the selected namespace/workload choices, finish setup again, and see the menu refresh using the updated watchlist.
@@ -44,9 +51,9 @@ result: [pending]
 total: 4
 passed: 0
 issues: 1
-pending: 3
+pending: 2
 skipped: 0
-blocked: 0
+blocked: 1
 
 ## Gaps
 

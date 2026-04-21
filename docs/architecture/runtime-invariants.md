@@ -32,10 +32,17 @@ These are the rules Kubebar must keep true at runtime.
 ## Freshness Rules
 
 - Old data never looks current.
+- A successful snapshot older than `2x` the saved refresh cadence must be shown
+  as `Stale`, even when its counters and watchlist rows were healthy when
+  captured.
 - A failed refresh may keep the previous snapshot only when the UI marks it
   `Stale`.
+- Repeated refresh failures keep the last successful snapshot only as stale data
+  and update the safe stale reason without clearing counters or watchlist rows.
 - Stale state must show the last successful update and the failure reason when
   one is available.
+- If refresh fails before any successful snapshot exists, the stale reason is
+  `No previous cluster data`.
 - If no valid configuration exists, the app shows setup or recovery state
   instead of healthy cluster content.
 
@@ -57,8 +64,13 @@ These are the rules Kubebar must keep true at runtime.
 
 ## Failure Rules
 
-- Command failures, parse failures, and timeouts are surfaced as refresh
-  failures.
+- Timeout, command failure, malformed JSON, and no previous data are distinct
+  safe reason categories.
+- Timeout uses `kubectl timed out`.
+- Empty or unsafe command failure output uses `kubectl failed`.
+- Malformed section data uses short reasons such as `invalid node JSON`,
+  `invalid pod JSON`, `invalid event JSON`, or `invalid workload JSON`.
+- No previous successful data uses `No previous cluster data`.
 - A refresh failure must never silently clear the last good data.
 - Warning and failure states must not rely on color alone.
 - Stale or failed reads must use distinct icon semantics from `OK`.

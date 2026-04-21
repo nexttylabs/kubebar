@@ -17,6 +17,7 @@ final class MenuBarViewModel: ObservableObject {
     }
     @Published private(set) var isShowingSetup: Bool
     @Published private(set) var refreshCadence: RefreshCadence
+    @Published private(set) var isRefreshing: Bool
 
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
@@ -27,7 +28,10 @@ final class MenuBarViewModel: ObservableObject {
     private var runtimeState: MenuRuntimeState
     private var isPublishingRuntimeState: Bool
     private var refreshLoopTask: Task<Void, Never>?
+    private var freshnessTimerTask: Task<Void, Never>?
     private var watchTargetLoadTask: Task<Void, Never>?
+    private var refreshGate: RefreshGate
+    private var staleReason: String?
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -54,6 +58,9 @@ final class MenuBarViewModel: ObservableObject {
         self.setupState = runtimeState.setupState
         self.isShowingSetup = runtimeState.isShowingSetup
         self.refreshCadence = runtimeState.setupState.refreshCadence
+        self.isRefreshing = false
+        self.refreshGate = RefreshGate()
+        self.staleReason = nil
         self.display = Self.initialDisplay(for: config, now: now)
 
         if runtimeState.isShowingSetup {
@@ -70,21 +77,48 @@ final class MenuBarViewModel: ObservableObject {
 
     deinit {
         refreshLoopTask?.cancel()
+        freshnessTimerTask?.cancel()
         watchTargetLoadTask?.cancel()
     }
 
     func refreshNow() {
+        performRefresh(queueIfBusy: false)
+    }
+
+    private func performRefresh(queueIfBusy: Bool) {
+        updateFreshnessDisplay()
+
+        guard let ticket = refreshGate.begin(config: config) else {
+            if queueIfBusy {
+                refreshGate.requestPendingRefresh()
+            }
+            return
+        }
+
+        isRefreshing = true
         let config = config
         let previousSnapshot = snapshot
         let refreshCoordinator = refreshCoordinator
 
         Task {
+            defer {
+                let shouldRunPendingRefresh = refreshGate.finishAndConsumePendingRefresh()
+                isRefreshing = false
+
+                if shouldRunPendingRefresh {
+                    performRefresh(queueIfBusy: false)
+                }
+            }
+
             let result = await Task.detached(priority: .userInitiated) {
                 refreshCoordinator.refresh(config: config, previousSnapshot: previousSnapshot, now: Date())
             }.value
 
-            snapshot = result.snapshot
-            display = result.display
+            guard refreshGate.shouldApply(ticket, currentConfig: self.config) else {
+                return
+            }
+
+            applyRefreshResult(result)
         }
     }
 
@@ -107,9 +141,11 @@ final class MenuBarViewModel: ObservableObject {
 
         do {
             try configStore.save(config)
+            invalidateRefreshState(clearSnapshot: true)
+            display = Self.initialDisplay(for: config, now: Date())
             runtimeState.completeSetupSaved()
             publishRuntimeState()
-            refreshNow()
+            performRefresh(queueIfBusy: true)
             startRefreshLoopIfConfigured()
         } catch {
             runtimeState.markConfigurationSaveFailed("Could not save setup. Try again.")
@@ -143,6 +179,11 @@ final class MenuBarViewModel: ObservableObject {
 
         do {
             try configStore.save(config)
+            invalidateRefreshState(clearSnapshot: false)
+            updateFreshnessDisplay()
+            if isRefreshing {
+                refreshGate.requestPendingRefresh()
+            }
             startRefreshLoopIfConfigured()
         } catch {
             display = HealthEvaluator().evaluate(
@@ -260,6 +301,76 @@ final class MenuBarViewModel: ObservableObject {
                 await MainActor.run {
                     self?.refreshNow()
                 }
+            }
+        }
+    }
+
+    private func invalidateRefreshState(clearSnapshot: Bool) {
+        refreshGate.invalidate()
+        freshnessTimerTask?.cancel()
+        freshnessTimerTask = nil
+        staleReason = nil
+
+        if clearSnapshot {
+            snapshot = nil
+        }
+    }
+
+    private func applyRefreshResult(_ result: RefreshResult) {
+        snapshot = result.snapshot
+        display = result.display
+        staleReason = result.display.staleBanner?.reason
+        scheduleFreshnessTimer()
+    }
+
+    private func updateFreshnessDisplay(now: Date = Date()) {
+        guard let snapshot else {
+            return
+        }
+
+        let staleAfterSeconds = config.refreshIntervalSeconds * 2
+
+        if let staleReason, staleReason != "Last refresh is too old" {
+            display = HealthEvaluator().evaluate(
+                snapshot: nil,
+                previousSnapshot: snapshot,
+                failure: RefreshFailure(reason: staleReason),
+                now: now,
+                staleAfterSeconds: staleAfterSeconds
+            )
+        } else {
+            display = HealthEvaluator().evaluate(
+                snapshot: snapshot,
+                now: now,
+                staleAfterSeconds: staleAfterSeconds
+            )
+        }
+
+        staleReason = display.staleBanner?.reason
+    }
+
+    private func scheduleFreshnessTimer(now: Date = Date()) {
+        freshnessTimerTask?.cancel()
+        freshnessTimerTask = nil
+
+        guard let snapshot, !config.needsSetup else {
+            return
+        }
+
+        let staleAfterSeconds = config.refreshIntervalSeconds * 2
+        let elapsedSeconds = max(0, Int(now.timeIntervalSince(snapshot.capturedAt)))
+        let delaySeconds = max(0, staleAfterSeconds + 1 - elapsedSeconds)
+        let delayNanoseconds = UInt64(delaySeconds) * 1_000_000_000
+
+        freshnessTimerTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: delayNanoseconds)
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                self?.updateFreshnessDisplay()
             }
         }
     }
