@@ -39,7 +39,7 @@ struct MenuBarRootView: View {
             StaleBannerView(banner: display.staleBanner)
             CompactCountersView(counters: display.counters)
             WatchlistSectionView(display: display)
-            WarningEventsView(count: display.counters.warningEvents)
+            WarningEventsView(count: display.counters.warningEvents, summaries: display.warningEventSummaries, sectionNotices: display.sectionNotices)
             NodeDetailsView(summary: display.counters.nodes)
             Divider()
             refreshControls
