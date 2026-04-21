@@ -21,7 +21,13 @@ struct KubebarApp: App {
             )
         } label: {
             let presentation = MenuBarStatusPresentation(state: viewModel.display.state)
-            Label(presentation.accessibilityLabel, systemImage: presentation.symbolName)
+            switch presentation.icon {
+            case let .system(name):
+                Label(presentation.accessibilityLabel, systemImage: name)
+            case let .custom(name):
+                Image(name)
+                    .accessibilityLabel(presentation.accessibilityLabel)
+            }
         }
         .menuBarExtraStyle(.window)
     }
