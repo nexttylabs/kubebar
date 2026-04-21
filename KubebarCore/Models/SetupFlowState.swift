@@ -1,20 +1,29 @@
 import Foundation
 
+public enum WatchTargetLoadingState: Equatable, Sendable {
+    case idle
+    case loading
+    case failed(String)
+}
+
 public struct SetupFlowState: Equatable, Sendable {
     public var selectedContext: String?
     public var availableContexts: [String]
     public var watchlist: WatchlistSelectionState
+    public var targetLoadingState: WatchTargetLoadingState
     public var configurationMessage: String?
 
     public init(
         selectedContext: String? = nil,
         availableContexts: [String] = [],
         watchlist: WatchlistSelectionState = WatchlistSelectionState(),
+        targetLoadingState: WatchTargetLoadingState = .idle,
         configurationMessage: String? = nil
     ) {
         self.selectedContext = selectedContext
         self.availableContexts = availableContexts
         self.watchlist = watchlist
+        self.targetLoadingState = targetLoadingState
         self.configurationMessage = configurationMessage
     }
 
@@ -55,6 +64,19 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public var watchlistHelpText: String {
+        if !watchlist.isEmpty {
+            return watchlist.selectionSummary
+        }
+
+        switch targetLoadingState {
+        case .loading:
+            return "Loading watch targets for the selected context."
+        case let .failed(reason):
+            return reason.isEmpty ? "Could not load watch targets." : reason
+        case .idle:
+            break
+        }
+
         if watchlist.isEmpty {
             return watchlist.emptyStateMessage
         }

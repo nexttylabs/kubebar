@@ -8,12 +8,23 @@ struct MenuBarRootView: View {
     let onRefresh: () -> Void
     let onEditWatchlist: () -> Void
     let onCompleteSetup: () -> Void
+    let onSelectContext: (String?) -> Void
+    let onRetryTargets: () -> Void
 
     var body: some View {
         Group {
             if isShowingSetup {
-                SetupView(state: $setupState, onComplete: onCompleteSetup)
-                    .frame(width: 560)
+                SetupView(
+                    state: $setupState,
+                    onComplete: onCompleteSetup,
+                    onSelectContext: onSelectContext,
+                    onRetryTargets: onRetryTargets
+                )
+                    .frame(
+                        width: Layout.setupWidth,
+                        height: Layout.setupHeight,
+                        alignment: .topLeading
+                    )
             } else {
                 menuContent
             }
@@ -41,5 +52,10 @@ struct MenuBarRootView: View {
             Spacer()
             Button("Edit watchlist", action: onEditWatchlist)
         }
+    }
+
+    private enum Layout {
+        static let setupWidth: CGFloat = 560
+        static let setupHeight: CGFloat = 560
     }
 }

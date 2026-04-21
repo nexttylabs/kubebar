@@ -4,13 +4,19 @@ import KubebarCore
 struct SetupView: View {
     @Binding var state: SetupFlowState
     let onComplete: () -> Void
+    let onSelectContext: (String?) -> Void
+    let onRetryTargets: () -> Void
 
     init(
         state: Binding<SetupFlowState>,
-        onComplete: @escaping () -> Void = {}
+        onComplete: @escaping () -> Void = {},
+        onSelectContext: @escaping (String?) -> Void = { _ in },
+        onRetryTargets: @escaping () -> Void = {}
     ) {
         _state = state
         self.onComplete = onComplete
+        self.onSelectContext = onSelectContext
+        self.onRetryTargets = onRetryTargets
     }
 
     var body: some View {
@@ -67,7 +73,9 @@ struct SetupView: View {
 
     private var watchlistPicker: some View {
         WatchlistPickerView(
-            state: watchlistBinding
+            state: watchlistBinding,
+            loadingState: state.targetLoadingState,
+            onRetryTargets: onRetryTargets
         )
     }
 
@@ -94,7 +102,7 @@ struct SetupView: View {
     private var selectedContextBinding: Binding<String?> {
         Binding(
             get: { state.selectedContext },
-            set: { state.selectedContext = $0 }
+            set: { onSelectContext($0) }
         )
     }
 

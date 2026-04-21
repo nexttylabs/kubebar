@@ -21,7 +21,7 @@ struct AppConfigStoreTests {
         let config = AppConfig(
             selectedContext: "prod",
             watchTargets: [
-                .workload(namespace: "api", name: "checkout"),
+                .workload(namespace: "api", name: "checkout", kind: .deployment),
                 .namespace("monitoring")
             ],
             refreshIntervalSeconds: 60
@@ -41,6 +41,40 @@ struct AppConfigStoreTests {
 
         #expect(throws: AppConfigStoreError.corruptConfig) {
             try store.load()
+        }
+    }
+
+    @Test("old workload config decodes with deployment kind")
+    func oldWorkloadConfigDecodesWithDeploymentKind() throws {
+        let directory = makeTemporaryDirectory()
+        let configURL = directory.appendingPathComponent("config.json")
+        let json = """
+        {
+          "selectedContext": "prod",
+          "refreshIntervalSeconds": 60,
+          "watchTargets": [
+            {"workload": {"namespace": "api", "name": "checkout"}}
+          ]
+        }
+        """
+        try json.write(to: configURL, atomically: true, encoding: .utf8)
+        let store = AppConfigStore(directory: directory)
+
+        let config = try store.load()
+
+        #expect(config.watchTargets == [.workload(namespace: "api", name: "checkout", kind: .deployment)])
+        #expect(config.refreshIntervalSeconds == 60)
+    }
+
+    @Test("save failure reports cannot save")
+    func saveFailureReportsCannotSave() throws {
+        let directory = makeTemporaryDirectory()
+        let blockedDirectory = directory.appendingPathComponent("not-a-directory")
+        try "file".write(to: blockedDirectory, atomically: true, encoding: .utf8)
+        let store = AppConfigStore(directory: blockedDirectory)
+
+        #expect(throws: AppConfigStoreError.cannotSave) {
+            try store.save(AppConfig(selectedContext: "prod", watchTargets: [.namespace("api")]))
         }
     }
 

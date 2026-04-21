@@ -9,21 +9,21 @@ struct WatchlistSelectionStateTests {
 
         #expect(state.isEmpty)
         #expect(state.emptyStateTitle == "No watch targets available")
-        #expect(state.emptyStateMessage == "Add a namespace or workload source to start building the watchlist.")
+        #expect(state.emptyStateMessage == "Choose a cluster context or retry loading watch targets.")
     }
 
     @Test("toggle helpers select and clear targets")
     func toggleHelpersSelectAndClearTargets() {
         var state = WatchlistSelectionState(
             availableNamespaces: ["api", "monitoring"],
-            availableWorkloads: [.workload(namespace: "api", name: "checkout")]
+            availableWorkloads: [.workload(namespace: "api", name: "checkout", kind: .deployment)]
         )
 
         state.toggleNamespace("api")
         state.toggleWorkload(namespace: "api", name: "checkout")
 
         #expect(state.isSelected(.namespace("api")))
-        #expect(state.isSelected(.workload(namespace: "api", name: "checkout")))
+        #expect(state.isSelected(.workload(namespace: "api", name: "checkout", kind: .deployment)))
         #expect(state.selectedCount == 2)
 
         state.toggle(.namespace("api"))
@@ -31,5 +31,29 @@ struct WatchlistSelectionStateTests {
         #expect(!state.isSelected(.namespace("api")))
         #expect(state.selectedCount == 1)
         #expect(state.selectionSummary == "1 target selected")
+    }
+
+    @Test("candidate replacement preserves selected targets")
+    func candidateReplacementPreservesSelectedTargets() {
+        var state = WatchlistSelectionState(
+            selectedTargets: [.workload(namespace: "api", name: "checkout", kind: .deployment)]
+        )
+
+        state.replaceAvailableTargets(
+            WatchlistCandidates(
+                namespaces: ["api"],
+                workloads: [.workload(namespace: "api", name: "checkout", kind: .deployment)]
+            )
+        )
+
+        #expect(state.availableNamespaces == ["api"])
+        #expect(state.availableWorkloads.map(\.displayTitle) == ["Deployment checkout"])
+        #expect(state.isSelected(.workload(namespace: "api", name: "checkout", kind: .deployment)))
+
+        state.clearAvailableTargets()
+
+        #expect(state.availableNamespaces.isEmpty)
+        #expect(state.availableWorkloads.isEmpty)
+        #expect(state.isSelected(.workload(namespace: "api", name: "checkout", kind: .deployment)))
     }
 }

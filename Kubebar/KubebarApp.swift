@@ -1,14 +1,9 @@
-import AppKit
 import SwiftUI
 import KubebarCore
 
 @main
 struct KubebarApp: App {
     @StateObject private var viewModel = MenuBarViewModel()
-
-    init() {
-        NSApplication.shared.setActivationPolicy(.accessory)
-    }
 
     var body: some Scene {
         MenuBarExtra {
@@ -18,7 +13,9 @@ struct KubebarApp: App {
                 isShowingSetup: viewModel.isShowingSetup,
                 onRefresh: viewModel.refreshNow,
                 onEditWatchlist: viewModel.openSetup,
-                onCompleteSetup: viewModel.completeSetup
+                onCompleteSetup: viewModel.completeSetup,
+                onSelectContext: viewModel.selectSetupContext,
+                onRetryTargets: viewModel.retryWatchTargetLoad
             )
         } label: {
             let presentation = MenuBarStatusPresentation(state: viewModel.display.state)

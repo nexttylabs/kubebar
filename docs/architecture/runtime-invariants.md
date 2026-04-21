@@ -37,6 +37,12 @@ These are the rules Kubebar must keep true at runtime.
 - The watchlist is ordered by attention, not by raw cluster size.
 - An empty watchlist is a real state and must not be treated as a healthy
   cluster.
+- Setup candidate discovery must use the app-owned selected context.
+- Watchlist setup candidates include namespaces plus Deployment, StatefulSet,
+  DaemonSet, and CronJob workloads.
+- Historical Job objects are not default setup candidates.
+- Candidate discovery failure must preserve selected targets and show a retry
+  path.
 
 ## Failure Rules
 
@@ -44,4 +50,3 @@ These are the rules Kubebar must keep true at runtime.
   failures.
 - A refresh failure must never silently clear the last good data.
 - Warning and failure states must not rely on color alone.
-

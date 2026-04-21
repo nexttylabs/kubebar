@@ -11,6 +11,7 @@ final class MenuBarViewModel: ObservableObject {
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
     private let contextCatalog: ContextCatalog
+    private let watchTargetCatalog: any WatchTargetCataloging
     private var config: AppConfig
     private var snapshot: ClusterSnapshot?
 
@@ -18,11 +19,13 @@ final class MenuBarViewModel: ObservableObject {
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
         refreshCoordinator: RefreshCoordinator = RefreshCoordinator(),
         contextCatalog: ContextCatalog = ContextCatalog(),
+        watchTargetCatalog: any WatchTargetCataloging = WatchTargetCatalog(),
         now: Date = Date()
     ) {
         self.configStore = configStore
         self.refreshCoordinator = refreshCoordinator
         self.contextCatalog = contextCatalog
+        self.watchTargetCatalog = watchTargetCatalog
 
         do {
             self.config = try configStore.load()
@@ -38,7 +41,13 @@ final class MenuBarViewModel: ObservableObject {
         self.isShowingSetup = config.needsSetup
         self.display = Self.initialDisplay(for: config, now: now)
 
-        if !config.needsSetup {
+        if config.needsSetup {
+            loadContexts()
+
+            if let selectedContext = setupState.selectedContext {
+                loadWatchTargets(for: selectedContext)
+            }
+        } else {
             refreshNow()
         }
     }
@@ -61,6 +70,10 @@ final class MenuBarViewModel: ObservableObject {
     func openSetup() {
         isShowingSetup = true
         loadContexts()
+
+        if let selectedContext = setupState.selectedContext {
+            loadWatchTargets(for: selectedContext)
+        }
     }
 
     func completeSetup() {
@@ -81,6 +94,27 @@ final class MenuBarViewModel: ObservableObject {
         } catch {
             setupState.configurationMessage = "Could not save setup. Try again."
         }
+    }
+
+    func selectSetupContext(_ context: String?) {
+        setupState.selectedContext = context
+        setupState.watchlist.clearAvailableTargets()
+
+        guard let context else {
+            setupState.targetLoadingState = .idle
+            return
+        }
+
+        loadWatchTargets(for: context)
+    }
+
+    func retryWatchTargetLoad() {
+        guard let selectedContext = setupState.selectedContext else {
+            setupState.targetLoadingState = .idle
+            return
+        }
+
+        loadWatchTargets(for: selectedContext)
     }
 
     private static var defaultConfigDirectory: URL {
@@ -113,5 +147,38 @@ final class MenuBarViewModel: ObservableObject {
 
             setupState.availableContexts = contexts
         }
+    }
+
+    private func loadWatchTargets(for context: String) {
+        let watchTargetCatalog = watchTargetCatalog
+        setupState.targetLoadingState = .loading
+
+        Task {
+            let result = await Task.detached(priority: .userInitiated) {
+                Result {
+                    try watchTargetCatalog.listCandidates(contextName: context)
+                }
+            }.value
+
+            guard setupState.selectedContext == context else {
+                return
+            }
+
+            switch result {
+            case let .success(candidates):
+                setupState.watchlist.replaceAvailableTargets(candidates)
+                setupState.targetLoadingState = .idle
+            case let .failure(error):
+                setupState.targetLoadingState = .failed(Self.failureReason(from: error))
+            }
+        }
+    }
+
+    private static func failureReason(from error: Error) -> String {
+        if case let KubectlCommandError.failed(reason) = error {
+            return reason
+        }
+
+        return error.localizedDescription
     }
 }
