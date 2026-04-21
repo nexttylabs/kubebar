@@ -10,6 +10,8 @@ public struct RefreshFailure: Equatable, Sendable {
 
 public struct HealthEvaluator: Sendable {
     private let visibleWatchItemLimit: Int
+    private let warningEventSummaryLimit = 3
+    private let warningMessageLimit = 96
 
     public init(visibleWatchItemLimit: Int = 5) {
         self.visibleWatchItemLimit = visibleWatchItemLimit
@@ -47,9 +49,10 @@ public struct HealthEvaluator: Sendable {
         now: Date
     ) -> MenuDisplayModel {
         let sortedItems = sortByAttention(snapshot.trackedItems)
-        let visibleItems = sortedItems.prefix(visibleWatchItemLimit).map(makeDisplayItem)
+        let visibleItems = sortedItems.prefix(visibleWatchItemLimit).map { makeDisplayItem($0, now: now) }
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let resolvedState = stateOverride ?? evaluateState(snapshot)
+        let warningEventSummaries = makeWarningEventSummaries(from: snapshot.warningEventsSection.value ?? [], now: now)
 
         return MenuDisplayModel(
             state: resolvedState,
@@ -62,7 +65,8 @@ public struct HealthEvaluator: Sendable {
             ),
             visibleWatchItems: Array(visibleItems),
             hiddenWatchItemCount: hiddenCount,
-            staleBanner: staleBanner(for: resolvedState, snapshot: snapshot, failure: failure, now: now)
+            staleBanner: staleBanner(for: resolvedState, snapshot: snapshot, failure: failure, now: now),
+            warningEventSummaries: warningEventSummaries
         )
     }
 
@@ -90,13 +94,105 @@ public struct HealthEvaluator: Sendable {
         }
     }
 
-    private func makeDisplayItem(_ item: TrackedItemStatus) -> WatchItemDisplay {
+    private func makeDisplayItem(_ item: TrackedItemStatus, now: Date) -> WatchItemDisplay {
         WatchItemDisplay(
             id: item.target.displayTitle,
             title: shortened(item.target.displayTitle),
             state: item.state,
-            reason: item.reason
+            reason: item.reason,
+            detail: WatchItemDetailDisplay(
+                stateLabel: item.state.label,
+                reason: item.reason,
+                affectedPodCount: item.affectedPodCount,
+                examplePodNames: Array(item.examplePodNames.prefix(3)),
+                latestWarning: item.latestWarning.map { makeWarningEventDisplay(from: $0, now: now) }
+            )
         )
+    }
+
+    private func makeWarningEventSummaries(from warningEvents: [WarningEventRecord], now: Date) -> [WarningEventDisplay] {
+        var groups: [WarningEventGroupKey: WarningEventGroup] = [:]
+
+        for event in warningEvents {
+            let key = WarningEventGroupKey(event: event)
+            groups[key, default: WarningEventGroup(key: key, reason: event.reason)]
+                .add(event, message: shortenedWarningMessage(event.message))
+        }
+
+        return groups.values
+            .sorted { left, right in
+                let leftDate = left.observedAt ?? .distantPast
+                let rightDate = right.observedAt ?? .distantPast
+
+                if leftDate != rightDate {
+                    return leftDate > rightDate
+                }
+
+                if left.reason != right.reason {
+                    return left.reason < right.reason
+                }
+
+                return warningLocation(namespace: left.key.namespace, objectKind: left.key.objectKind, objectName: left.key.objectName) <
+                    warningLocation(namespace: right.key.namespace, objectKind: right.key.objectKind, objectName: right.key.objectName)
+            }
+            .prefix(warningEventSummaryLimit)
+            .map { group in
+                WarningEventDisplay(
+                    id: group.key.id,
+                    reason: group.reason,
+                    location: warningLocation(
+                        namespace: group.key.namespace,
+                        objectKind: group.key.objectKind,
+                        objectName: group.key.objectName
+                    ),
+                    age: warningAge(from: group.observedAt, to: now),
+                    occurrenceCount: group.occurrenceCount,
+                    message: group.message
+                )
+            }
+    }
+
+    private func makeWarningEventDisplay(from event: WarningEventRecord, now: Date) -> WarningEventDisplay {
+        WarningEventDisplay(
+            id: WarningEventGroupKey(event: event).id,
+            reason: event.reason,
+            location: warningLocation(
+                namespace: event.namespace,
+                objectKind: event.objectKind,
+                objectName: event.objectName
+            ),
+            age: warningAge(from: event.observedAt, to: now),
+            occurrenceCount: max(1, event.count),
+            message: shortenedWarningMessage(event.message)
+        )
+    }
+
+    private func warningLocation(namespace: String?, objectKind: String?, objectName: String?) -> String {
+        let namespace = normalizedText(namespace)
+        let objectKind = normalizedText(objectKind)
+        let objectName = normalizedText(objectName)
+
+        if let namespace, let objectKind, let objectName {
+            return "\(namespace)/\(objectKind.lowercased())/\(objectName)"
+        }
+
+        if let namespace, let objectName {
+            return "\(namespace)/\(objectName)"
+        }
+
+        if let objectName {
+            return objectName
+        }
+
+        return "unknown object"
+    }
+
+    private func warningAge(from date: Date?, to now: Date) -> String {
+        guard let date else {
+            return "recently"
+        }
+
+        return relativeAge(from: date, to: now)
     }
 
     private func healthSentence(for state: ClusterHealthState, visibleItems: [WatchItemDisplay]) -> String {
@@ -149,5 +245,78 @@ public struct HealthEvaluator: Sendable {
         }
 
         return String(value.prefix(limit - 1)) + "…"
+    }
+
+    private func shortenedWarningMessage(_ value: String?) -> String? {
+        guard let value = normalizedText(value) else {
+            return nil
+        }
+
+        guard value.count > warningMessageLimit else {
+            return value
+        }
+
+        return String(value.prefix(warningMessageLimit))
+    }
+
+    private func normalizedText(_ value: String?) -> String? {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let text, !text.isEmpty else {
+            return nil
+        }
+
+        return text
+    }
+}
+
+private struct WarningEventGroupKey: Hashable, Sendable {
+    let reason: String
+    let objectKind: String?
+    let namespace: String?
+    let objectName: String?
+
+    init(event: WarningEventRecord) {
+        self.reason = event.reason
+        self.objectKind = event.objectKind
+        self.namespace = event.namespace
+        self.objectName = event.objectName
+    }
+
+    var id: String {
+        [reason, objectKind, namespace, objectName]
+            .map { $0 ?? "-" }
+            .joined(separator: "|")
+    }
+}
+
+private struct WarningEventGroup: Sendable {
+    let key: WarningEventGroupKey
+    let reason: String
+    private(set) var observedAt: Date?
+    private(set) var occurrenceCount = 0
+    private(set) var message: String?
+    private var messageObservedAt: Date?
+
+    init(key: WarningEventGroupKey, reason: String) {
+        self.key = key
+        self.reason = reason
+    }
+
+    mutating func add(_ event: WarningEventRecord, message: String?) {
+        occurrenceCount += max(1, event.count)
+
+        if let observedAt = event.observedAt {
+            self.observedAt = max(self.observedAt ?? .distantPast, observedAt)
+        }
+
+        guard let message else {
+            return
+        }
+
+        let eventObservedAt = event.observedAt ?? .distantPast
+        if self.message == nil || eventObservedAt >= (messageObservedAt ?? .distantPast) {
+            self.message = message
+            self.messageObservedAt = eventObservedAt
+        }
     }
 }
