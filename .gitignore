@@ -11,3 +11,4 @@ xcuserdata/
 .env
 .env.local
 !.env.example
+.skill-archive/

@@ -12,7 +12,14 @@ let package = Package(
         .library(name: "KubebarCore", targets: ["KubebarCore"])
     ],
     targets: [
-        .executableTarget(name: "Kubebar", dependencies: ["KubebarCore"], path: "Kubebar"),
+        .executableTarget(
+            name: "Kubebar",
+            dependencies: ["KubebarCore"],
+            path: "Kubebar",
+            resources: [
+                .process("Assets.xcassets")
+            ]
+        ),
         .target(name: "KubebarCore", path: "KubebarCore"),
         .testTarget(name: "KubebarCoreTests", dependencies: ["KubebarCore"], path: "KubebarTests")
     ]

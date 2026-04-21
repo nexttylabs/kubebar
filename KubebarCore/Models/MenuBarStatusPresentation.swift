@@ -1,10 +1,28 @@
 import Foundation
 
 public struct MenuBarStatusPresentation: Equatable, Sendable {
+    public enum IconSource: Equatable, Sendable {
+        case system(String)
+        case custom(String)
+    }
+
     public let state: ClusterHealthState
 
     public init(state: ClusterHealthState) {
         self.state = state
+    }
+
+    public var icon: IconSource {
+        switch state {
+        case .ok:
+            .custom("KubebarLogo")
+        case .watch:
+            .system("exclamationmark.triangle")
+        case .bad:
+            .system("xmark.octagon")
+        case .stale:
+            .system("clock.badge.exclamationmark")
+        }
     }
 
     public var symbolName: String {
