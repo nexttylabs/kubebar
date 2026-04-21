@@ -265,6 +265,57 @@ struct MenuDisplayModelTests {
         #expect(display.visibleWatchItems.first?.detail.latestWarning?.reason == "BackOff")
         #expect(display.visibleWatchItems.first?.detail.latestWarning?.occurrenceCount == 2)
     }
+
+    @Test("unavailable warning events use dash counter and watch state")
+    func unavailableWarningEventsUseDashCounterAndWatchState() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .unavailable(reason: "invalid event JSON"),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.counters.warningEvents == "-")
+        #expect(display.state == .watch)
+        #expect(display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
+    }
+
+    @Test("unavailable pods use dash counter")
+    func unavailablePodsUseDashCounter() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .unavailable(reason: "invalid pod JSON"),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.counters.pods == "-")
+        #expect(display.state == .watch)
+    }
+
+    @Test("unavailable section prevents otherwise healthy ok state")
+    func unavailableSectionPreventsOtherwiseHealthyOKState() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .unavailable(reason: "invalid workload JSON"),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.state == .watch)
+    }
 }
 
 private func warningEvent(
