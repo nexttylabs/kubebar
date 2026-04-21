@@ -16,11 +16,14 @@ struct WatchlistSectionView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(display.visibleWatchItems) { item in
-                    DisclosureGroup {
-                        TrackedItemDetailView(item: item)
-                    } label: {
-                        WatchlistRowView(item: item)
-                    }
+                    DisclosureGroup(
+                        content: {
+                            TrackedItemDetailView(item: item)
+                        },
+                        label: {
+                            WatchlistRowView(item: item)
+                        }
+                    )
                 }
             }
 

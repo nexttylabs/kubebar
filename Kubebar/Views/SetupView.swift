@@ -119,6 +119,7 @@ struct SetupView: View {
 
             Button("Finish setup", action: onComplete)
                 .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
                 .disabled(!state.isConfigured)
         }
     }
