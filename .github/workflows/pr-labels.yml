@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -25,8 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Classify PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
-        run: bash .github/scripts/pr-labeler.sh
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const classify = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/pr-labeler.js`)
+            await classify({ github, context, core })
