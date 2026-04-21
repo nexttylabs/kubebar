@@ -50,6 +50,54 @@ struct RefreshCoordinatorTests {
         #expect(result.display.staleBanner?.lastUpdated == "2m ago")
     }
 
+    @Test("failed refresh with no previous snapshot shows no previous data")
+    func failedRefreshWithNoPreviousSnapshotShowsNoPreviousData() {
+        let coordinator = RefreshCoordinator(reader: FakeClusterReader(result: .failure(KubectlCommandError.failed("kubectl timed out"))))
+
+        let result = coordinator.refresh(
+            config: AppConfig(selectedContext: "prod", watchTargets: [.workload(namespace: "api", name: "checkout")]),
+            previousSnapshot: nil,
+            now: Date(timeIntervalSince1970: 220)
+        )
+
+        #expect(result.snapshot == nil)
+        #expect(result.display.state == .stale)
+        #expect(result.display.lastUpdated == "never")
+        #expect(result.display.staleBanner?.reason == "No previous cluster data")
+    }
+
+    @Test("second failed refresh keeps previous snapshot and updates reason")
+    func secondFailedRefreshKeepsPreviousSnapshotAndUpdatesReason() {
+        let previous = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [.init(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let firstFailure = RefreshCoordinator(reader: FakeClusterReader(result: .failure(KubectlCommandError.failed("cluster unreachable"))))
+        let secondFailure = RefreshCoordinator(reader: FakeClusterReader(result: .failure(KubectlCommandError.failed("kubectl timed out"))))
+
+        let first = firstFailure.refresh(
+            config: AppConfig(selectedContext: "prod", watchTargets: [.workload(namespace: "api", name: "checkout")]),
+            previousSnapshot: previous,
+            now: Date(timeIntervalSince1970: 220)
+        )
+        let second = secondFailure.refresh(
+            config: AppConfig(selectedContext: "prod", watchTargets: [.workload(namespace: "api", name: "checkout")]),
+            previousSnapshot: first.snapshot,
+            now: Date(timeIntervalSince1970: 260)
+        )
+
+        #expect(first.snapshot == previous)
+        #expect(second.snapshot == previous)
+        #expect(second.display.state == .stale)
+        #expect(second.display.counters.nodes == "3/3")
+        #expect(second.display.visibleWatchItems.first?.title == "api/checkout")
+        #expect(second.display.staleBanner?.reason == "kubectl timed out")
+    }
+
     @Test("partial warning event failure stays fresh and visible")
     func partialWarningEventFailureStaysFreshAndVisible() {
         let snapshot = ClusterSnapshot(

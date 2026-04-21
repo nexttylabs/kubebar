@@ -45,12 +45,14 @@ public struct RefreshCoordinator: Sendable {
                 )
             )
         } catch {
+            let reason = previousSnapshot == nil ? "No previous cluster data" : failureReason(from: error)
+
             return RefreshResult(
                 snapshot: previousSnapshot,
                 display: evaluator.evaluate(
                     snapshot: nil,
                     previousSnapshot: previousSnapshot,
-                    failure: RefreshFailure(reason: failureReason(from: error)),
+                    failure: RefreshFailure(reason: reason),
                     now: now,
                     staleAfterSeconds: staleAfterSeconds
                 )
