@@ -116,7 +116,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             switch target {
             case let .namespace(namespace):
                 pod.metadata.namespace == namespace
-            case let .workload(namespace, name):
+            case let .workload(namespace, name, _):
                 pod.metadata.namespace == namespace && pod.matchesWorkload(named: name)
             }
         }

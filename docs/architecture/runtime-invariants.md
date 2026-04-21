@@ -19,6 +19,10 @@ These are the rules Kubebar must keep true at runtime.
   shell context.
 - `CommandRunner` remains an injectable boundary so reads can be tested without
   shelling out.
+- Kubebar uses `kubectl` only for the saved context and the status/setup reads
+  needed by the menu.
+- Kubebar does not query Kubernetes Secrets.
+- Kubebar keeps config and displayed cluster status local to the app.
 
 ## Freshness Rules
 
@@ -37,6 +41,12 @@ These are the rules Kubebar must keep true at runtime.
 - The watchlist is ordered by attention, not by raw cluster size.
 - An empty watchlist is a real state and must not be treated as a healthy
   cluster.
+- Setup candidate discovery must use the app-owned selected context.
+- Watchlist setup candidates include namespaces plus Deployment, StatefulSet,
+  DaemonSet, and CronJob workloads.
+- Historical Job objects are not default setup candidates.
+- Candidate discovery failure must preserve selected targets and show a retry
+  path.
 
 ## Failure Rules
 
@@ -44,4 +54,4 @@ These are the rules Kubebar must keep true at runtime.
   failures.
 - A refresh failure must never silently clear the last good data.
 - Warning and failure states must not rely on color alone.
-
+- Stale or failed reads must use distinct icon semantics from `OK`.

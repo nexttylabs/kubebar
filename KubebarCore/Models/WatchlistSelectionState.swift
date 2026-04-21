@@ -2,12 +2,12 @@ import Foundation
 
 public struct WatchlistSelectionState: Equatable, Sendable {
     public var availableNamespaces: [String]
-    public var availableWorkloads: [WatchTarget]
+    public var availableWorkloads: [WatchlistCandidate]
     public var selectedTargets: Set<WatchTarget>
 
     public init(
         availableNamespaces: [String] = [],
-        availableWorkloads: [WatchTarget] = [],
+        availableWorkloads: [WatchlistCandidate] = [],
         selectedTargets: Set<WatchTarget> = []
     ) {
         self.availableNamespaces = availableNamespaces
@@ -35,7 +35,7 @@ public struct WatchlistSelectionState: Equatable, Sendable {
         if hasAvailableTargets {
             "Choose namespaces or workloads to keep Kubebar focused on the first screen."
         } else {
-            "Add a namespace or workload source to start building the watchlist."
+            "Choose a cluster context or retry loading watch targets."
         }
     }
 
@@ -59,8 +59,8 @@ public struct WatchlistSelectionState: Equatable, Sendable {
         toggle(.namespace(namespace))
     }
 
-    public mutating func toggleWorkload(namespace: String, name: String) {
-        toggle(.workload(namespace: namespace, name: name))
+    public mutating func toggleWorkload(namespace: String, name: String, kind: WorkloadKind = .deployment) {
+        toggle(.workload(namespace: namespace, name: name, kind: kind))
     }
 
     public mutating func toggle(_ target: WatchTarget) {
@@ -69,5 +69,15 @@ public struct WatchlistSelectionState: Equatable, Sendable {
         } else {
             selectedTargets.insert(target)
         }
+    }
+
+    public mutating func replaceAvailableTargets(_ candidates: WatchlistCandidates) {
+        availableNamespaces = candidates.namespaces
+        availableWorkloads = candidates.workloads
+    }
+
+    public mutating func clearAvailableTargets() {
+        availableNamespaces = []
+        availableWorkloads = []
     }
 }

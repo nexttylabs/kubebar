@@ -4,13 +4,19 @@ import KubebarCore
 struct SetupView: View {
     @Binding var state: SetupFlowState
     let onComplete: () -> Void
+    let onSelectContext: (String?) -> Void
+    let onRetryTargets: () -> Void
 
     init(
         state: Binding<SetupFlowState>,
-        onComplete: @escaping () -> Void = {}
+        onComplete: @escaping () -> Void = {},
+        onSelectContext: @escaping (String?) -> Void = { _ in },
+        onRetryTargets: @escaping () -> Void = {}
     ) {
         _state = state
         self.onComplete = onComplete
+        self.onSelectContext = onSelectContext
+        self.onRetryTargets = onRetryTargets
     }
 
     var body: some View {
@@ -19,6 +25,7 @@ struct SetupView: View {
                 header
                 contextPicker
                 watchlistPicker
+                refreshCadencePicker
                 footer
             }
             .padding(20)
@@ -67,8 +74,28 @@ struct SetupView: View {
 
     private var watchlistPicker: some View {
         WatchlistPickerView(
-            state: watchlistBinding
+            state: watchlistBinding,
+            loadingState: state.targetLoadingState,
+            onRetryTargets: onRetryTargets
         )
+    }
+
+    private var refreshCadencePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Refresh cadence")
+                .font(.headline)
+
+            Text(state.refreshCadenceHelpText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Picker("Refresh cadence", selection: $state.refreshCadence) {
+                ForEach(RefreshCadence.allCases) { cadence in
+                    Text(cadence.label).tag(cadence)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
     }
 
     private var footer: some View {
@@ -94,7 +121,7 @@ struct SetupView: View {
     private var selectedContextBinding: Binding<String?> {
         Binding(
             get: { state.selectedContext },
-            set: { state.selectedContext = $0 }
+            set: { onSelectContext($0) }
         )
     }
 

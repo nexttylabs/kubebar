@@ -10,13 +10,13 @@ public struct MenuBarStatusPresentation: Equatable, Sendable {
     public var symbolName: String {
         switch state {
         case .ok:
-            "circle"
+            "checkmark.circle"
         case .watch:
-            "exclamationmark.circle"
+            "exclamationmark.triangle"
         case .bad:
             "xmark.octagon"
         case .stale:
-            "clock"
+            "clock.badge.exclamationmark"
         }
     }
 

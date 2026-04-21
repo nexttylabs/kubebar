@@ -72,12 +72,21 @@ public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
             outputReaders.leave()
         }
 
-        let timeout = DispatchTime.now() + request.timeoutSeconds
-        if finished.wait(timeout: timeout) == .timedOut {
-            process.terminate()
-            process.waitUntilExit()
-            outputReaders.wait()
-            throw CommandRunnerError.timedOut
+        let deadline = Date().addingTimeInterval(request.timeoutSeconds)
+        while finished.wait(timeout: .now() + 0.1) == .timedOut {
+            if Task.isCancelled {
+                process.terminate()
+                process.waitUntilExit()
+                outputReaders.wait()
+                throw CancellationError()
+            }
+
+            if Date() >= deadline {
+                process.terminate()
+                process.waitUntilExit()
+                outputReaders.wait()
+                throw CommandRunnerError.timedOut
+            }
         }
 
         process.waitUntilExit()

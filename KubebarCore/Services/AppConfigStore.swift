@@ -5,18 +5,46 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public let watchTargets: [WatchTarget]
     public let refreshIntervalSeconds: Int
 
+    private enum CodingKeys: String, CodingKey {
+        case selectedContext
+        case watchTargets
+        case refreshIntervalSeconds
+    }
+
     public init(
         selectedContext: String? = nil,
         watchTargets: [WatchTarget] = [],
-        refreshIntervalSeconds: Int = 60
+        refreshIntervalSeconds: Int = RefreshCadence.default.seconds
     ) {
         self.selectedContext = selectedContext
         self.watchTargets = watchTargets
-        self.refreshIntervalSeconds = refreshIntervalSeconds
+        self.refreshIntervalSeconds = RefreshCadence.from(seconds: refreshIntervalSeconds).seconds
     }
 
     public var needsSetup: Bool {
         selectedContext == nil || watchTargets.isEmpty
+    }
+
+    public var refreshCadence: RefreshCadence {
+        RefreshCadence.from(seconds: refreshIntervalSeconds)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.init(
+            selectedContext: try container.decodeIfPresent(String.self, forKey: .selectedContext),
+            watchTargets: try container.decodeIfPresent([WatchTarget].self, forKey: .watchTargets) ?? [],
+            refreshIntervalSeconds: try container.decodeIfPresent(Int.self, forKey: .refreshIntervalSeconds) ?? RefreshCadence.default.seconds
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encodeIfPresent(selectedContext, forKey: .selectedContext)
+        try container.encode(watchTargets, forKey: .watchTargets)
+        try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
     }
 }
 

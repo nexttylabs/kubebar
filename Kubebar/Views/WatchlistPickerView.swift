@@ -3,24 +3,40 @@ import KubebarCore
 
 struct WatchlistPickerView: View {
     @Binding var state: WatchlistSelectionState
-    let onRequestAddNamespace: () -> Void
-    let onRequestAddWorkload: () -> Void
+    let loadingState: WatchTargetLoadingState
+    let onRetryTargets: () -> Void
 
     init(
         state: Binding<WatchlistSelectionState>,
-        onRequestAddNamespace: @escaping () -> Void = {},
-        onRequestAddWorkload: @escaping () -> Void = {}
+        loadingState: WatchTargetLoadingState = .idle,
+        onRetryTargets: @escaping () -> Void = {}
     ) {
         _state = state
-        self.onRequestAddNamespace = onRequestAddNamespace
-        self.onRequestAddWorkload = onRequestAddWorkload
+        self.loadingState = loadingState
+        self.onRetryTargets = onRetryTargets
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            namespaceSection
-            workloadSection
+            content
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch loadingState {
+        case .loading:
+            loadingView
+        case let .failed(reason):
+            failureView(reason: reason)
+        case .idle:
+            if state.hasAvailableTargets {
+                namespaceSection
+                workloadSection
+            } else {
+                emptyTargetsView
+            }
         }
     }
 
@@ -46,9 +62,7 @@ struct WatchlistPickerView: View {
             title: "Namespaces",
             emptyTitle: "No namespaces yet",
             emptyMessage: "Namespaces keep the watchlist compact when you want whole areas of the cluster on the first screen.",
-            actionTitle: "Add namespace",
-            hasItems: !state.availableNamespaces.isEmpty,
-            action: onRequestAddNamespace
+            hasItems: !state.availableNamespaces.isEmpty
         ) {
             ForEach(state.availableNamespaces, id: \.self) { namespace in
                 Toggle(
@@ -64,15 +78,60 @@ struct WatchlistPickerView: View {
             title: "Workloads",
             emptyTitle: "No workloads yet",
             emptyMessage: "Watch individual workloads when one service needs regular attention.",
-            actionTitle: "Add workload",
-            hasItems: !state.availableWorkloads.isEmpty,
-            action: onRequestAddWorkload
+            hasItems: !state.availableWorkloads.isEmpty
         ) {
-            ForEach(state.availableWorkloads, id: \.self) { workload in
-                Toggle(
-                    workload.displayTitle,
-                    isOn: binding(for: workload)
-                )
+            ForEach(groupedWorkloads, id: \.key) { group in
+                DisclosureGroup(group.key) {
+                    ForEach(group.value, id: \.self) { workload in
+                        Toggle(
+                            workload.displayTitle,
+                            isOn: binding(for: workload.target)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var loadingView: some View {
+        StateCard {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+
+                Text("Loading watch targets...")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func failureView(reason: String) -> some View {
+        StateCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Could not load watch targets")
+                    .font(.subheadline.weight(.medium))
+
+                Text(reason.isEmpty ? "Try loading targets again." : reason)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Retry", action: onRetryTargets)
+            }
+        }
+    }
+
+    private var emptyTargetsView: some View {
+        StateCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("No watch targets found")
+                    .font(.subheadline.weight(.medium))
+
+                Text("Kubebar could not find namespaces or supported workloads for this context.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Retry", action: onRetryTargets)
             }
         }
     }
@@ -83,32 +142,46 @@ struct WatchlistPickerView: View {
             set: { state.setSelected(target, to: $0) }
         )
     }
+
+    private var groupedWorkloads: [(key: String, value: [WatchlistCandidate])] {
+        Dictionary(grouping: state.availableWorkloads, by: { $0.namespace })
+            .sorted { $0.key < $1.key }
+    }
+}
+
+private struct StateCard<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+    }
 }
 
 private struct SectionCard<Content: View>: View {
     let title: String
     let emptyTitle: String
     let emptyMessage: String
-    let actionTitle: String
     let hasItems: Bool
-    let action: () -> Void
     let content: Content
 
     init(
         title: String,
         emptyTitle: String,
         emptyMessage: String,
-        actionTitle: String,
         hasItems: Bool,
-        action: @escaping () -> Void,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.emptyTitle = emptyTitle
         self.emptyMessage = emptyMessage
-        self.actionTitle = actionTitle
         self.hasItems = hasItems
-        self.action = action
         self.content = content()
     }
 
@@ -129,8 +202,6 @@ private struct SectionCard<Content: View>: View {
                         Text(emptyMessage)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-
-                        Button(actionTitle, action: action)
                     }
                 }
             }

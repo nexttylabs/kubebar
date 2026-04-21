@@ -24,5 +24,25 @@ struct CommandRunnerTests {
         #expect(result.stdout.utf8.count == byteCount)
         #expect(result.stderr.utf8.count == byteCount)
     }
-}
 
+    @Test("terminates process when task is cancelled")
+    func terminatesProcessWhenTaskIsCancelled() async throws {
+        let runner = ProcessCommandRunner()
+        let task = Task {
+            try runner.run(
+                CommandRequest(
+                    executable: "/bin/sh",
+                    arguments: ["-c", "sleep 5"],
+                    timeoutSeconds: 10
+                )
+            )
+        }
+
+        try await Task.sleep(nanoseconds: 100_000_000)
+        task.cancel()
+
+        await #expect(throws: CancellationError.self) {
+            try await task.value
+        }
+    }
+}

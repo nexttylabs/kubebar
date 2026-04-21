@@ -5,15 +5,28 @@ struct MenuBarRootView: View {
     let display: MenuDisplayModel
     @Binding var setupState: SetupFlowState
     let isShowingSetup: Bool
+    let refreshCadence: RefreshCadence
     let onRefresh: () -> Void
     let onEditWatchlist: () -> Void
     let onCompleteSetup: () -> Void
+    let onSelectContext: (String?) -> Void
+    let onSelectRefreshCadence: (RefreshCadence) -> Void
+    let onRetryTargets: () -> Void
 
     var body: some View {
         Group {
             if isShowingSetup {
-                SetupView(state: $setupState, onComplete: onCompleteSetup)
-                    .frame(width: 560)
+                SetupView(
+                    state: $setupState,
+                    onComplete: onCompleteSetup,
+                    onSelectContext: onSelectContext,
+                    onRetryTargets: onRetryTargets
+                )
+                    .frame(
+                        width: Layout.setupWidth,
+                        height: Layout.setupHeight,
+                        alignment: .topLeading
+                    )
             } else {
                 menuContent
             }
@@ -29,10 +42,30 @@ struct MenuBarRootView: View {
             WarningEventsView(count: display.counters.warningEvents)
             NodeDetailsView(summary: display.counters.nodes)
             Divider()
+            refreshControls
             actions
         }
         .frame(width: 340)
         .padding(16)
+    }
+
+    private var refreshControls: some View {
+        HStack(spacing: 8) {
+            Text("Refresh")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Picker("Refresh cadence", selection: refreshCadenceBinding) {
+                ForEach(RefreshCadence.allCases) { cadence in
+                    Text(cadence.label).tag(cadence)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: 96)
+
+            Spacer()
+        }
     }
 
     private var actions: some View {
@@ -41,5 +74,17 @@ struct MenuBarRootView: View {
             Spacer()
             Button("Edit watchlist", action: onEditWatchlist)
         }
+    }
+
+    private var refreshCadenceBinding: Binding<RefreshCadence> {
+        Binding(
+            get: { refreshCadence },
+            set: { onSelectRefreshCadence($0) }
+        )
+    }
+
+    private enum Layout {
+        static let setupWidth: CGFloat = 560
+        static let setupHeight: CGFloat = 560
     }
 }
