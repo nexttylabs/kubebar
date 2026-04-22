@@ -12,11 +12,9 @@ final class MenuBarViewModel: ObservableObject {
             }
 
             runtimeState.setupState = setupState
-            refreshCadence = setupState.refreshCadence
         }
     }
     @Published private(set) var isShowingSetup: Bool
-    @Published private(set) var refreshCadence: RefreshCadence
     @Published private(set) var isRefreshing: Bool
 
     private let configStore: AppConfigStore
@@ -57,7 +55,6 @@ final class MenuBarViewModel: ObservableObject {
         self.isPublishingRuntimeState = false
         self.setupState = runtimeState.setupState
         self.isShowingSetup = runtimeState.isShowingSetup
-        self.refreshCadence = runtimeState.setupState.refreshCadence
         self.isRefreshing = false
         self.refreshGate = RefreshGate()
         self.staleReason = nil
@@ -178,38 +175,6 @@ final class MenuBarViewModel: ObservableObject {
         publishRuntimeState()
 
         contextToLoad.map(loadWatchTargets)
-    }
-
-    func selectRefreshCadence(_ cadence: RefreshCadence) {
-        runtimeState.selectRefreshCadence(cadence)
-        publishRuntimeState()
-
-        guard !isShowingSetup else {
-            return
-        }
-
-        config = AppConfig(
-            selectedContext: config.selectedContext,
-            watchTargets: config.watchTargets,
-            refreshIntervalSeconds: cadence.seconds
-        )
-
-        do {
-            try configStore.save(config)
-            invalidateRefreshState(clearSnapshot: false)
-            updateFreshnessDisplay()
-            if isRefreshing {
-                refreshGate.requestPendingRefresh()
-            }
-            startRefreshLoopIfConfigured()
-        } catch {
-            display = HealthEvaluator().evaluate(
-                snapshot: nil,
-                previousSnapshot: snapshot,
-                failure: RefreshFailure(reason: "Could not save refresh cadence"),
-                now: Date()
-            )
-        }
     }
 
     func retryWatchTargetLoad() {
@@ -383,8 +348,11 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         let staleAfterSeconds = config.refreshIntervalSeconds * 2
-        let elapsedSeconds = max(0, Int(now.timeIntervalSince(snapshot.capturedAt)))
-        let delaySeconds = max(0, staleAfterSeconds + 1 - elapsedSeconds)
+        let delaySeconds = FreshnessDisplaySchedule.nextUpdateDelaySeconds(
+            capturedAt: snapshot.capturedAt,
+            now: now,
+            staleAfterSeconds: staleAfterSeconds
+        )
         let delayNanoseconds = UInt64(delaySeconds) * 1_000_000_000
 
         freshnessTimerTask = Task { [weak self] in
@@ -395,9 +363,14 @@ final class MenuBarViewModel: ObservableObject {
             }
 
             await MainActor.run {
-                self?.updateFreshnessDisplay()
+                self?.handleFreshnessTimerFired()
             }
         }
+    }
+
+    private func handleFreshnessTimerFired() {
+        updateFreshnessDisplay()
+        scheduleFreshnessTimer()
     }
 
     private static func failureReason(from error: Error) -> String {
@@ -412,7 +385,6 @@ final class MenuBarViewModel: ObservableObject {
         isPublishingRuntimeState = true
         setupState = runtimeState.setupState
         isShowingSetup = runtimeState.isShowingSetup
-        refreshCadence = runtimeState.setupState.refreshCadence
         isPublishingRuntimeState = false
     }
 }

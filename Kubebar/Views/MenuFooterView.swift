@@ -1,14 +1,11 @@
 import SwiftUI
-import KubebarCore
 
 struct MenuFooterView: View {
     let lastUpdated: String
-    let refreshCadence: RefreshCadence
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
-    let onSelectRefreshCadence: (RefreshCadence) -> Void
 
     var body: some View {
         HStack(spacing: 10) {
@@ -37,21 +34,6 @@ struct MenuFooterView: View {
             .accessibilityLabel(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
             .disabled(isRefreshing)
 
-            Menu {
-                Picker("Refresh cadence", selection: refreshCadenceBinding) {
-                    ForEach(RefreshCadence.allCases) { cadence in
-                        Text(cadence.label).tag(cadence)
-                    }
-                }
-            } label: {
-                Label(refreshCadence.label, systemImage: "timer")
-            }
-            .labelStyle(.iconOnly)
-            .menuStyle(.borderlessButton)
-            .controlSize(.small)
-            .help(Text("Refresh every \(refreshCadence.label)"))
-            .accessibilityLabel(Text("Refresh every \(refreshCadence.label)"))
-
             Button(action: onOpenSettings) {
                 Image(systemName: "gearshape")
             }
@@ -70,12 +52,5 @@ struct MenuFooterView: View {
             .help(Text("Quit Kubebar"))
             .accessibilityLabel(Text("Quit Kubebar"))
         }
-    }
-
-    private var refreshCadenceBinding: Binding<RefreshCadence> {
-        Binding(
-            get: { refreshCadence },
-            set: { onSelectRefreshCadence($0) }
-        )
     }
 }

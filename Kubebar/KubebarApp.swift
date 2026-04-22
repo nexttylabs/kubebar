@@ -67,12 +67,10 @@ struct KubebarApp: App {
         MenuBarRootView(
             display: viewModel.display,
             isShowingSetup: viewModel.isShowingSetup,
-            refreshCadence: viewModel.refreshCadence,
             isRefreshing: viewModel.isRefreshing,
             onRefresh: viewModel.refreshNow,
             onPrepareSettings: viewModel.prepareSettings,
-            onQuit: { NSApplication.shared.terminate(nil) },
-            onSelectRefreshCadence: viewModel.selectRefreshCadence
+            onQuit: { NSApplication.shared.terminate(nil) }
         )
     }
 }
@@ -80,23 +78,19 @@ struct KubebarApp: App {
 #if DEBUG
 private struct QAFixtureMenuRootView: View {
     let fixture: MenuStateFixture
-    @State private var refreshCadence: RefreshCadence
 
     init(fixture: MenuStateFixture) {
         self.fixture = fixture
-        self._refreshCadence = State(initialValue: fixture.setupState.refreshCadence)
     }
 
     var body: some View {
         MenuBarRootView(
             display: fixture.display,
             isShowingSetup: fixture.isShowingSetup,
-            refreshCadence: refreshCadence,
             isRefreshing: false,
             onRefresh: {},
             onPrepareSettings: {},
-            onQuit: { NSApplication.shared.terminate(nil) },
-            onSelectRefreshCadence: { refreshCadence = $0 }
+            onQuit: { NSApplication.shared.terminate(nil) }
         )
     }
 }

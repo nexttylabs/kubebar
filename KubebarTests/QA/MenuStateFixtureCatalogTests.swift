@@ -59,6 +59,8 @@ struct MenuStateFixtureCatalogTests {
         #expect(warningHeavy.display.overview.recentWarnings.first?.metadataLabel == "1m ago / x2")
         #expect(warningHeavy.display.overview.recentWarnings.first?.secondaryText == "qa-api/pod/qa-checkout-7f9 - Container is backing off after repeated restarts.")
         #expect(warningHeavy.display.overview.recentWarningsOverflowCount == 1)
+        #expect(warningHeavy.expectedBehavior.contains("footer remains visible"))
+        #expect(warningHeavy.expectedBehavior.contains("refresh/settings/quit only"))
     }
 
     @Test("watch fixture exposes reason first warning details")
@@ -136,5 +138,15 @@ struct MenuStateFixtureCatalogTests {
 
         #expect(!metadata.contains("Watching rows"))
         #expect(!metadata.contains("Watching section"))
+    }
+
+    @Test("fixture copy keeps refresh cadence out of menu footer")
+    func fixtureCopyKeepsRefreshCadenceOutOfMenuFooter() {
+        let metadata = MenuQAState.allCases
+            .map { MenuStateFixtureCatalog.fixture(for: $0).expectedBehavior }
+            .joined(separator: "\n")
+
+        #expect(!metadata.localizedCaseInsensitiveContains("cadence"))
+        #expect(metadata.contains("refresh/settings/quit only"))
     }
 }

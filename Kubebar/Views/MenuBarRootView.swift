@@ -5,12 +5,10 @@ import KubebarCore
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
     let isShowingSetup: Bool
-    let refreshCadence: RefreshCadence
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onPrepareSettings: () -> Void
     let onQuit: () -> Void
-    let onSelectRefreshCadence: (RefreshCadence) -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
     @State private var selectedTabContentHeight: CGFloat = 0
@@ -27,12 +25,10 @@ struct MenuBarRootView: View {
             Divider()
             MenuFooterView(
                 lastUpdated: display.lastUpdated,
-                refreshCadence: refreshCadence,
                 isRefreshing: isRefreshing,
                 onRefresh: onRefresh,
                 onOpenSettings: openSettingsFromMenu,
-                onQuit: onQuit,
-                onSelectRefreshCadence: onSelectRefreshCadence
+                onQuit: onQuit
             )
         }
         .frame(width: Layout.menuWidth)
@@ -57,20 +53,24 @@ struct MenuBarRootView: View {
 
     private var configuredMenuContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Picker("Menu section", selection: $selectedTab) {
-                ForEach(MenuTab.allCases) { tab in
-                    Text(tab.label)
-                        .tag(tab)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-
+            tabPicker
             selectedTabContentContainer
         }
         .onChange(of: selectedTab) { _, _ in
             selectedTabContentHeight = 0
         }
+    }
+
+    private var tabPicker: some View {
+        Picker("Menu section", selection: $selectedTab) {
+            ForEach(MenuTab.allCases) { tab in
+                Text(tab.label)
+                    .tag(tab)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.segmented)
+        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -158,7 +158,7 @@ struct MenuBarRootView: View {
 
         static func selectedTabMaxContentHeight(forScreenVisibleHeight visibleHeight: CGFloat) -> CGFloat {
             let availableHeight = menuMaxHeight(forScreenVisibleHeight: visibleHeight) - nonTabContentHeightBudget
-            return min(preferredContentHeight, max(minimumContentHeight, availableHeight))
+            return min(preferredContentHeight, max(0, availableHeight))
         }
 
         static func podItemsMaxHeight(forSelectedTabContentHeight contentHeight: CGFloat) -> CGFloat {

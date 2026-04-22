@@ -38,6 +38,10 @@ For all states, confirm the menu stays within the visible screen height. If a
 tab has more rows than fit, the tab content should scroll inside the menu
 instead of pushing the footer or lower rows off screen.
 
+For all configured menu states, confirm the footer remains visible at the
+bottom of the menu and contains only refresh, settings, and quit actions. The
+refresh cadence picker belongs in Settings.
+
 ## State Checklist
 
 | State | Expected visible behavior | Evidence path |
@@ -51,7 +55,7 @@ instead of pushing the footer or lower rows off screen.
 | empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
 | kubectl failure | Menu shows Stale with a safe failure message and retained prior status. | `docs/assets/qa/phase-07-kubectl-failure.png` |
 | metrics-unavailable | Menu keeps OK cluster status while CPU and Memory cards show unavailable metrics; Nodes tab keeps rows visible with `-` resource values, and Pods tab still shows watched Pods. | `docs/assets/qa/phase-07-metrics-unavailable.png` |
-| warning-heavy | Menu shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events; Pods tab keeps attention rows before ready rows. | `docs/assets/qa/phase-07-warning-heavy.png` |
+| warning-heavy | Menu shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events; Events tab scrolls above the footer, the footer remains visible with refresh/settings/quit only, and Pods tab keeps attention rows before ready rows. | `docs/assets/qa/phase-07-warning-heavy.png` |
 
 ## Keyboard Check
 
@@ -66,6 +70,13 @@ For warning rows, confirm the row reads as reason first, then affected object,
 age/repeat count, and secondary message. Tracked-object warnings must be
 recognizable without the word `Watching`. Empty, unavailable, and overflow
 states must be distinct.
+
+## Menu Footer and Freshness Check
+
+For the footer, confirm refresh, settings, and quit remain reachable after
+switching between Overview, Nodes, Pods, and Events. The tab bar should have
+equal left and right spacing. After a fresh refresh, `Last checked 0s ago`
+should advance as time passes without pressing refresh again.
 
 ## Nodes Tab Check
 
