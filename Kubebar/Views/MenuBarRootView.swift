@@ -12,6 +12,7 @@ struct MenuBarRootView: View {
     let onSelectRefreshCadence: (RefreshCadence) -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
+    @State private var selectedTabContentHeight: CGFloat = 0
 
     var body: some View {
         menuContent
@@ -61,16 +62,36 @@ struct MenuBarRootView: View {
             .labelsHidden()
             .pickerStyle(.segmented)
 
+            selectedTabContentContainer
+        }
+        .onChange(of: selectedTab) { _, _ in
+            selectedTabContentHeight = 0
+        }
+    }
+
+    @ViewBuilder
+    private var selectedTabContentContainer: some View {
+        if selectedTabContentHeight > Layout.maxContentHeight {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    selectedTabContent
-                }
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                .fixedSize(horizontal: false, vertical: true)
+                measuredSelectedTabContent
             }
             .scrollIndicators(.hidden)
-            .frame(maxHeight: Layout.maxContentHeight, alignment: .top)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: Layout.maxContentHeight, alignment: .top)
+        } else {
+            measuredSelectedTabContent
         }
+    }
+
+    private var measuredSelectedTabContent: some View {
+        selectedTabContent
+            .id(selectedTab)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
+            .onMeasuredHeight { height in
+                guard height > 0, abs(selectedTabContentHeight - height) > 0.5 else { return }
+                selectedTabContentHeight = height
+            }
     }
 
     @ViewBuilder
@@ -96,5 +117,30 @@ struct MenuBarRootView: View {
     private enum Layout {
         static let menuWidth: CGFloat = 360
         static let maxContentHeight: CGFloat = 560
+    }
+}
+
+private struct MeasuredHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let nextHeight = nextValue()
+        if nextHeight > 0 {
+            value = nextHeight
+        }
+    }
+}
+
+private extension View {
+    func onMeasuredHeight(_ onChange: @escaping (CGFloat) -> Void) -> some View {
+        background {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: MeasuredHeightPreferenceKey.self,
+                    value: ceil(proxy.size.height)
+                )
+            }
+        }
+        .onPreferenceChange(MeasuredHeightPreferenceKey.self, perform: onChange)
     }
 }
