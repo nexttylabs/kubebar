@@ -41,6 +41,7 @@ Phase 09 automated checks passed. Visible app smoke launched the built app, but 
 | Manual proof not overstated | pass | `09-UAT.md` uses `pending-human-verification` for opened menu states, tab switching, reopen reset, Settings, Quit, keyboard traversal, and long-name visual inspection. |
 | Safe evidence only | pass | Verification records command names, pass/fail summaries, app path, and PID only. It does not include raw command transcripts, kubeconfig paths, token-like values, full JSON, or unredacted sensitive cluster details. |
 | Full local gate | pass | `./scripts/swift-quality-gate.sh local` passed before marking automated verification complete. |
+| Deferred source scope | pass | Source guard found no `Open in k9s`, `NSStatusItem`, dashboard, live watch stream, provider, usage meter, cloud sync, account, raw output, full transcript, or kubeconfig-path scope in `Kubebar`, `KubebarCore`, or `KubebarTests`. |
 
 ## Requirement Coverage
 
@@ -69,3 +70,96 @@ Phase 09 automated checks passed. Visible app smoke launched the built app, but 
 | Quit exits and preserves config | pending-human-verification | Requires visible Quit activation and safe post-relaunch config comparison. |
 | Keyboard traversal | pending-human-verification | Depends on native macOS focus behavior and system settings. |
 | Long-name truncation and help/accessibility | pending-human-verification | Requires visible UI or accessibility inspection with safe fixture names. |
+
+## Source Coverage Audit
+
+### GOAL Coverage
+
+| Goal | Coverage |
+| --- | --- |
+| Tabbed menu with Overview, Nodes, Pods, and Events | Covered by Plan 01 implementation, `MenuDisplayModelTests`, and pending UAT menu rows. |
+| Overview as default home tab | Covered by Plan 01 implementation and pending UAT reopen-reset row. |
+| Settings moved to independent dialog/window | Covered by Plan 02 implementation, `MenuRuntimeStateTests`, `SetupFlowStateTests`, and pending Settings UAT row. |
+| Visible `Quit Kubebar` action | Covered by Plan 02 source checks and pending Quit UAT row. |
+| Final verification without overstating manual behavior | Covered by Plan 03 `09-UAT.md`, this verification file, full quality gate, and visible app smoke launch evidence. |
+
+### REQ Coverage
+
+| Requirement | Coverage |
+| --- | --- |
+| REQ-09-01 | Plan 01 fixed tabs and Overview reset; Plan 03 UAT rows for OK, Watch, Bad, Stale, tab switching, and reopen reset. |
+| REQ-09-02 | Plan 01 local tab state with no refresh hook; Plan 03 UAT row for tab switching without refresh. |
+| REQ-09-03 | Plan 01 Overview display, watchlist cap, stale banner, counters, and one-notice tests; Plan 03 Overview UAT rows. |
+| REQ-09-04 | Plan 01 Nodes tab aggregate/unavailable/stale display tests; Plan 03 Nodes-related UAT rows. |
+| REQ-09-05 | Plan 01 Pods tab reuse of watchlist details, affected pod count, and example caps; Plan 03 Pods-related UAT rows. |
+| REQ-09-06 | Plan 01 Events tab grouped warning rows, unavailable/empty/stale states, and row caps; Plan 03 Events-related UAT rows. |
+| REQ-09-07 | Plan 02 independent Settings surface and preparation tests; Plan 03 Settings UAT rows. |
+| REQ-09-08 | Plan 02 visible Quit action and termination-only source checks; Plan 03 Quit UAT row. |
+| REQ-09-09 | Plan 01/02 native controls and shortcuts; Plan 03 keyboard UAT row. |
+| REQ-09-10 | Plan 01 model preservation and view truncation/accessibility patterns; Plan 03 long-name UAT row. |
+
+### RESEARCH Coverage
+
+| Research Finding | Coverage |
+| --- | --- |
+| Keep `MenuBarExtra.window` and use native SwiftUI controls. | Plan 01/02 kept the existing shell; source guard confirms no `NSStatusItem` rewrite. |
+| Keep display shaping in `KubebarCore`, not SwiftUI health decisions. | Plan 01 added tab display fields in `MenuDisplayModel` and `HealthEvaluator`; full tests passed. |
+| Settings should be a SwiftUI Settings surface. | Plan 02 added independent Settings and Settings preparation tests. |
+| Visible menu automation is unreliable. | Plan 03 marks opened menu, Settings, Quit, keyboard, and truncation checks pending-human-verification. |
+
+### CONTEXT Decision Coverage
+
+| Decision | Coverage |
+| --- | --- |
+| D-01 | Covered by Plan 01 tabbed organization and Plan 03 UAT rows for icon-to-menu state. |
+| D-02 | Covered by source guard excluding provider-style product scope. |
+| D-03 | Covered by scope guard excluding dashboard/deep debugging. |
+| D-04 | Covered by retaining `MenuBarExtra.window` and source guard excluding `NSStatusItem`. |
+| D-05 | Covered by Plan 01 fixed `Overview`, `Nodes`, `Pods`, `Events` tabs. |
+| D-06 | Covered by Plan 01 Overview reset and pending reopen UAT row. |
+| D-07 | Covered by native segmented tab control and pending keyboard UAT row. |
+| D-08 | Covered by Plan 01 no-refresh source check and tab-switching UAT row. |
+| D-09 | Covered by Plan 01 menu-local tab state with no config persistence. |
+| D-10 | Covered by Overview display tests and UAT rows. |
+| D-11 | Covered by watchlist-first Overview design and watchlist cap tests. |
+| D-12 | Covered by visible watchlist cap tests. |
+| D-13 | Covered by one-notice Overview tests. |
+| D-14 | Covered by Nodes tab aggregate/unavailable display. |
+| D-15 | Covered by aggregate-only node display and no fake node rows. |
+| D-16 | Covered by source guard and core-owned display contract. |
+| D-17 | Covered by Pods tab display and affected workload detail tests. |
+| D-18 | Covered by Pods tab reuse of watchlist/workload detail rows. |
+| D-19 | Covered as not implemented beyond safe display-model-shaped fields. |
+| D-20 | Covered by source guard excluding all-namespace inventory/dashboard scope. |
+| D-21 | Covered by Events tab ownership of grouped warning rows. |
+| D-22 | Covered by warning row display tests. |
+| D-23 | Covered by duplicate warning grouping tests. |
+| D-24 | Covered by Events tab row cap tests. |
+| D-25 | Covered by empty/unavailable/stale Events display tests and UAT rows. |
+| D-26 | Covered by Plan 02 independent Settings surface. |
+| D-27 | Covered by Settings reuse of existing setup/save controls. |
+| D-28 | Covered by visible `Settings...` action and pending Settings UAT row. |
+| D-29 | Covered by compact first-use/recovery prompt and empty-watchlist UAT row. |
+| D-30 | Covered by source guard excluding cloud sync, accounts, providers, and multi-cluster scope. |
+| D-31 | Covered by visible `Quit Kubebar` footer action. |
+| D-32 | Covered by Plan 02 termination-only source check and pending Quit UAT row. |
+| D-33 | Covered by standard app termination wiring. |
+| D-34 | Covered by `MenuDisplayModel` render contract changes and tests. |
+| D-35 | Covered by `HealthEvaluator` tests and unchanged severity ownership. |
+| D-36 | Covered by new tab fields shaped in `KubebarCore`. |
+| D-37 | Covered by source guard and unchanged injectable read boundaries. |
+| D-38 | Covered by native controls and pending keyboard UAT row. |
+| D-39 | Covered by focused model/runtime/setup tests. |
+| D-40 | Covered by `09-UAT.md`. |
+| D-41 | Covered by `./scripts/swift-quality-gate.sh local` pass. |
+
+### Deferred Ideas Excluded
+
+| Deferred Idea | Audit Result |
+| --- | --- |
+| Full dashboard or arbitrary resource browsing | pass - source guard found no dashboard scope in app/core/test source. |
+| Filters, search, sorting, or custom tabs | pass - verification found no added source scope for these ideas. |
+| Multi-cluster switching beyond saved context | pass - Settings remains local app config only. |
+| `Open in k9s` or deep debugging handoff | pass - source guard found no `Open in k9s` scope. |
+| Live streams or real-time event feeds | pass - source guard found no live watch stream scope. |
+| CodexBar providers, widgets, usage meters, accounts, or cloud sync | pass - source guard found no provider, usage meter, account, or cloud sync scope. |

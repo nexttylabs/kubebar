@@ -62,4 +62,3 @@ Evidence in this file is intentionally limited to safe summaries, source-backed 
 | REQ-09-08 | Quit row and keyboard row. |
 | REQ-09-09 | Settings, Quit, and keyboard rows. |
 | REQ-09-10 | Status rows, empty watchlist row, and long-name row. |
-*** End Patch
