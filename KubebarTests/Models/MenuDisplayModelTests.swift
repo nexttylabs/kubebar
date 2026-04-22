@@ -4,8 +4,8 @@ import Testing
 
 @Suite("Menu display model")
 struct MenuDisplayModelTests {
-    @Test("healthy snapshots show OK status and compact counters")
-    func healthySnapshotShowsOKStatusAndCounters() {
+    @Test("healthy snapshots show OK status and Overview cards")
+    func healthySnapshotShowsOKStatusAndOverviewCards() {
         let snapshot = ClusterSnapshot(
             contextName: "prod",
             nodeSummary: NodeSummary(ready: 3, total: 3),
@@ -14,6 +14,7 @@ struct MenuDisplayModelTests {
             trackedItems: [
                 TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
             ],
+            metricsSection: .available(metricsSummary()),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
 
@@ -24,9 +25,13 @@ struct MenuDisplayModelTests {
         #expect(display.counters.nodes == "3/3")
         #expect(display.counters.pods == "12/12")
         #expect(display.counters.warningEvents == "0")
-        #expect(display.healthSentence == "Cluster looks healthy")
-        #expect(display.primaryStatusReason == "Cluster looks healthy")
+        #expect(display.healthSentence == "All tracked items OK")
+        #expect(display.primaryStatusReason == "All tracked items OK")
         #expect(display.lastUpdated == "20s ago")
+        #expect(display.overview.cards.map(\.id) == ["nodes", "pods", "cpu", "memory"])
+        #expect(display.overview.cards.map(\.value) == ["3/3", "12/12", "21%", "17%"])
+        #expect(display.overview.cards.allSatisfy { $0.state == .current })
+        #expect(display.overview.recentWarningsEmptyMessage == "No current warning events")
         #expect(display.nodeTab.summary == "3/3 nodes ready")
         #expect(display.nodeTab.emptyMessage == "No node data yet. Refresh or check Settings.")
         #expect(display.podTab.summary == "12/12 pods running")
@@ -93,8 +98,8 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 node not ready")
     }
 
-    @Test("single not running pod uses singular primary status reason")
-    func singleNotRunningPodUsesSingularPrimaryStatusReason() {
+    @Test("single not ready pod uses singular primary status reason")
+    func singleNotReadyPodUsesSingularPrimaryStatusReason() {
         let snapshot = ClusterSnapshot(
             contextName: "prod",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
@@ -107,7 +112,47 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
         #expect(display.state == .watch)
-        #expect(display.primaryStatusReason == "1 pod not running")
+        #expect(display.primaryStatusReason == "1 pod not ready")
+    }
+
+    @Test("metrics unavailable does not change otherwise OK state")
+    func metricsUnavailableDoesNotChangeOtherwiseOKState() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            metricsSection: .unavailable(reason: "metrics API unavailable"),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .ok)
+        #expect(display.primaryStatusReason == "Metrics unavailable")
+        #expect(display.overview.cards.first(where: { $0.id == "cpu" })?.state == .unavailable)
+        #expect(display.overview.cards.first(where: { $0.id == "memory" })?.detail == "metrics API unavailable")
+    }
+
+    @Test("overview pods use ready count while pod tab keeps running count")
+    func overviewPodsUseReadyCountWhilePodTabKeepsRunningCount() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 10, running: 12, total: 12)),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "2 pods not ready")
+        #expect(display.overview.cards.first(where: { $0.id == "pods" })?.value == "10/12")
+        #expect(display.podTab.summary == "12/12 pods running")
     }
 
     @Test("single warning event uses singular primary status reason")
@@ -339,7 +384,32 @@ struct MenuDisplayModelTests {
         )
 
         #expect(single.summary == "BackOff api/pod/checkout 2m ago")
-        #expect(repeated.summary == "BackOff x4 api/pod/checkout 2m ago")
+        #expect(single.metadataLabel == "2m ago")
+        #expect(single.secondaryText == "api/pod/checkout")
+        #expect(single.accessibilityLabel == "Warning, BackOff, object api/pod/checkout, 2m ago")
+        #expect(repeated.summary == "BackOff api/pod/checkout 2m ago x4")
+        #expect(repeated.metadataLabel == "2m ago / x4")
+        #expect(repeated.accessibilityLabel == "Warning, BackOff, object api/pod/checkout, 2m ago, repeated 4 times")
+    }
+
+    @Test("warning event display keeps message secondary and accessibility complete")
+    func warningEventDisplayKeepsMessageSecondaryAndAccessibilityComplete() {
+        let warning = WarningEventDisplay(
+            id: "tracked",
+            reason: "FailedScheduling",
+            location: "api/pod/checkout",
+            age: "30s ago",
+            occurrenceCount: 2,
+            message: "Insufficient cpu.",
+            fullMessage: "Insufficient cpu on every available node.",
+            isTracked: true
+        )
+
+        #expect(warning.summary == "FailedScheduling api/pod/checkout 30s ago x2")
+        #expect(warning.metadataLabel == "30s ago / x2")
+        #expect(warning.secondaryText == "api/pod/checkout - Insufficient cpu.")
+        #expect(warning.helpText == "FailedScheduling api/pod/checkout 30s ago x2, Insufficient cpu on every available node.")
+        #expect(warning.accessibilityLabel == "Tracked object warning, FailedScheduling, object api/pod/checkout, 30s ago, repeated 2 times, Insufficient cpu on every available node.")
     }
 
     @Test("duplicate warning events group into one warning summaries row")
@@ -360,8 +430,9 @@ struct MenuDisplayModelTests {
 
         #expect(display.warningEventSummaries.count == 1)
         #expect(display.warningEventSummaries.first?.occurrenceCount == 4)
-        #expect(display.warningEventSummaries.first?.summary == "BackOff x4 api/pod/checkout 2m ago")
+        #expect(display.warningEventSummaries.first?.summary == "BackOff api/pod/checkout 2m ago x4")
         #expect(display.warningEventSummaries.first?.message == "newest warning")
+        #expect(display.warningEventSummaries.first?.secondaryText == "api/pod/checkout - newest warning")
     }
 
     @Test("warning summaries are capped at three rows")
@@ -385,6 +456,87 @@ struct MenuDisplayModelTests {
         #expect(display.warningEventSummaries.count == 3)
     }
 
+    @Test("warning rows keep stable fallback object scope")
+    func warningRowsKeepStableFallbackObjectScope() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(
+                    reason: "BackOff",
+                    namespace: nil,
+                    objectKind: nil,
+                    objectName: nil,
+                    observedAt: Date(timeIntervalSince1970: 100),
+                    count: 1
+                )
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.warningEventSummaries.first?.location == "unknown object")
+        #expect(display.warningEventSummaries.first?.secondaryText == "unknown object")
+    }
+
+    @Test("overview warning rows are capped and tracked warnings are first")
+    func overviewWarningRowsAreCappedAndTrackedWarningsAreFirst() {
+        let trackedWarning = warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 80), count: 1)
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([
+                warningEvent(reason: "FailedScheduling", objectName: "checkout-b", observedAt: Date(timeIntervalSince1970: 120), count: 1),
+                trackedWarning,
+                warningEvent(reason: "Unhealthy", objectName: "checkout-c", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .available([
+                TrackedItemStatus(
+                    target: .workload(namespace: "api", name: "checkout"),
+                    state: .watch,
+                    reason: "latest warning: BackOff",
+                    latestWarning: trackedWarning
+                )
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.overview.recentWarnings.count == 2)
+        #expect(display.overview.recentWarnings.first?.reason == "BackOff")
+        #expect(display.overview.recentWarnings.first?.isTracked == true)
+        #expect(display.overview.recentWarnings.dropFirst().first?.isTracked == false)
+        #expect(display.overview.recentWarningsOverflowCount == 1)
+    }
+
+    @Test("overview warning overflow counts grouped rows")
+    func overviewWarningOverflowCountsGroupedRows() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 120), count: 1),
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 110), count: 1),
+                warningEvent(reason: "FailedScheduling", objectName: "checkout-b", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.overview.recentWarnings.count == 2)
+        #expect(display.overview.recentWarningsOverflowCount == 0)
+    }
+
     @Test("long warning message is shortened before display")
     func longWarningMessageIsShortenedBeforeDisplay() {
         let longWarning = String(repeating: "a", count: 140)
@@ -402,7 +554,10 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
 
         #expect(display.warningEventSummaries.first?.message?.count == 96)
+        #expect(display.warningEventSummaries.first?.message?.hasSuffix("...") == true)
         #expect(display.warningEventSummaries.first?.message != longWarning)
+        #expect(display.warningEventSummaries.first?.fullMessage == longWarning)
+        #expect(display.warningEventSummaries.first?.accessibilityLabel.contains(longWarning) == true)
     }
 
     @Test("tracked item detail.examplePodNames are capped at three")
@@ -473,6 +628,8 @@ struct MenuDisplayModelTests {
         #expect(display.state == .watch)
         #expect(display.primaryStatusReason == "invalid event JSON")
         #expect(display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
+        #expect(display.overview.recentWarningsUnavailableMessage == "Warning events unavailable: invalid event JSON")
+        #expect(display.overview.recentWarningsEmptyMessage == "Warning event count unavailable")
         #expect(display.eventsTab.unavailableMessage == "Warning events unavailable: invalid event JSON")
     }
 
@@ -485,6 +642,7 @@ struct MenuDisplayModelTests {
         )
 
         #expect(display.counters.warningEvents == "-")
+        #expect(display.overview.recentWarningsEmptyMessage == "Warning event count unavailable")
         #expect(display.eventsTab.emptyMessage == "Warning event count unavailable")
     }
 
@@ -682,5 +840,14 @@ private func warningEvent(
         message: message,
         observedAt: observedAt,
         count: count
+    )
+}
+
+private func metricsSummary() -> ClusterMetricsSummary {
+    ClusterMetricsSummary(
+        cpuUsageNanocores: 750_000_000,
+        cpuAllocatableNanocores: 3_500_000_000,
+        memoryUsageBytes: 2_147_483_648,
+        memoryAllocatableBytes: 12_884_901_888
     )
 }

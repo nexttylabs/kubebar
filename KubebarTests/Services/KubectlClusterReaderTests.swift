@@ -9,6 +9,7 @@ struct KubectlClusterReaderTests {
         let runner = FakeMultiCommandRunner(results: [
             nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
             podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
             warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0),
             deploymentsCommand: CommandResult(output: deploymentMetadataJSON, error: "", exitCode: 0)
         ])
@@ -24,10 +25,82 @@ struct KubectlClusterReaderTests {
         #expect(snapshot.nodeSummary == NodeSummary(ready: 1, total: 2))
         #expect(snapshot.podSummary == PodSummary(running: 1, total: 3))
         #expect(snapshot.warningEventCount == 1)
+        #expect(snapshot.metricsSection.value?.cpuUsageNanocores == 750_000_000)
+        #expect(snapshot.metricsSection.value?.cpuAllocatableNanocores == 3_500_000_000)
+        #expect(snapshot.metricsSection.value?.memoryUsageBytes == 2_147_483_648)
+        #expect(snapshot.metricsSection.value?.memoryAllocatableBytes == 12_884_901_888)
         #expect(snapshot.trackedItems.first?.state == .watch)
         #expect(snapshot.trackedItems.first?.reason == "1 pod not ready")
         #expect(snapshot.trackedItems.first?.affectedPodCount == 1)
         #expect(snapshot.trackedItems.first?.examplePodNames == ["checkout-8a1b"])
+    }
+
+    @Test("metrics API failure only marks metrics unavailable")
+    func metricsAPIFailureOnlyMarksMetricsUnavailable() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: "", error: "metrics API unavailable", exitCode: 1),
+            warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+
+        #expect(snapshot.nodesSection.isAvailable == true)
+        #expect(snapshot.podsSection.isAvailable == true)
+        #expect(snapshot.metricsSection.unavailableReason == "metrics API unavailable")
+        #expect(snapshot.sectionFailures == [])
+    }
+
+    @Test("malformed metrics JSON only marks metrics unavailable")
+    func malformedMetricsJSONOnlyMarksMetricsUnavailable() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: "{", error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+
+        #expect(snapshot.metricsSection.unavailableReason == "invalid metrics JSON")
+        #expect(snapshot.warningEventsSection.isAvailable == true)
+        #expect(snapshot.sectionFailures == [])
+    }
+
+    @Test("missing node allocatable makes metrics unavailable")
+    func missingNodeAllocatableMakesMetricsUnavailable() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesWithoutAllocatableJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+
+        #expect(snapshot.metricsSection.unavailableReason == "missing node allocatable")
+    }
+
+    @Test("zero metrics and exponent quantities are valid")
+    func zeroMetricsAndExponentQuantitiesAreValid() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: exponentNodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: zeroNodeMetricsJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+
+        #expect(snapshot.metricsSection.value?.cpuUsageNanocores == 0)
+        #expect(snapshot.metricsSection.value?.cpuAllocatableNanocores == 1_000_000_000)
+        #expect(snapshot.metricsSection.value?.memoryUsageBytes == 0)
+        #expect(snapshot.metricsSection.value?.memoryAllocatableBytes == 2_000_000_000)
     }
 
     @Test("legacy snapshot initializer preserves warning count and available sections")
@@ -442,14 +515,49 @@ private func readSnapshot(
 
 private let nodesCommand = ["--context", "prod", "get", "nodes", "-o", "json"]
 private let podsCommand = ["--context", "prod", "get", "pods", "--all-namespaces", "-o", "json"]
+private let nodeMetricsCommand = ["--context", "prod", "get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes"]
 private let warningEventsCommand = ["--context", "prod", "get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
 private let deploymentsCommand = ["--context", "prod", "get", "deployments", "--all-namespaces", "-o", "json"]
 
 private let nodesJSON = """
 {
   "items": [
+    {"status": {"allocatable": {"cpu": "2", "memory": "8Gi"}, "conditions": [{"type": "Ready", "status": "True"}]}},
+    {"status": {"allocatable": {"cpu": "1500m", "memory": "4096Mi"}, "conditions": [{"type": "Ready", "status": "False"}]}}
+  ]
+}
+"""
+
+private let nodesWithoutAllocatableJSON = """
+{
+  "items": [
     {"status": {"conditions": [{"type": "Ready", "status": "True"}]}},
     {"status": {"conditions": [{"type": "Ready", "status": "False"}]}}
+  ]
+}
+"""
+
+private let nodeMetricsJSON = """
+{
+  "items": [
+    {"usage": {"cpu": "500m", "memory": "1024Mi"}},
+    {"usage": {"cpu": "250000000n", "memory": "1Gi"}}
+  ]
+}
+"""
+
+private let exponentNodesJSON = """
+{
+  "items": [
+    {"status": {"allocatable": {"cpu": "1e0", "memory": "2G"}, "conditions": [{"type": "Ready", "status": "True"}]}}
+  ]
+}
+"""
+
+private let zeroNodeMetricsJSON = """
+{
+  "items": [
+    {"usage": {"cpu": "0", "memory": "0"}}
   ]
 }
 """

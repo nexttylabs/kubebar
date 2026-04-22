@@ -12,6 +12,7 @@ public struct HealthEvaluator: Sendable {
     private let healthyWatchItemLimit: Int
     private let attentionWatchItemLimit: Int
     private let warningEventSummaryLimit = 3
+    private let overviewWarningLimit = 2
     private let warningMessageLimit = 96
 
     public init(visibleWatchItemLimit: Int = 5, healthyWatchItemLimit: Int = 3) {
@@ -49,13 +50,17 @@ public struct HealthEvaluator: Sendable {
         return MenuDisplayModel(
             state: .stale,
             contextName: "Not configured",
-            healthSentence: "Cluster status is unavailable",
+            healthSentence: "Status unavailable",
             primaryStatusReason: failure?.reason ?? "No previous cluster data",
             lastUpdated: "never",
             counters: MenuCounters(nodes: "-", pods: "-", warningEvents: "-"),
             visibleWatchItems: [],
             hiddenWatchItemCount: 0,
-            staleBanner: StaleBannerDisplay(lastUpdated: "never", reason: failure?.reason ?? "No previous cluster data")
+            staleBanner: StaleBannerDisplay(lastUpdated: "never", reason: failure?.reason ?? "No previous cluster data"),
+            overview: unavailableOverview(
+                contextName: "Not configured",
+                reason: failure?.reason ?? "No previous cluster data"
+            )
         )
     }
 
@@ -72,16 +77,36 @@ public struct HealthEvaluator: Sendable {
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let freshnessReason = staleAgeOutReason(for: snapshot, now: now, staleAfterSeconds: staleAfterSeconds)
         let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
-        let warningEventSummaries = makeWarningEventSummaries(from: snapshot.warningEventsSection.value ?? [], now: now)
+        let pinnedWarningIDs = pinnedWarningIDs(from: snapshot.trackedItems)
+        let warningEventSummaries = makeWarningEventSummaries(
+            from: snapshot.warningEventsSection.value ?? [],
+            now: now,
+            pinnedWarningIDs: [],
+            limit: warningEventSummaryLimit
+        )
+        let overviewWarningRows = makeWarningEventSummaries(
+            from: snapshot.warningEventsSection.value ?? [],
+            now: now,
+            pinnedWarningIDs: pinnedWarningIDs,
+            limit: Int.max
+        )
+        let overviewWarnings = Array(overviewWarningRows.prefix(overviewWarningLimit))
         let sectionNotices = makeSectionNotices(from: snapshot.sectionFailures)
         let staleReason = failureReason ?? freshnessReason
         let lastUpdated = relativeAge(from: snapshot.capturedAt, to: now)
+        let primaryStatusReason = primaryStatusReason(
+            for: resolvedState,
+            snapshot: snapshot,
+            visibleItems: visibleItems,
+            sectionNotices: sectionNotices,
+            staleReason: staleReason
+        )
 
         return MenuDisplayModel(
             state: resolvedState,
             contextName: snapshot.contextName,
             healthSentence: healthSentence(for: resolvedState, visibleItems: visibleItems),
-            primaryStatusReason: primaryStatusReason(for: resolvedState, snapshot: snapshot, visibleItems: visibleItems, sectionNotices: sectionNotices, staleReason: staleReason),
+            primaryStatusReason: primaryStatusReason,
             lastUpdated: lastUpdated,
             counters: menuCounters(from: snapshot),
             visibleWatchItems: visibleItems,
@@ -95,6 +120,14 @@ public struct HealthEvaluator: Sendable {
             warningEventSummaries: warningEventSummaries,
             sectionNotices: sectionNotices,
             overviewNotice: makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries),
+            overview: makeOverview(
+                from: snapshot,
+                state: resolvedState,
+                primaryStatusReason: primaryStatusReason,
+                sectionNotices: sectionNotices,
+                warningRows: overviewWarnings,
+                totalWarningRows: overviewWarningRows.count
+            ),
             nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
             podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
             eventsTab: makeEventsTab(from: snapshot, rows: warningEventSummaries, sectionNotices: sectionNotices)
@@ -116,7 +149,7 @@ public struct HealthEvaluator: Sendable {
             return .bad
         }
 
-        if snapshot.podsSection.value.map({ $0.running < $0.total }) == true ||
+        if snapshot.podsSection.value.map({ $0.ready < $0.total }) == true ||
             snapshot.warningEventsSection.value.map({ !$0.isEmpty }) == true ||
             snapshot.trackedItems.contains(where: { $0.state == .watch }) ||
             !snapshot.sectionFailures.isEmpty {
@@ -163,6 +196,186 @@ public struct HealthEvaluator: Sendable {
                 message: event.summary
             )
         }
+    }
+
+    private func makeOverview(
+        from snapshot: ClusterSnapshot,
+        state: ClusterHealthState,
+        primaryStatusReason: String,
+        sectionNotices: [SectionAvailabilityDisplay],
+        warningRows: [WarningEventDisplay],
+        totalWarningRows: Int
+    ) -> OverviewDisplay {
+        OverviewDisplay(
+            statusText: primaryStatusReason,
+            statusAccessibilityLabel: "\(state.label), \(primaryStatusReason), context \(snapshot.contextName)",
+            cards: [
+                nodeOverviewCard(from: snapshot, state: state),
+                podOverviewCard(from: snapshot, state: state),
+                cpuOverviewCard(from: snapshot, state: state),
+                memoryOverviewCard(from: snapshot, state: state)
+            ],
+            recentWarnings: warningRows,
+            recentWarningsOverflowCount: max(0, totalWarningRows - warningRows.count),
+            recentWarningsEmptyMessage: snapshot.warningEventsSection.value == nil
+                ? "Warning event count unavailable"
+                : warningEventsEmptyMessage(count: snapshot.warningEventCount),
+            recentWarningsUnavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.warningEvents.rawValue,
+                prefix: "Warning events unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func unavailableOverview(contextName: String, reason: String) -> OverviewDisplay {
+        OverviewDisplay(
+            statusText: reason,
+            statusAccessibilityLabel: "Stale, \(reason), context \(contextName)",
+            cards: [
+                unavailableOverviewCard(id: "nodes", title: "Nodes", systemImageName: "server.rack", reason: reason),
+                unavailableOverviewCard(id: "pods", title: "Pods", systemImageName: "shippingbox", reason: reason),
+                unavailableOverviewCard(id: "cpu", title: "CPU", systemImageName: "cpu", reason: reason),
+                unavailableOverviewCard(id: "memory", title: "Memory", systemImageName: "memorychip", reason: reason)
+            ],
+            recentWarnings: [],
+            recentWarningsOverflowCount: 0,
+            recentWarningsEmptyMessage: "Warning event count unavailable"
+        )
+    }
+
+    private func nodeOverviewCard(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewCardDisplay {
+        switch snapshot.nodesSection {
+        case let .available(summary):
+            return OverviewCardDisplay(
+                id: "nodes",
+                title: "Nodes",
+                value: "\(summary.ready)/\(summary.total)",
+                detail: "ready",
+                systemImageName: "server.rack",
+                state: cardState(for: state),
+                accessibilityLabel: "Nodes \(summary.ready) of \(summary.total) ready"
+            )
+        case let .unavailable(reason):
+            let reason = sanitizedSectionReason(reason)
+            return unavailableOverviewCard(
+                id: "nodes",
+                title: "Nodes",
+                systemImageName: "server.rack",
+                reason: reason
+            )
+        }
+    }
+
+    private func podOverviewCard(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewCardDisplay {
+        switch snapshot.podsSection {
+        case let .available(summary):
+            return OverviewCardDisplay(
+                id: "pods",
+                title: "Pods",
+                value: "\(summary.ready)/\(summary.total)",
+                detail: "ready",
+                systemImageName: "shippingbox",
+                state: cardState(for: state),
+                accessibilityLabel: "Pods \(summary.ready) of \(summary.total) ready"
+            )
+        case let .unavailable(reason):
+            let reason = sanitizedSectionReason(reason)
+            return unavailableOverviewCard(
+                id: "pods",
+                title: "Pods",
+                systemImageName: "shippingbox",
+                reason: reason
+            )
+        }
+    }
+
+    private func cpuOverviewCard(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewCardDisplay {
+        guard let metrics = snapshot.metricsSection.value else {
+            return unavailableOverviewCard(
+                id: "cpu",
+                title: "CPU",
+                systemImageName: "cpu",
+                reason: sanitizedSectionReason(snapshot.metricsSection.unavailableReason ?? "Metrics unavailable")
+            )
+        }
+
+        let percent = percentage(usage: metrics.cpuUsageNanocores, allocatable: metrics.cpuAllocatableNanocores)
+        let detail = "\(formatCores(metrics.cpuUsageNanocores)) / \(formatCores(metrics.cpuAllocatableNanocores)) cores"
+        return OverviewCardDisplay(
+            id: "cpu",
+            title: "CPU",
+            value: percent,
+            detail: detail,
+            systemImageName: "cpu",
+            state: cardState(for: state),
+            accessibilityLabel: "CPU \(percent), \(detail)"
+        )
+    }
+
+    private func memoryOverviewCard(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewCardDisplay {
+        guard let metrics = snapshot.metricsSection.value else {
+            return unavailableOverviewCard(
+                id: "memory",
+                title: "Memory",
+                systemImageName: "memorychip",
+                reason: sanitizedSectionReason(snapshot.metricsSection.unavailableReason ?? "Metrics unavailable")
+            )
+        }
+
+        let percent = percentage(usage: metrics.memoryUsageBytes, allocatable: metrics.memoryAllocatableBytes)
+        let detail = "\(formatGiB(metrics.memoryUsageBytes)) / \(formatGiB(metrics.memoryAllocatableBytes)) GiB"
+        return OverviewCardDisplay(
+            id: "memory",
+            title: "Memory",
+            value: percent,
+            detail: detail,
+            systemImageName: "memorychip",
+            state: cardState(for: state),
+            accessibilityLabel: "Memory \(percent), \(detail)"
+        )
+    }
+
+    private func unavailableOverviewCard(id: String, title: String, systemImageName: String, reason: String) -> OverviewCardDisplay {
+        OverviewCardDisplay(
+            id: id,
+            title: title,
+            value: "-",
+            detail: reason,
+            systemImageName: systemImageName,
+            state: .unavailable,
+            accessibilityLabel: "\(title) unavailable, \(reason)"
+        )
+    }
+
+    private func cardState(for state: ClusterHealthState) -> OverviewCardState {
+        state == .stale ? .stale : .current
+    }
+
+    private func percentage(usage: Int64, allocatable: Int64) -> String {
+        guard allocatable > 0 else {
+            return "-"
+        }
+
+        let percent = (Double(usage) / Double(allocatable) * 100).rounded()
+        return "\(Int(percent))%"
+    }
+
+    private func formatCores(_ nanocores: Int64) -> String {
+        formatDecimal(Double(nanocores) / 1_000_000_000)
+    }
+
+    private func formatGiB(_ bytes: Int64) -> String {
+        formatDecimal(Double(bytes) / 1_073_741_824)
+    }
+
+    private func formatDecimal(_ value: Double) -> String {
+        let rounded = (value * 10).rounded() / 10
+        if rounded == floor(rounded) {
+            return "\(Int(rounded))"
+        }
+
+        return String(format: "%.1f", rounded)
     }
 
     private func makeNodeTab(from snapshot: ClusterSnapshot, sectionNotices: [SectionAvailabilityDisplay]) -> NodeTabDisplay {
@@ -285,17 +498,29 @@ public struct HealthEvaluator: Sendable {
         )
     }
 
-    private func makeWarningEventSummaries(from warningEvents: [WarningEventRecord], now: Date) -> [WarningEventDisplay] {
+    private func makeWarningEventSummaries(
+        from warningEvents: [WarningEventRecord],
+        now: Date,
+        pinnedWarningIDs: Set<String>,
+        limit: Int
+    ) -> [WarningEventDisplay] {
         var groups: [WarningEventGroupKey: WarningEventGroup] = [:]
 
         for event in warningEvents {
             let key = WarningEventGroupKey(event: event)
             groups[key, default: WarningEventGroup(key: key, reason: event.reason)]
-                .add(event, message: shortenedWarningMessage(event.message))
+                .add(event, message: normalizedText(event.message))
         }
 
         return groups.values
             .sorted { left, right in
+                let leftPinned = pinnedWarningIDs.contains(left.key.id)
+                let rightPinned = pinnedWarningIDs.contains(right.key.id)
+
+                if leftPinned != rightPinned {
+                    return leftPinned
+                }
+
                 let leftDate = left.observedAt ?? .distantPast
                 let rightDate = right.observedAt ?? .distantPast
 
@@ -310,9 +535,12 @@ public struct HealthEvaluator: Sendable {
                 return warningLocation(namespace: left.key.namespace, objectKind: left.key.objectKind, objectName: left.key.objectName) <
                     warningLocation(namespace: right.key.namespace, objectKind: right.key.objectKind, objectName: right.key.objectName)
             }
-            .prefix(warningEventSummaryLimit)
+            .prefix(limit)
             .map { group in
-                WarningEventDisplay(
+                let fullMessage = group.message
+                let isTracked = pinnedWarningIDs.contains(group.key.id)
+
+                return WarningEventDisplay(
                     id: group.key.id,
                     reason: group.reason,
                     location: warningLocation(
@@ -322,9 +550,17 @@ public struct HealthEvaluator: Sendable {
                     ),
                     age: warningAge(from: group.observedAt, to: now),
                     occurrenceCount: group.occurrenceCount,
-                    message: group.message
+                    message: shortenedWarningMessage(fullMessage),
+                    fullMessage: fullMessage,
+                    isTracked: isTracked
                 )
             }
+    }
+
+    private func pinnedWarningIDs(from trackedItems: [TrackedItemStatus]) -> Set<String> {
+        Set(trackedItems.compactMap { item in
+            item.latestWarning.map { WarningEventGroupKey(event: $0).id }
+        })
     }
 
     private func makeWarningEventDisplay(from event: WarningEventRecord, now: Date) -> WarningEventDisplay {
@@ -338,7 +574,8 @@ public struct HealthEvaluator: Sendable {
             ),
             age: warningAge(from: event.observedAt, to: now),
             occurrenceCount: max(1, event.count),
-            message: shortenedWarningMessage(event.message)
+            message: shortenedWarningMessage(event.message),
+            fullMessage: normalizedText(event.message)
         )
     }
 
@@ -373,20 +610,24 @@ public struct HealthEvaluator: Sendable {
     private func healthSentence(for state: ClusterHealthState, visibleItems: [WatchItemDisplay]) -> String {
         switch state {
         case .ok:
-            return "Cluster looks healthy"
+            return visibleItems.isEmpty ? "No warnings" : "All tracked items OK"
         case .watch:
-            return visibleItems.first(where: { $0.state == .watch })?.title.appending(" needs watching") ?? "Cluster has warnings"
+            return visibleItems.first(where: { $0.state == .watch })?.title.appending(" has warning") ?? "Warnings present"
         case .bad:
-            return visibleItems.first(where: { $0.state == .bad })?.title.appending(" needs attention") ?? "Cluster needs attention"
+            return visibleItems.first(where: { $0.state == .bad })?.title.appending(" needs attention") ?? "Attention required"
         case .stale:
-            return "Last cluster status is stale"
+            return "Status is stale"
         }
     }
 
     private func primaryStatusReason(for state: ClusterHealthState, snapshot: ClusterSnapshot, visibleItems: [WatchItemDisplay], sectionNotices: [SectionAvailabilityDisplay], staleReason: String?) -> String {
         switch state {
         case .ok:
-            return "Cluster looks healthy"
+            if snapshot.metricsSection.value == nil {
+                return "Metrics unavailable"
+            }
+
+            return visibleItems.isEmpty ? "No warnings" : "All tracked items OK"
         case .bad:
             if let reason = visibleItems.first(where: { $0.state == .bad })?.reason {
                 return reason
@@ -397,30 +638,30 @@ public struct HealthEvaluator: Sendable {
             }
 
             if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
-                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not running")
+                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not ready")
             }
 
-            return "Cluster needs attention"
+            return "Attention required"
         case .watch:
             if let reason = visibleItems.first(where: { $0.state == .watch })?.reason {
                 return reason
             }
 
-            if let sectionReason = sectionNotices.first?.reason {
-                return sectionReason
+            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
+                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not ready")
             }
 
             if snapshot.warningEventCount > 0 {
                 return countLabel(snapshot.warningEventCount, singular: "warning event", plural: "warning events")
             }
 
-            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
-                return countLabel(podDeficit, singular: "pod", plural: "pods", suffix: "not running")
+            if let sectionReason = sectionNotices.first?.reason {
+                return sectionReason
             }
 
-            return "Cluster has warnings"
+            return "Warnings present"
         case .stale:
-            return staleReason ?? "Last cluster status is stale"
+            return staleReason ?? "Status is stale"
         }
     }
 
@@ -435,7 +676,7 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func podDeficit(from snapshot: ClusterSnapshot) -> Int? {
-        snapshot.podsSection.value.map { max(0, $0.total - $0.running) }
+        snapshot.podsSection.value.map { max(0, $0.total - $0.ready) }
     }
 
     private func staleBanner(
@@ -478,7 +719,8 @@ public struct HealthEvaluator: Sendable {
             return value
         }
 
-        return String(value.prefix(warningMessageLimit))
+        let prefixLimit = max(1, warningMessageLimit - 3)
+        return String(value.prefix(prefixLimit)) + "..."
     }
 
     private func normalizedText(_ value: String?) -> String? {

@@ -6,9 +6,11 @@ These are the rules Kubebar must keep true at runtime.
 
 - The menu bar icon only uses `OK`, `Watch`, `Bad`, or `Stale`.
 - `OK` uses the brand logo in the menu bar, but the opened menu must explicitly show OK text.
-- The first screen is watchlist-first.
-- The first screen shows only a small set of tracked items, with overflow
-  pushed behind a secondary entry.
+- The first screen is watchlist-first without requiring a visible `Watching`
+  section. Tracked objects must influence the top status row and pinned warning
+  ordering.
+- The first screen shows the top status row, Nodes card, Pods card, CPU card,
+  Memory card, and capped `Recent Warnings`; warning overflow belongs in Events.
 - Deep troubleshooting stays out of version 1.
 
 ## Data Rules
@@ -22,9 +24,20 @@ These are the rules Kubebar must keep true at runtime.
   shelling out.
 - Kubebar uses `kubectl` only for the saved context and the status/setup reads
   needed by the menu.
+- CPU and memory cards use `kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes`
+  and node allocatable values. Missing Metrics API data is a card-level
+  unavailable state, not a cluster-health failure by itself.
 - Kubebar does not query Kubernetes Secrets.
-- Warning summaries are capped at 3, grouped by reason plus involved object,
-  and show only reason, location, age, count, and short message.
+- Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
+  at 2 visible rows by default so it cannot push the top status row or cards out
+  of the first scan.
+- Warning summaries are grouped by reason plus involved object. Rows lead with
+  reason, then show object scope, age, repeat count, and secondary message text.
+- Overview tracked-object warnings must be visibly distinct without using the
+  word `Watching`; the distinction must not rely on color alone.
+- `Recent Warnings` empty, unavailable, and overflow states must read
+  differently. Empty means no warning rows, unavailable means warning data could
+  not be read, and overflow means more grouped warnings are in Events.
 - Partial section failures must be visible as unavailable and must not make
   unavailable data look healthy.
 - Menu views must not show unprocessed command transcripts.
@@ -58,6 +71,9 @@ These are the rules Kubebar must keep true at runtime.
 - Primary watchlist rows stay one line; detailed reasons stay in watchlist
   detail, stale banner, warning event, or section notice areas.
 - The watchlist is ordered by attention, not by raw cluster size.
+- Overview does not show a separate `Watching` label or section. Tracked-object
+  attention remains visible through the top status row and through pinned
+  `Recent Warnings` ordering.
 - An empty watchlist is a real state and must not be treated as a healthy
   cluster.
 - Setup candidate discovery must use the app-owned selected context.
@@ -74,6 +90,9 @@ These are the rules Kubebar must keep true at runtime.
 - Setup, refresh, edit watchlist, watchlist detail, warning events, and
   secondary sections must be reachable through native macOS keyboard
   navigation.
+- Overview keyboard focus order is top status row, Nodes card, Pods card, CPU
+  card, Memory card, visible `Recent Warnings` rows, then warning overflow
+  affordance when present.
 - Refresh and setup completion must keep enabled and disabled states visible
   and testable.
 - Keyboard support uses native SwiftUI controls and shortcuts, not custom app

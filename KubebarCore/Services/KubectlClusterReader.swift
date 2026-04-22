@@ -13,11 +13,14 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
 
     public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
         let rawSnapshot = readRawSnapshot(contextName: contextName, watchTargets: watchTargets)
-        let nodesSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodes)
+        let nodeRecordsSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodeRecords)
+        let nodesSection = mappedSection(nodeRecordsSection, transform: makeNodeSummary)
         let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
-        let podsSection = mappedSection(podRecordsSection) { pods in
-            PodSummary(running: pods.filter(\.isRunning).count, total: pods.count)
-        }
+        let podsSection = mappedSection(podRecordsSection, transform: makePodSummary)
+        let metricsSection = makeMetricsSection(
+            nodeRecordsSection: nodeRecordsSection,
+            metricsResult: rawSnapshot.result(for: .nodeMetrics)
+        )
         let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
         let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
         let workloadsSection = trackedItemsSection(
@@ -41,6 +44,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             contextName: contextName,
             nodesSection: nodesSection,
             podsSection: podsSection,
+            metricsSection: metricsSection,
             warningEventsSection: warningEventsSection,
             workloadsSection: workloadsSection,
             capturedAt: now
@@ -126,14 +130,24 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
     }
 
-    private func decodeNodes(_ json: String) throws -> NodeSummary {
+    private func decodeNodeRecords(_ json: String) throws -> [NodeRecord] {
         do {
-            let nodeList = try JSONDecoder().decode(NodeList.self, from: Data(json.utf8))
-            let ready = nodeList.items.filter(\.isReady).count
-            return NodeSummary(ready: ready, total: nodeList.items.count)
+            return try JSONDecoder().decode(NodeList.self, from: Data(json.utf8)).items
         } catch {
             throw KubectlCommandError.failed("invalid node JSON")
         }
+    }
+
+    private func makeNodeSummary(from nodes: [NodeRecord]) -> NodeSummary {
+        NodeSummary(ready: nodes.filter(\.isReady).count, total: nodes.count)
+    }
+
+    private func makePodSummary(from pods: [PodRecord]) -> PodSummary {
+        PodSummary(
+            ready: pods.filter { !$0.isNotReady }.count,
+            running: pods.filter(\.isRunning).count,
+            total: pods.count
+        )
     }
 
     private func decodePods(_ json: String) throws -> [PodRecord] {
@@ -142,6 +156,121 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         } catch {
             throw KubectlCommandError.failed("invalid pod JSON")
         }
+    }
+
+    private func decodeNodeMetrics(_ json: String) throws -> [NodeMetricsRecord] {
+        do {
+            return try JSONDecoder().decode(NodeMetricsList.self, from: Data(json.utf8)).items
+        } catch {
+            throw KubectlCommandError.failed("invalid metrics JSON")
+        }
+    }
+
+    private func makeMetricsSection(
+        nodeRecordsSection: SnapshotSection<[NodeRecord]>,
+        metricsResult: Result<String, KubectlCommandError>?
+    ) -> SnapshotSection<ClusterMetricsSummary> {
+        guard let nodes = nodeRecordsSection.value else {
+            return .unavailable(reason: nodeRecordsSection.unavailableReason ?? "Node data unavailable")
+        }
+
+        let metricsRecordsSection = decodedSection(metricsResult, decode: decodeNodeMetrics)
+        guard let metrics = metricsRecordsSection.value else {
+            return .unavailable(reason: metricsRecordsSection.unavailableReason ?? "Metrics unavailable")
+        }
+
+        guard
+            let cpuAllocatable = sumNodeQuantity(nodes, resource: "cpu", scale: .cpuNanocores),
+            let memoryAllocatable = sumNodeQuantity(nodes, resource: "memory", scale: .memoryBytes),
+            cpuAllocatable > 0,
+            memoryAllocatable > 0
+        else {
+            return .unavailable(reason: "missing node allocatable")
+        }
+
+        guard
+            let cpuUsage = sumMetricQuantity(metrics, resource: "cpu", scale: .cpuNanocores),
+            let memoryUsage = sumMetricQuantity(metrics, resource: "memory", scale: .memoryBytes)
+        else {
+            return .unavailable(reason: "invalid metrics JSON")
+        }
+
+        return .available(
+            ClusterMetricsSummary(
+                cpuUsageNanocores: cpuUsage,
+                cpuAllocatableNanocores: cpuAllocatable,
+                memoryUsageBytes: memoryUsage,
+                memoryAllocatableBytes: memoryAllocatable
+            )
+        )
+    }
+
+    private func sumNodeQuantity(_ nodes: [NodeRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
+        sumQuantities(nodes.map { $0.status.allocatable?[resource] }, scale: scale)
+    }
+
+    private func sumMetricQuantity(_ metrics: [NodeMetricsRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
+        sumQuantities(metrics.map { $0.usage[resource] }, scale: scale)
+    }
+
+    private func sumQuantities(_ values: [String?], scale: ResourceQuantityScale) -> Int64? {
+        var total: Int64 = 0
+
+        for value in values {
+            guard let value, let parsed = parseResourceQuantity(value, scale: scale) else {
+                return nil
+            }
+
+            let nextTotal = total.addingReportingOverflow(parsed)
+            if nextTotal.overflow {
+                return nil
+            }
+
+            total = nextTotal.partialValue
+        }
+
+        return total
+    }
+
+    private func parseResourceQuantity(_ value: String, scale: ResourceQuantityScale) -> Int64? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        if let number = Double(trimmed), number >= 0, number.isFinite {
+            return scaledQuantity(number: number, multiplier: scale.multiplier(for: ""))
+        }
+
+        let splitIndex = trimmed.firstIndex { character in
+            !(character.isNumber || character == "." || character == "+" || character == "-")
+        } ?? trimmed.endIndex
+        let numberText = String(trimmed[..<splitIndex])
+        let suffix = String(trimmed[splitIndex...])
+
+        guard
+            let number = Double(numberText),
+            number >= 0,
+            number.isFinite,
+            let multiplier = scale.multiplier(for: suffix)
+        else {
+            return nil
+        }
+
+        return scaledQuantity(number: number, multiplier: multiplier)
+    }
+
+    private func scaledQuantity(number: Double, multiplier: Double?) -> Int64? {
+        guard let multiplier else {
+            return nil
+        }
+
+        let scaled = number * multiplier
+        guard scaled.isFinite, scaled <= Double(Int64.max) else {
+            return nil
+        }
+
+        return Int64(scaled.rounded(.toNearestOrAwayFromZero))
     }
 
     private func decodeWarningEvents(_ json: String) throws -> [WarningEventRecord] {
@@ -458,6 +587,7 @@ private extension WorkloadKind {
 private enum KubectlRead: Hashable, Sendable {
     case nodes
     case pods
+    case nodeMetrics
     case warningEvents
     case workload(WorkloadKind)
 
@@ -467,6 +597,8 @@ private enum KubectlRead: Hashable, Sendable {
             return ["get", "nodes", "-o", "json"]
         case .pods:
             return ["get", "pods", "--all-namespaces", "-o", "json"]
+        case .nodeMetrics:
+            return ["get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes"]
         case .warningEvents:
             return ["get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
         case let .workload(kind):
@@ -475,7 +607,7 @@ private enum KubectlRead: Hashable, Sendable {
     }
 
     static func reads(for watchTargets: [WatchTarget]) -> [KubectlRead] {
-        var reads: [KubectlRead] = [.nodes, .pods, .warningEvents]
+        var reads: [KubectlRead] = [.nodes, .pods, .nodeMetrics, .warningEvents]
         let targetKinds = Set(watchTargets.compactMap { target -> WorkloadKind? in
             guard case let .workload(_, _, kind) = target, kind.supportsSelectorMetadata else {
                 return nil
@@ -518,12 +650,13 @@ private struct NodeList: Decodable {
     let items: [NodeRecord]
 }
 
-private struct NodeRecord: Decodable {
-    struct Status: Decodable {
+private struct NodeRecord: Decodable, Equatable, Sendable {
+    struct Status: Decodable, Equatable, Sendable {
         let conditions: [Condition]
+        let allocatable: [String: String]?
     }
 
-    struct Condition: Decodable {
+    struct Condition: Decodable, Equatable, Sendable {
         let type: String
         let status: String
     }
@@ -532,6 +665,88 @@ private struct NodeRecord: Decodable {
 
     var isReady: Bool {
         status.conditions.contains { $0.type == "Ready" && $0.status == "True" }
+    }
+}
+
+private struct NodeMetricsList: Decodable {
+    let items: [NodeMetricsRecord]
+}
+
+private struct NodeMetricsRecord: Decodable, Equatable, Sendable {
+    let usage: [String: String]
+}
+
+private enum ResourceQuantityScale {
+    case cpuNanocores
+    case memoryBytes
+
+    func multiplier(for suffix: String) -> Double? {
+        switch self {
+        case .cpuNanocores:
+            return cpuMultiplier(for: suffix)
+        case .memoryBytes:
+            return memoryMultiplier(for: suffix)
+        }
+    }
+
+    private func cpuMultiplier(for suffix: String) -> Double? {
+        switch suffix {
+        case "":
+            return 1_000_000_000
+        case "n":
+            return 1
+        case "u":
+            return 1_000
+        case "m":
+            return 1_000_000
+        case "k":
+            return 1_000_000_000_000
+        case "M":
+            return 1_000_000_000_000_000
+        case "G":
+            return 1_000_000_000_000_000_000
+        default:
+            return nil
+        }
+    }
+
+    private func memoryMultiplier(for suffix: String) -> Double? {
+        switch suffix {
+        case "":
+            return 1
+        case "n":
+            return 0.000_000_001
+        case "u":
+            return 0.000_001
+        case "m":
+            return 0.001
+        case "k":
+            return 1_000
+        case "M":
+            return 1_000_000
+        case "G":
+            return 1_000_000_000
+        case "T":
+            return 1_000_000_000_000
+        case "P":
+            return 1_000_000_000_000_000
+        case "E":
+            return 1_000_000_000_000_000_000
+        case "Ki":
+            return 1_024
+        case "Mi":
+            return 1_048_576
+        case "Gi":
+            return 1_073_741_824
+        case "Ti":
+            return 1_099_511_627_776
+        case "Pi":
+            return 1_125_899_906_842_624
+        case "Ei":
+            return 1_152_921_504_606_846_976
+        default:
+            return nil
+        }
     }
 }
 
@@ -574,7 +789,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
     }
 
     var isNotReady: Bool {
-        if status.phase == "Pending" || status.phase == "Unknown" {
+        if status.phase == "Pending" || status.phase == "Unknown" || status.phase == "Failed" {
             return true
         }
 

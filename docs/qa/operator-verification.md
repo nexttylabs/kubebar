@@ -14,6 +14,8 @@ This guide covers operator-facing checks for the menu states required by Phase 0
 - `./scripts/compile-and-run.sh --qa-state first-use`
 - `./scripts/compile-and-run.sh --qa-state empty-watchlist`
 - `./scripts/compile-and-run.sh --qa-state kubectl-failure`
+- `./scripts/compile-and-run.sh --qa-state metrics-unavailable`
+- `./scripts/compile-and-run.sh --qa-state warning-heavy`
 
 ## Evidence Rules
 
@@ -27,6 +29,8 @@ Screenshots belong under `docs/assets/qa/` with these names:
 - `phase-07-first-use.png`
 - `phase-07-empty-watchlist.png`
 - `phase-07-kubectl-failure.png`
+- `phase-07-metrics-unavailable.png`
+- `phase-07-warning-heavy.png`
 
 Evidence must not include raw command transcripts, tokens, kubeconfig paths, full JSON, or sensitive cluster details.
 
@@ -34,14 +38,30 @@ Evidence must not include raw command transcripts, tokens, kubeconfig paths, ful
 
 | State | Expected visible behavior | Evidence path |
 |-------|---------------------------|---------------|
-| Healthy | Menu shows OK with healthy counters and watched namespaces. | `docs/assets/qa/phase-07-healthy.png` |
-| Watch | Menu shows Watch with warning context and non-healthy attention. | `docs/assets/qa/phase-07-watch.png` |
-| Bad | Menu shows Bad and prioritizes the broken watched target. | `docs/assets/qa/phase-07-bad.png` |
-| Stale refresh failure | Menu shows Stale while preserving last known status. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
-| Stale age-out | Menu shows Stale because the last successful refresh is too old. | `docs/assets/qa/phase-07-stale-age-out.png` |
+| Healthy | Menu shows OK with top status row, four Overview cards, and neutral Recent Warnings. | `docs/assets/qa/phase-07-healthy.png` |
+| Watch | Menu shows Watch with a pinned BackOff warning row: reason first, object scope, age/repeat count, and message. | `docs/assets/qa/phase-07-watch.png` |
+| Bad | Menu shows Bad and prioritizes the broken tracked target in the top row. | `docs/assets/qa/phase-07-bad.png` |
+| Stale refresh failure | Menu shows Stale while preserving last known top row and cards with stale marking. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
+| Stale age-out | Menu shows Stale because the last successful refresh is too old and cards are visibly stale. | `docs/assets/qa/phase-07-stale-age-out.png` |
 | first-use | Menu shows setup before any saved context exists. | `docs/assets/qa/phase-07-first-use.png` |
 | empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
 | kubectl failure | Menu shows Stale with a safe failure message and retained prior status. | `docs/assets/qa/phase-07-kubectl-failure.png` |
+| metrics-unavailable | Menu keeps OK cluster status while CPU and Memory cards show unavailable metrics. | `docs/assets/qa/phase-07-metrics-unavailable.png` |
+| warning-heavy | Menu shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events. | `docs/assets/qa/phase-07-warning-heavy.png` |
+
+## Keyboard Check
+
+For Overview, confirm native keyboard focus reaches the top status row, Nodes,
+Pods, CPU, Memory, visible `Recent Warnings` rows, and any warning overflow
+affordance in that order. Keep this as `pending-human-verification` unless the
+menu was actually opened and traversed.
+
+## Recent Warnings Check
+
+For warning rows, confirm the row reads as reason first, then affected object,
+age/repeat count, and secondary message. Tracked-object warnings must be
+recognizable without the word `Watching`. Empty, unavailable, and overflow
+states must be distinct.
 
 ## When To Mark pending-human-verification
 
