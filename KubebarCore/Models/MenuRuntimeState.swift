@@ -39,6 +39,15 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.configurationMessage = nil
     }
 
+    public mutating func prepareSettings(config: AppConfig) {
+        setupState = SetupFlowState(
+            selectedContext: config.selectedContext,
+            watchlist: WatchlistSelectionState(selectedTargets: Set(config.watchTargets)),
+            refreshCadence: config.refreshCadence
+        )
+        setupState.configurationMessage = nil
+    }
+
     @discardableResult
     public mutating func selectContext(_ context: String?) -> String? {
         setupState.selectContext(context)

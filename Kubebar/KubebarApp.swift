@@ -31,5 +31,16 @@ struct KubebarApp: App {
             }
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsRootView(
+                state: $viewModel.setupState,
+                isEditingExistingConfig: viewModel.isEditingExistingConfiguration,
+                onPrepare: viewModel.prepareSettings,
+                onComplete: viewModel.completeSetup,
+                onSelectContext: viewModel.selectSetupContext,
+                onRetryTargets: viewModel.retryWatchTargetLoad
+            )
+        }
     }
 }

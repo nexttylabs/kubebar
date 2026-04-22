@@ -81,6 +81,10 @@ final class MenuBarViewModel: ObservableObject {
         watchTargetLoadTask?.cancel()
     }
 
+    var isEditingExistingConfiguration: Bool {
+        !config.needsSetup
+    }
+
     func refreshNow() {
         performRefresh(queueIfBusy: false)
     }
@@ -132,6 +136,16 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func prepareSettings() {
+        runtimeState.prepareSettings(config: config)
+        publishRuntimeState()
+        loadContextsForSettings()
+
+        if let selectedContext = runtimeState.setupState.selectedContext {
+            loadWatchTargets(for: selectedContext)
+        }
+    }
+
     func completeSetup() {
         guard let completedConfig = runtimeState.completedConfig() else {
             return
@@ -148,7 +162,7 @@ final class MenuBarViewModel: ObservableObject {
             performRefresh(queueIfBusy: true)
             startRefreshLoopIfConfigured()
         } catch {
-            runtimeState.markConfigurationSaveFailed("Could not save setup. Try again.")
+            runtimeState.markConfigurationSaveFailed(SetupFlowState.settingsSaveFailureMessage)
             publishRuntimeState()
         }
     }
@@ -230,6 +244,14 @@ final class MenuBarViewModel: ObservableObject {
             return
         }
 
+        loadContexts()
+    }
+
+    private func loadContextsForSettings() {
+        loadContexts()
+    }
+
+    private func loadContexts() {
         let contextCatalog = contextCatalog
 
         Task {

@@ -3,17 +3,20 @@ import KubebarCore
 
 struct SetupView: View {
     @Binding var state: SetupFlowState
+    let primaryActionTitle: String
     let onComplete: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
 
     init(
         state: Binding<SetupFlowState>,
+        primaryActionTitle: String = "Finish setup",
         onComplete: @escaping () -> Void = {},
         onSelectContext: @escaping (String?) -> Void = { _ in },
         onRetryTargets: @escaping () -> Void = {}
     ) {
         _state = state
+        self.primaryActionTitle = primaryActionTitle
         self.onComplete = onComplete
         self.onSelectContext = onSelectContext
         self.onRetryTargets = onRetryTargets
@@ -117,7 +120,7 @@ struct SetupView: View {
 
             Spacer()
 
-            Button("Finish setup", action: onComplete)
+            Button(primaryActionTitle, action: onComplete)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!state.isConfigured)

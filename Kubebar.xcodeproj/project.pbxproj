@@ -47,6 +47,7 @@
 		90A3769DF7A535DE88BBA88B /* MenuDisplayModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */; };
 		9519708EC07DA17E1E419E8A /* SetupFlowState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C221382EB43B27DF73F677E5 /* SetupFlowState.swift */; };
 		9B671EDA20D6DF7D94CF39C5 /* WatchlistSelectionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32B1B6F7E78CC246131309D /* WatchlistSelectionStateTests.swift */; };
+		9C927DBFB7ECCCB5139CEF39 /* SettingsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 044436EFC75907A7253A3A7A /* SettingsRootView.swift */; };
 		9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4602F3AD3687ABB356E1C266 /* NodesTabView.swift */; };
 		9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */; };
 		A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */; };
@@ -110,6 +111,7 @@
 /* Begin PBXFileReference section */
 		039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusSummaryView.swift; sourceTree = "<group>"; };
 		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
+		044436EFC75907A7253A3A7A /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
 		09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReader.swift; sourceTree = "<group>"; };
 		12938B9D8A040BCC4053F8EA /* RefreshCadenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCadenceTests.swift; sourceTree = "<group>"; };
 		16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalog.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 				4602F3AD3687ABB356E1C266 /* NodesTabView.swift */,
 				66841095D9A2044E6C8AF517 /* OverviewTabView.swift */,
 				BE870F98B15D0AD4D10E4031 /* PodsTabView.swift */,
+				044436EFC75907A7253A3A7A /* SettingsRootView.swift */,
 				A695AF3866AB76864159F1C9 /* SetupView.swift */,
 				CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */,
 				039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */,
@@ -494,6 +497,7 @@
 				9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */,
 				55F321A04D2EA4B27B1BFD9D /* OverviewTabView.swift in Sources */,
 				D343AF9AAD2DB31A718A3396 /* PodsTabView.swift in Sources */,
+				9C927DBFB7ECCCB5139CEF39 /* SettingsRootView.swift in Sources */,
 				8455B75AF69EE30EA14B7DFA /* SetupView.swift in Sources */,
 				E72D650497668E687AFC0027 /* StaleBannerView.swift in Sources */,
 				6AF6A15E2D4F765E4C98EE30 /* StatusSummaryView.swift in Sources */,

@@ -7,6 +7,8 @@ public enum WatchTargetLoadingState: Equatable, Sendable {
 }
 
 public struct SetupFlowState: Equatable, Sendable {
+    public static let settingsSaveFailureMessage = "Could not save settings. Try again."
+
     public var selectedContext: String?
     public var availableContexts: [String]
     public var watchlist: WatchlistSelectionState
@@ -93,6 +95,10 @@ public struct SetupFlowState: Equatable, Sendable {
 
     public var refreshCadenceHelpText: String {
         "Refresh every \(refreshCadence.label)."
+    }
+
+    public func primaryActionTitle(isEditingExistingConfig: Bool) -> String {
+        isEditingExistingConfig && isConfigured ? "Save Settings" : "Finish setup"
     }
 
     public mutating func selectContext(_ context: String?) {
