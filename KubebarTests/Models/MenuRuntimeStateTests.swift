@@ -54,6 +54,40 @@ struct MenuRuntimeStateTests {
         #expect(state.targetContextToLoad == "prod")
     }
 
+    @Test("preparing settings preserves saved configuration fields")
+    func preparingSettingsPreservesSavedConfigurationFields() {
+        let config = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [
+                .namespace("api"),
+                .workload(namespace: "ops", name: "worker", kind: .deployment)
+            ],
+            refreshIntervalSeconds: 120
+        )
+        var state = MenuRuntimeState(config: config)
+
+        state.prepareSettings(config: config)
+
+        #expect(state.setupState.selectedContext == "prod")
+        #expect(state.setupState.watchlist.selectedTargets == Set(config.watchTargets))
+        #expect(state.setupState.refreshCadence == .twoMinutes)
+        #expect(state.setupState.configurationMessage == nil)
+    }
+
+    @Test("preparing settings does not switch configured menu to setup")
+    func preparingSettingsDoesNotSwitchConfiguredMenuToSetup() {
+        let config = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")]
+        )
+        var state = MenuRuntimeState(config: config)
+
+        state.prepareSettings(config: config)
+
+        #expect(state.surface == .menu)
+        #expect(!state.isShowingSetup)
+    }
+
     @Test("selecting context clears candidates and requests target load")
     func selectingContextClearsCandidatesAndRequestsTargetLoad() {
         var state = MenuRuntimeState(config: AppConfig())

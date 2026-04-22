@@ -41,6 +41,33 @@ struct SetupFlowStateTests {
         #expect(state.watchlistHelpText == "2 targets selected")
     }
 
+    @Test("configured setup can use settings save primary action")
+    func configuredSetupCanUseSettingsSavePrimaryAction() {
+        let state = SetupFlowState(
+            selectedContext: "prod",
+            watchlist: WatchlistSelectionState(
+                selectedTargets: [.namespace("api")]
+            )
+        )
+
+        #expect(state.primaryActionTitle(isEditingExistingConfig: true) == "Save Settings")
+    }
+
+    @Test("first use setup keeps finish setup primary action")
+    func firstUseSetupKeepsFinishSetupPrimaryAction() {
+        let state = SetupFlowState(
+            selectedContext: nil,
+            watchlist: WatchlistSelectionState()
+        )
+
+        #expect(state.primaryActionTitle(isEditingExistingConfig: true) == "Finish setup")
+    }
+
+    @Test("settings save failure copy is concise")
+    func settingsSaveFailureCopyIsConcise() {
+        #expect(SetupFlowState.settingsSaveFailureMessage == "Could not save settings. Try again.")
+    }
+
     @Test("failed target loading preserves configured setup")
     func failedTargetLoadingPreservesConfiguredSetup() {
         let state = SetupFlowState(
