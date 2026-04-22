@@ -94,7 +94,7 @@ public struct HealthEvaluator: Sendable {
             overviewNotice: makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries),
             nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
             podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
-            eventsTab: makeEventsTab(rows: warningEventSummaries, sectionNotices: sectionNotices)
+            eventsTab: makeEventsTab(from: snapshot, rows: warningEventSummaries, sectionNotices: sectionNotices)
         )
     }
 
@@ -190,6 +190,7 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func makeEventsTab(
+        from snapshot: ClusterSnapshot,
         rows: [WarningEventDisplay],
         sectionNotices: [SectionAvailabilityDisplay]
     ) -> EventsTabDisplay {
@@ -199,8 +200,20 @@ public struct HealthEvaluator: Sendable {
                 sectionID: SnapshotSectionName.warningEvents.rawValue,
                 prefix: "Warning events unavailable",
                 sectionNotices: sectionNotices
-            )
+            ),
+            emptyMessage: warningEventsEmptyMessage(count: snapshot.warningEventCount)
         )
+    }
+
+    private func warningEventsEmptyMessage(count: Int) -> String {
+        switch count {
+        case 0:
+            return "No current warning events"
+        case 1:
+            return "1 warning event needs review"
+        default:
+            return "\(count) warning events need review"
+        }
     }
 
     private func tabUnavailableMessage(

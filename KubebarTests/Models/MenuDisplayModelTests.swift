@@ -553,6 +553,23 @@ struct MenuDisplayModelTests {
         #expect(display.eventsTab.rows.count == 3)
     }
 
+    @Test("events tab preserves warning count when grouped rows are unavailable")
+    func eventsTabPreservesWarningCountWhenGroupedRowsAreUnavailable() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 1,
+            trackedItems: [],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.eventsTab.rows.isEmpty)
+        #expect(display.eventsTab.emptyMessage == "1 warning event needs review")
+    }
+
     @Test("unavailable section prevents otherwise healthy ok state")
     func unavailableSectionPreventsOtherwiseHealthyOKState() {
         let snapshot = ClusterSnapshot(

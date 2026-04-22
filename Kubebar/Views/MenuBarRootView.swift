@@ -13,6 +13,7 @@ struct MenuBarRootView: View {
     let onSelectContext: (String?) -> Void
     let onSelectRefreshCadence: (RefreshCadence) -> Void
     let onRetryTargets: () -> Void
+    @State private var selectedTab: MenuTab = .overview
 
     var body: some View {
         Group {
@@ -35,19 +36,44 @@ struct MenuBarRootView: View {
     }
 
     private var menuContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            StatusSummaryView(display: display)
-            StaleBannerView(banner: display.staleBanner)
-            CompactCountersView(counters: display.counters)
-            WatchlistSectionView(display: display)
-            WarningEventsView(count: display.counters.warningEvents, summaries: display.warningEventSummaries, sectionNotices: display.sectionNotices)
-            NodeDetailsView(summary: display.counters.nodes)
+        VStack(alignment: .leading, spacing: 16) {
+            Picker("Menu section", selection: $selectedTab) {
+                ForEach(MenuTab.allCases) { tab in
+                    Text(tab.label)
+                        .tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ScrollView {
+                selectedTabContent
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: Layout.maxContentHeight, alignment: .top)
+
             Divider()
             refreshControls
             actions
         }
-        .frame(width: 340)
+        .frame(width: Layout.menuWidth)
         .padding(16)
+        .onAppear {
+            selectedTab = .overview
+        }
+    }
+
+    @ViewBuilder
+    private var selectedTabContent: some View {
+        switch selectedTab {
+        case .overview:
+            OverviewTabView(display: display)
+        case .nodes:
+            NodesTabView(display: display)
+        case .pods:
+            PodsTabView(display: display)
+        case .events:
+            EventsTabView(display: display)
+        }
     }
 
     private var refreshControls: some View {
@@ -95,6 +121,8 @@ struct MenuBarRootView: View {
     }
 
     private enum Layout {
+        static let menuWidth: CGFloat = 360
+        static let maxContentHeight: CGFloat = 520
         static let setupWidth: CGFloat = 560
         static let setupHeight: CGFloat = 560
     }

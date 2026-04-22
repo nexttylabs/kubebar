@@ -207,7 +207,11 @@ public struct MenuDisplayModel: Equatable, Sendable {
         self.overviewNotice = overviewNotice ?? Self.makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries)
         self.nodeTab = nodeTab ?? Self.makeNodeTab(counters: counters, sectionNotices: sectionNotices)
         self.podTab = podTab ?? Self.makePodTab(counters: counters, visibleWatchItems: visibleWatchItems, sectionNotices: sectionNotices)
-        self.eventsTab = eventsTab ?? Self.makeEventsTab(warningEventSummaries: warningEventSummaries, sectionNotices: sectionNotices)
+        self.eventsTab = eventsTab ?? Self.makeEventsTab(
+            counters: counters,
+            warningEventSummaries: warningEventSummaries,
+            sectionNotices: sectionNotices
+        )
     }
 
     private static func makeOverviewNotice(
@@ -251,6 +255,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
     }
 
     private static func makeEventsTab(
+        counters: MenuCounters,
         warningEventSummaries: [WarningEventDisplay],
         sectionNotices: [SectionAvailabilityDisplay]
     ) -> EventsTabDisplay {
@@ -260,8 +265,20 @@ public struct MenuDisplayModel: Equatable, Sendable {
                 for: "warningEvents",
                 prefix: "Warning events unavailable",
                 sectionNotices: sectionNotices
-            )
+            ),
+            emptyMessage: warningEventsEmptyMessage(count: counters.warningEvents)
         )
+    }
+
+    private static func warningEventsEmptyMessage(count: String) -> String {
+        switch count {
+        case "0", "-":
+            return "No current warning events"
+        case "1":
+            return "1 warning event needs review"
+        default:
+            return "\(count) warning events need review"
+        }
     }
 
     private static func unavailableMessage(
