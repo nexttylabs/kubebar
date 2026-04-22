@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 public enum FreshnessDisplaySchedule {
@@ -34,5 +35,19 @@ public enum FreshnessDisplaySchedule {
 
         let nextHourBoundary = ((elapsedSeconds / 3_600) + 1) * 3_600
         return max(1, nextHourBoundary - elapsedSeconds)
+    }
+}
+
+public enum ScreenVisibleHeightUpdate {
+    public static func nextHeight(
+        current: CGFloat,
+        proposed: CGFloat,
+        tolerance: CGFloat = 1
+    ) -> CGFloat? {
+        guard proposed > 0, abs(current - proposed) > tolerance else {
+            return nil
+        }
+
+        return proposed
     }
 }

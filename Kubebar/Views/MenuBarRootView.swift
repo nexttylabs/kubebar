@@ -135,23 +135,14 @@ struct MenuBarRootView: View {
     private func updateScreenVisibleHeight(_ height: CGFloat) {
         guard let nextHeight = ScreenVisibleHeightUpdate.nextHeight(
             current: screenVisibleHeight,
-            proposed: height
+            proposed: height,
+            tolerance: Layout.heightTolerance
         ) else {
             return
         }
 
         Task { @MainActor in
             screenVisibleHeight = nextHeight
-        }
-    }
-
-    enum ScreenVisibleHeightUpdate {
-        static func nextHeight(current: CGFloat, proposed: CGFloat) -> CGFloat? {
-            guard proposed > 0, abs(current - proposed) > Layout.heightTolerance else {
-                return nil
-            }
-
-            return proposed
         }
     }
 
