@@ -28,6 +28,11 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         )
         let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
         let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
+        let podDetailsSection = makePodDetailsSection(
+            podRecordsSection: podRecordsSection,
+            workloadSelectorsSection: workloadSelectorsSection,
+            watchTargets: watchTargets
+        )
         let workloadsSection = trackedItemsSection(
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
@@ -50,6 +55,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             nodesSection: nodesSection,
             nodeDetailsSection: nodeDetailsSection,
             podsSection: podsSection,
+            podDetailsSection: podDetailsSection,
             metricsSection: metricsSection,
             warningEventsSection: warningEventsSection,
             workloadsSection: workloadsSection,
@@ -244,6 +250,36 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
                 )
             }
         )
+    }
+
+    private func makePodDetailsSection(
+        podRecordsSection: SnapshotSection<[PodRecord]>,
+        workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
+        watchTargets: [WatchTarget]
+    ) -> SnapshotSection<[PodDetail]> {
+        guard let pods = podRecordsSection.value else {
+            return .unavailable(reason: podRecordsSection.unavailableReason ?? "invalid pod JSON")
+        }
+
+        guard let workloadSelectors = workloadSelectorsSection.value else {
+            return .unavailable(reason: workloadSelectorsSection.unavailableReason ?? "invalid workload JSON")
+        }
+
+        var seenPodIDs: Set<String> = []
+        var details: [PodDetail] = []
+
+        for target in watchTargets {
+            for pod in pods where pod.matches(target: target, workloadSelectors: workloadSelectors) {
+                let id = "\(pod.metadata.namespace)/\(pod.metadata.name)"
+                guard seenPodIDs.insert(id).inserted else {
+                    continue
+                }
+
+                details.append(pod.makeDetail())
+            }
+        }
+
+        return .available(details)
     }
 
     private func sumNodeQuantity(_ nodes: [NodeRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
@@ -913,6 +949,75 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         return status.containerStatuses?.contains { $0.ready == false } ?? false
     }
 
+    var isPending: Bool {
+        status.phase == "Pending"
+    }
+
+    var isUnknown: Bool {
+        status.phase == "Unknown"
+    }
+
+    var readyContainerCount: Int? {
+        guard let containerStatuses = status.containerStatuses, !containerStatuses.isEmpty else {
+            return nil
+        }
+
+        return containerStatuses.filter { $0.ready == true }.count
+    }
+
+    var totalContainerCount: Int? {
+        guard let containerStatuses = status.containerStatuses, !containerStatuses.isEmpty else {
+            return nil
+        }
+
+        return containerStatuses.count
+    }
+
+    var hasUnreadyContainer: Bool {
+        status.containerStatuses?.contains { $0.ready == false } ?? false
+    }
+
+    var currentWaitingState: ContainerStateWaiting? {
+        status.containerStatuses?.compactMap { $0.state?.waiting }.first
+    }
+
+    var currentTerminatedState: ContainerStateTerminated? {
+        status.containerStatuses?.compactMap { $0.state?.terminated }.first
+    }
+
+    var notReadyCondition: PodCondition? {
+        status.conditions?.first { condition in
+            (condition.type == "Ready" || condition.type == "ContainersReady") && condition.status != "True"
+        }
+    }
+
+    func makeDetail() -> PodDetail {
+        let waitingState = currentWaitingState
+        let terminatedState = currentTerminatedState
+        let condition = notReadyCondition
+
+        return PodDetail(
+            namespace: metadata.namespace,
+            name: metadata.name,
+            phase: status.phase,
+            readyContainerCount: readyContainerCount,
+            totalContainerCount: totalContainerCount,
+            statusReason: status.reason,
+            statusMessage: status.message,
+            waitingReason: waitingState?.reason,
+            waitingMessage: waitingState?.message,
+            terminatedReason: terminatedState?.reason,
+            terminatedMessage: terminatedState?.message,
+            notReadyConditionReason: condition?.reason,
+            notReadyConditionMessage: condition?.message,
+            hasUnreadyContainer: hasUnreadyContainer,
+            isFailed: isFailed,
+            isPending: isPending,
+            isUnknown: isUnknown,
+            isNotReady: isNotReady
+        )
+    }
+
     func matches(target: WatchTarget, workloadSelectors: [WorkloadIdentity: [String: String]]) -> Bool {
         switch target {
         case let .namespace(namespace):
@@ -968,6 +1073,8 @@ private struct OwnerReference: Decodable, Equatable, Sendable {
 private struct PodCondition: Decodable, Equatable, Sendable {
     let type: String
     let status: String
+    let reason: String?
+    let message: String?
 }
 
 private struct ContainerStatus: Decodable, Equatable, Sendable {

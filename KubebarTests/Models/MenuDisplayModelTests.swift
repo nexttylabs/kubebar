@@ -14,6 +14,9 @@ struct MenuDisplayModelTests {
             trackedItems: [
                 TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
             ],
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
             metricsSection: .available(metricsSummary()),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
@@ -34,7 +37,8 @@ struct MenuDisplayModelTests {
         #expect(display.overview.recentWarningsEmptyMessage == "No current warning events")
         #expect(display.nodeTab.summary == "3/3 nodes ready")
         #expect(display.nodeTab.emptyMessage == "No node data yet. Refresh or check Settings.")
-        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.summary == "1/1 watched pods ready")
+        #expect(display.podTab.sections.first?.namespace == "api")
         #expect(display.podTab.emptyMessage == "No pod data yet. Refresh or check Settings.")
         #expect(display.eventsTab.emptyMessage == "No current warning events")
     }
@@ -230,6 +234,110 @@ struct MenuDisplayModelTests {
         #expect(display.podTab.summary == "12/12 pods running")
     }
 
+    @Test("pod tab groups rows by namespace and attention")
+    func podTabGroupsRowsByNamespaceAndAttention() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 3, running: 4, total: 4)),
+            podDetailsSection: .available([
+                podDetail(namespace: "monitoring", name: "prometheus-0", readyContainerCount: 2, totalContainerCount: 2),
+                podDetail(namespace: "api", name: "checkout-ready", readyContainerCount: 1, totalContainerCount: 1),
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-crash",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    waitingReason: "CrashLoopBackOff",
+                    waitingMessage: "back-off restarting container",
+                    isNotReady: true
+                ),
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-pending",
+                    phase: "Pending",
+                    isPending: true,
+                    isNotReady: true
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "1 pod restarting"),
+                TrackedItemStatus(target: .namespace("monitoring"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let sections = display.podTab.sections
+        let apiRows = try #require(sections.first?.rows)
+
+        #expect(display.podTab.summary == "2/4 watched pods ready")
+        #expect(sections.map(\.namespace) == ["api", "monitoring"])
+        #expect(apiRows.map(\.name) == ["checkout-crash", "checkout-pending", "checkout-ready"])
+        #expect(apiRows.map(\.state) == [.bad, .watch, .ready])
+        #expect(apiRows[0].readyLabel == "0/1")
+        #expect(apiRows[0].issueText == "CrashLoopBackOff: back-off restarting container")
+        #expect(apiRows[0].accessibilityLabel.contains("Bad") == true)
+        #expect(apiRows[1].readyLabel == "-")
+        #expect(apiRows[1].issueText == "Pending")
+        #expect(apiRows[2].issueText == nil)
+    }
+
+    @Test("pod tab does not mark historical restarts as bad")
+    func podTabDoesNotMarkHistoricalRestartsAsBad() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 1, running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.state == .ready)
+        #expect(row.issueText == nil)
+    }
+
+    @Test("pod tab distinguishes unavailable and empty watched pods")
+    func podTabDistinguishesUnavailableAndEmptyWatchedPods() {
+        let unavailable = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .unavailable(reason: "invalid pod JSON"),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let empty = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 0, running: 0, total: 0)),
+            podDetailsSection: .available([]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "no matching pods")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let unavailableDisplay = HealthEvaluator().evaluate(snapshot: unavailable, now: Date(timeIntervalSince1970: 120))
+        let emptyDisplay = HealthEvaluator().evaluate(snapshot: empty, now: Date(timeIntervalSince1970: 120))
+
+        #expect(unavailableDisplay.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+        #expect(emptyDisplay.podTab.unavailableMessage == nil)
+        #expect(emptyDisplay.podTab.sections.isEmpty)
+        #expect(emptyDisplay.podTab.emptyMessage == "No watched pods found")
+    }
+
     @Test("single warning event uses singular primary status reason")
     func singleWarningEventUsesSingularPrimaryStatusReason() {
         let snapshot = ClusterSnapshot(
@@ -362,6 +470,9 @@ struct MenuDisplayModelTests {
             trackedItems: [
                 TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
             ],
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
 
@@ -391,6 +502,9 @@ struct MenuDisplayModelTests {
             trackedItems: [
                 TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
             ],
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
 
@@ -785,6 +899,9 @@ struct MenuDisplayModelTests {
             trackedItems: [
                 TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
             ],
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
 
@@ -797,8 +914,9 @@ struct MenuDisplayModelTests {
 
         #expect(display.counters.nodes == "3/3")
         #expect(display.nodeTab.summary == "3/3 nodes ready")
-        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.summary == "1/1 watched pods ready")
         #expect(display.podTab.rows.first?.title == "api/checkout")
+        #expect(display.podTab.sections.first?.rows.first?.name == "checkout-7f9d")
         #expect(display.eventsTab.emptyMessage == "No current warning events")
         #expect(display.staleBanner?.reason == "kubectl timed out")
     }
@@ -946,5 +1064,47 @@ private func nodeDetail(
         cpuAllocatableNanocores: cpuAllocatableNanocores,
         memoryUsageBytes: memoryUsageBytes,
         memoryAllocatableBytes: memoryAllocatableBytes
+    )
+}
+
+private func podDetail(
+    namespace: String,
+    name: String,
+    phase: String? = "Running",
+    readyContainerCount: Int? = nil,
+    totalContainerCount: Int? = nil,
+    statusReason: String? = nil,
+    statusMessage: String? = nil,
+    waitingReason: String? = nil,
+    waitingMessage: String? = nil,
+    terminatedReason: String? = nil,
+    terminatedMessage: String? = nil,
+    notReadyConditionReason: String? = nil,
+    notReadyConditionMessage: String? = nil,
+    hasUnreadyContainer: Bool = false,
+    isFailed: Bool = false,
+    isPending: Bool = false,
+    isUnknown: Bool = false,
+    isNotReady: Bool = false
+) -> PodDetail {
+    PodDetail(
+        namespace: namespace,
+        name: name,
+        phase: phase,
+        readyContainerCount: readyContainerCount,
+        totalContainerCount: totalContainerCount,
+        statusReason: statusReason,
+        statusMessage: statusMessage,
+        waitingReason: waitingReason,
+        waitingMessage: waitingMessage,
+        terminatedReason: terminatedReason,
+        terminatedMessage: terminatedMessage,
+        notReadyConditionReason: notReadyConditionReason,
+        notReadyConditionMessage: notReadyConditionMessage,
+        hasUnreadyContainer: hasUnreadyContainer,
+        isFailed: isFailed,
+        isPending: isPending,
+        isUnknown: isUnknown,
+        isNotReady: isNotReady
     )
 }

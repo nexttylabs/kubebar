@@ -48,7 +48,8 @@ includes:
 - compact node, pod, and warning counts for secondary tabs,
 - per-node rows for the Nodes tab with node name, readiness, CPU, memory, and
   Not Ready issue text,
-- visible watchlist rows,
+- watched-scope Pod rows for the Pods tab, grouped by namespace, with status
+  dot, Pod name, ready/all count, and one short secondary issue text,
 - overflow count for hidden watched items,
 - stale banner content when the last refresh is no longer fresh.
 
