@@ -15,11 +15,16 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         let rawSnapshot = readRawSnapshot(contextName: contextName, watchTargets: watchTargets)
         let nodeRecordsSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodeRecords)
         let nodesSection = mappedSection(nodeRecordsSection, transform: makeNodeSummary)
+        let metricsRecordsSection = decodedSection(rawSnapshot.result(for: .nodeMetrics), decode: decodeNodeMetrics)
+        let nodeDetailsSection = makeNodeDetailsSection(
+            nodeRecordsSection: nodeRecordsSection,
+            metricsRecordsSection: metricsRecordsSection
+        )
         let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
         let podsSection = mappedSection(podRecordsSection, transform: makePodSummary)
         let metricsSection = makeMetricsSection(
             nodeRecordsSection: nodeRecordsSection,
-            metricsResult: rawSnapshot.result(for: .nodeMetrics)
+            metricsRecordsSection: metricsRecordsSection
         )
         let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
         let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
@@ -43,6 +48,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         return ClusterSnapshot(
             contextName: contextName,
             nodesSection: nodesSection,
+            nodeDetailsSection: nodeDetailsSection,
             podsSection: podsSection,
             metricsSection: metricsSection,
             warningEventsSection: warningEventsSection,
@@ -168,13 +174,12 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
 
     private func makeMetricsSection(
         nodeRecordsSection: SnapshotSection<[NodeRecord]>,
-        metricsResult: Result<String, KubectlCommandError>?
+        metricsRecordsSection: SnapshotSection<[NodeMetricsRecord]>
     ) -> SnapshotSection<ClusterMetricsSummary> {
         guard let nodes = nodeRecordsSection.value else {
             return .unavailable(reason: nodeRecordsSection.unavailableReason ?? "Node data unavailable")
         }
 
-        let metricsRecordsSection = decodedSection(metricsResult, decode: decodeNodeMetrics)
         guard let metrics = metricsRecordsSection.value else {
             return .unavailable(reason: metricsRecordsSection.unavailableReason ?? "Metrics unavailable")
         }
@@ -205,12 +210,68 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         )
     }
 
+    private func makeNodeDetailsSection(
+        nodeRecordsSection: SnapshotSection<[NodeRecord]>,
+        metricsRecordsSection: SnapshotSection<[NodeMetricsRecord]>
+    ) -> SnapshotSection<[NodeDetail]> {
+        guard let nodes = nodeRecordsSection.value else {
+            return .unavailable(reason: nodeRecordsSection.unavailableReason ?? "Node data unavailable")
+        }
+
+        let metricsByName = (metricsRecordsSection.value ?? []).reduce(into: [String: NodeMetricsRecord]()) { result, record in
+            guard let name = normalizedText(record.metadata?.name) else {
+                return
+            }
+
+            result[name] = record
+        }
+
+        return .available(
+            nodes.enumerated().map { index, node in
+                let name = normalizedText(node.metadata?.name) ?? "unknown-node-\(index + 1)"
+                let metrics = metricsByName[name]
+                let cpuAllocatable = parseNodeQuantity(node, resource: "cpu", scale: .cpuNanocores)
+                let memoryAllocatable = parseNodeQuantity(node, resource: "memory", scale: .memoryBytes)
+                let cpuUsage = parseMetricQuantity(metrics, resource: "cpu", scale: .cpuNanocores)
+                let memoryUsage = parseMetricQuantity(metrics, resource: "memory", scale: .memoryBytes)
+                let issue = node.notReadyIssue
+
+                return NodeDetail(
+                    name: name,
+                    isReady: node.isReady,
+                    issueReason: issue.reason,
+                    issueMessage: issue.message,
+                    cpuUsageNanocores: cpuUsage,
+                    cpuAllocatableNanocores: cpuAllocatable,
+                    memoryUsageBytes: memoryUsage,
+                    memoryAllocatableBytes: memoryAllocatable
+                )
+            }
+        )
+    }
+
     private func sumNodeQuantity(_ nodes: [NodeRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
         sumQuantities(nodes.map { $0.status.allocatable?[resource] }, scale: scale)
     }
 
     private func sumMetricQuantity(_ metrics: [NodeMetricsRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
         sumQuantities(metrics.map { $0.usage[resource] }, scale: scale)
+    }
+
+    private func parseNodeQuantity(_ node: NodeRecord, resource: String, scale: ResourceQuantityScale) -> Int64? {
+        guard let value = node.status.allocatable?[resource] else {
+            return nil
+        }
+
+        return parseResourceQuantity(value, scale: scale)
+    }
+
+    private func parseMetricQuantity(_ metrics: NodeMetricsRecord?, resource: String, scale: ResourceQuantityScale) -> Int64? {
+        guard let value = metrics?.usage[resource] else {
+            return nil
+        }
+
+        return parseResourceQuantity(value, scale: scale)
     }
 
     private func sumQuantities(_ values: [String?], scale: ResourceQuantityScale) -> Int64? {
@@ -651,6 +712,10 @@ private struct NodeList: Decodable {
 }
 
 private struct NodeRecord: Decodable, Equatable, Sendable {
+    struct Metadata: Decodable, Equatable, Sendable {
+        let name: String
+    }
+
     struct Status: Decodable, Equatable, Sendable {
         let conditions: [Condition]
         let allocatable: [String: String]?
@@ -659,12 +724,44 @@ private struct NodeRecord: Decodable, Equatable, Sendable {
     struct Condition: Decodable, Equatable, Sendable {
         let type: String
         let status: String
+        let reason: String?
+        let message: String?
     }
 
+    let metadata: Metadata?
     let status: Status
 
     var isReady: Bool {
-        status.conditions.contains { $0.type == "Ready" && $0.status == "True" }
+        readyCondition?.status == "True"
+    }
+
+    private var readyCondition: Condition? {
+        status.conditions.first { $0.type == "Ready" }
+    }
+
+    var notReadyIssue: (reason: String?, message: String?) {
+        if let readyCondition, readyCondition.status != "True" {
+            return (
+                reason: normalizedNodeText(readyCondition.reason) ?? "Ready \(readyCondition.status)",
+                message: normalizedNodeText(readyCondition.message)
+            )
+        }
+
+        if readyCondition == nil {
+            return (reason: "Ready status missing", message: nil)
+        }
+
+        if let pressureCondition = status.conditions.first(where: { condition in
+            ["DiskPressure", "MemoryPressure", "PIDPressure", "NetworkUnavailable"].contains(condition.type) &&
+                condition.status == "True"
+        }) {
+            return (
+                reason: normalizedNodeText(pressureCondition.reason) ?? pressureCondition.type,
+                message: normalizedNodeText(pressureCondition.message)
+            )
+        }
+
+        return (reason: nil, message: nil)
     }
 }
 
@@ -673,7 +770,21 @@ private struct NodeMetricsList: Decodable {
 }
 
 private struct NodeMetricsRecord: Decodable, Equatable, Sendable {
+    struct Metadata: Decodable, Equatable, Sendable {
+        let name: String
+    }
+
+    let metadata: Metadata?
     let usage: [String: String]
+}
+
+private func normalizedNodeText(_ value: String?) -> String? {
+    let text = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let text, !text.isEmpty else {
+        return nil
+    }
+
+    return text
 }
 
 private enum ResourceQuantityScale {

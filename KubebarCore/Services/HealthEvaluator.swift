@@ -361,6 +361,14 @@ public struct HealthEvaluator: Sendable {
         return "\(Int(percent))%"
     }
 
+    private func percentage(usage: Int64?, allocatable: Int64?) -> String {
+        guard let usage, let allocatable else {
+            return "-"
+        }
+
+        return percentage(usage: usage, allocatable: allocatable)
+    }
+
     private func formatCores(_ nanocores: Int64) -> String {
         formatDecimal(Double(nanocores) / 1_000_000_000)
     }
@@ -381,12 +389,95 @@ public struct HealthEvaluator: Sendable {
     private func makeNodeTab(from snapshot: ClusterSnapshot, sectionNotices: [SectionAvailabilityDisplay]) -> NodeTabDisplay {
         NodeTabDisplay(
             summary: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total) nodes ready" } ?? "- nodes ready",
+            rows: makeNodeRows(from: snapshot),
             unavailableMessage: tabUnavailableMessage(
                 sectionID: SnapshotSectionName.nodes.rawValue,
                 prefix: "Node data unavailable",
                 sectionNotices: sectionNotices
             )
         )
+    }
+
+    private func makeNodeRows(from snapshot: ClusterSnapshot) -> [NodeItemDisplay] {
+        guard snapshot.nodesSection.isAvailable, let details = snapshot.nodeDetailsSection.value else {
+            return []
+        }
+
+        return details
+            .sorted { left, right in
+                if left.isReady != right.isReady {
+                    return !left.isReady
+                }
+
+                return left.name < right.name
+            }
+            .map(makeNodeRow)
+    }
+
+    private func makeNodeRow(from detail: NodeDetail) -> NodeItemDisplay {
+        let readiness: NodeItemReadiness = detail.isReady ? .ready : .notReady
+        let statusLabel = detail.isReady ? "Ready" : "Not Ready"
+        let cpuLabel = percentage(usage: detail.cpuUsageNanocores, allocatable: detail.cpuAllocatableNanocores)
+        let memoryLabel = percentage(usage: detail.memoryUsageBytes, allocatable: detail.memoryAllocatableBytes)
+        let issueText = detail.isReady ? nil : nodeIssueText(from: detail)
+        let helpText = nodeHelpText(
+            name: detail.name,
+            statusLabel: statusLabel,
+            cpuLabel: cpuLabel,
+            memoryLabel: memoryLabel,
+            issueText: issueText
+        )
+
+        return NodeItemDisplay(
+            name: detail.name,
+            readiness: readiness,
+            statusLabel: statusLabel,
+            cpuLabel: cpuLabel,
+            memoryLabel: memoryLabel,
+            issueText: issueText,
+            helpText: helpText,
+            accessibilityLabel: helpText
+        )
+    }
+
+    private func nodeIssueText(from detail: NodeDetail) -> String {
+        let reason = normalizedText(detail.issueReason)
+        let message = normalizedText(detail.issueMessage)
+
+        if let reason, let message, reason != message {
+            return "\(reason): \(message)"
+        }
+
+        if let reason {
+            return reason
+        }
+
+        if let message {
+            return message
+        }
+
+        return "Node is not ready"
+    }
+
+    private func nodeHelpText(
+        name: String,
+        statusLabel: String,
+        cpuLabel: String,
+        memoryLabel: String,
+        issueText: String?
+    ) -> String {
+        var parts = [
+            name,
+            statusLabel,
+            "CPU \(cpuLabel)",
+            "Memory \(memoryLabel)"
+        ]
+
+        if let issueText {
+            parts.append(issueText)
+        }
+
+        return parts.joined(separator: ", ")
     }
 
     private func makePodTab(

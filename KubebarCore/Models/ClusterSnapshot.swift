@@ -10,6 +10,37 @@ public struct NodeSummary: Equatable, Sendable {
     }
 }
 
+public struct NodeDetail: Equatable, Sendable {
+    public let name: String
+    public let isReady: Bool
+    public let issueReason: String?
+    public let issueMessage: String?
+    public let cpuUsageNanocores: Int64?
+    public let cpuAllocatableNanocores: Int64?
+    public let memoryUsageBytes: Int64?
+    public let memoryAllocatableBytes: Int64?
+
+    public init(
+        name: String,
+        isReady: Bool,
+        issueReason: String? = nil,
+        issueMessage: String? = nil,
+        cpuUsageNanocores: Int64? = nil,
+        cpuAllocatableNanocores: Int64? = nil,
+        memoryUsageBytes: Int64? = nil,
+        memoryAllocatableBytes: Int64? = nil
+    ) {
+        self.name = name
+        self.isReady = isReady
+        self.issueReason = issueReason
+        self.issueMessage = issueMessage
+        self.cpuUsageNanocores = cpuUsageNanocores
+        self.cpuAllocatableNanocores = cpuAllocatableNanocores
+        self.memoryUsageBytes = memoryUsageBytes
+        self.memoryAllocatableBytes = memoryAllocatableBytes
+    }
+}
+
 public struct PodSummary: Equatable, Sendable {
     public let ready: Int
     public let running: Int
@@ -134,6 +165,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
     public let trackedItems: [TrackedItemStatus]
     public let capturedAt: Date
     public let nodesSection: SnapshotSection<NodeSummary>
+    public let nodeDetailsSection: SnapshotSection<[NodeDetail]>
     public let podsSection: SnapshotSection<PodSummary>
     public let metricsSection: SnapshotSection<ClusterMetricsSummary>
     public let warningEventsSection: SnapshotSection<[WarningEventRecord]>
@@ -146,6 +178,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         podSummary: PodSummary,
         warningEventCount: Int,
         trackedItems: [TrackedItemStatus],
+        nodeDetailsSection: SnapshotSection<[NodeDetail]> = .available([]),
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
         capturedAt: Date
     ) {
@@ -156,6 +189,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         self.trackedItems = trackedItems
         self.capturedAt = capturedAt
         self.nodesSection = .available(nodeSummary)
+        self.nodeDetailsSection = nodeDetailsSection
         self.podsSection = .available(podSummary)
         self.metricsSection = metricsSection
         self.warningEventsSection = .available([])
@@ -166,6 +200,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
     public init(
         contextName: String,
         nodesSection: SnapshotSection<NodeSummary>,
+        nodeDetailsSection: SnapshotSection<[NodeDetail]>? = nil,
         podsSection: SnapshotSection<PodSummary>,
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
         warningEventsSection: SnapshotSection<[WarningEventRecord]>,
@@ -186,6 +221,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         self.trackedItems = trackedItems
         self.capturedAt = capturedAt
         self.nodesSection = nodesSection
+        self.nodeDetailsSection = nodeDetailsSection ?? Self.makeNodeDetailsSection(from: nodesSection)
         self.podsSection = podsSection
         self.metricsSection = metricsSection
         self.warningEventsSection = warningEventsSection
@@ -196,6 +232,15 @@ public struct ClusterSnapshot: Equatable, Sendable {
             warningEventsSection: warningEventsSection,
             workloadsSection: workloadsSection
         )
+    }
+
+    private static func makeNodeDetailsSection(from nodesSection: SnapshotSection<NodeSummary>) -> SnapshotSection<[NodeDetail]> {
+        switch nodesSection {
+        case .available:
+            .available([])
+        case let .unavailable(reason):
+            .unavailable(reason: reason)
+        }
     }
 
     private static func makeSectionFailures(

@@ -182,6 +182,7 @@ public enum MenuStateFixtureCatalog {
         ClusterSnapshot(
             contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([]),
@@ -205,6 +206,7 @@ public enum MenuStateFixtureCatalog {
         ClusterSnapshot(
             contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(ready: 11, running: 11, total: 12)),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([
@@ -244,6 +246,7 @@ public enum MenuStateFixtureCatalog {
         ClusterSnapshot(
             contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            nodeDetailsSection: .available(badNodeDetails()),
             podsSection: .available(PodSummary(ready: 10, running: 10, total: 12)),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([]),
@@ -269,6 +272,7 @@ public enum MenuStateFixtureCatalog {
         ClusterSnapshot(
             contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(metricsUnavailableNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
             metricsSection: .unavailable(reason: "metrics API unavailable"),
             warningEventsSection: .available([]),
@@ -297,6 +301,7 @@ public enum MenuStateFixtureCatalog {
         return ClusterSnapshot(
             contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([
@@ -330,6 +335,74 @@ public enum MenuStateFixtureCatalog {
             ]),
             capturedAt: capturedAt
         )
+    }
+
+    private static func healthyNodeDetails() -> [NodeDetail] {
+        [
+            NodeDetail(
+                name: "qa-worker-1",
+                isReady: true,
+                cpuUsageNanocores: 500_000_000,
+                cpuAllocatableNanocores: 2_000_000_000,
+                memoryUsageBytes: 1_073_741_824,
+                memoryAllocatableBytes: 4_294_967_296
+            ),
+            NodeDetail(
+                name: "qa-worker-2",
+                isReady: true,
+                cpuUsageNanocores: 750_000_000,
+                cpuAllocatableNanocores: 3_000_000_000,
+                memoryUsageBytes: 2_147_483_648,
+                memoryAllocatableBytes: 8_589_934_592
+            ),
+            NodeDetail(
+                name: "qa-worker-3",
+                isReady: true,
+                cpuUsageNanocores: 250_000_000,
+                cpuAllocatableNanocores: 1_000_000_000,
+                memoryUsageBytes: 536_870_912,
+                memoryAllocatableBytes: 2_147_483_648
+            )
+        ]
+    }
+
+    private static func badNodeDetails() -> [NodeDetail] {
+        [
+            NodeDetail(
+                name: "qa-worker-1",
+                isReady: true,
+                cpuUsageNanocores: 500_000_000,
+                cpuAllocatableNanocores: 2_000_000_000,
+                memoryUsageBytes: 1_073_741_824,
+                memoryAllocatableBytes: 4_294_967_296
+            ),
+            NodeDetail(
+                name: "qa-worker-2",
+                isReady: false,
+                issueReason: "KubeletNotReady",
+                issueMessage: "container runtime is down",
+                cpuUsageNanocores: 900_000_000,
+                cpuAllocatableNanocores: 2_000_000_000,
+                memoryUsageBytes: 3_221_225_472,
+                memoryAllocatableBytes: 4_294_967_296
+            ),
+            NodeDetail(
+                name: "qa-worker-3",
+                isReady: true,
+                cpuUsageNanocores: 250_000_000,
+                cpuAllocatableNanocores: 1_000_000_000,
+                memoryUsageBytes: 536_870_912,
+                memoryAllocatableBytes: 2_147_483_648
+            )
+        ]
+    }
+
+    private static func metricsUnavailableNodeDetails() -> [NodeDetail] {
+        [
+            NodeDetail(name: "qa-worker-1", isReady: true),
+            NodeDetail(name: "qa-worker-2", isReady: true),
+            NodeDetail(name: "qa-worker-3", isReady: true)
+        ]
     }
 
     private static func metricsSummary() -> ClusterMetricsSummary {
