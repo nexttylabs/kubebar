@@ -135,4 +135,3 @@ Ready for phase-level verification. Issue #8 implementation, documentation, and 
 - Summary file exists.
 - Task commits found: `0138a09`, `ab4c9e7`.
 - README, CHANGELOG, and UAT acceptance checks passed.
-

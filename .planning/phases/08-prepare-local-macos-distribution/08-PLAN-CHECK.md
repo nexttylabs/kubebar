@@ -66,4 +66,3 @@ issues: []
   gate verifies plans before execution.
 
 Plans verified. Run `$gsd-execute-phase issue #8` or `$gsd-execute-phase 08` to proceed.
-

@@ -172,4 +172,3 @@ notarization plan is needed.
 None. The first local distribution shape is locked as a copied `.app` bundle.
 
 ## RESEARCH COMPLETE
-
