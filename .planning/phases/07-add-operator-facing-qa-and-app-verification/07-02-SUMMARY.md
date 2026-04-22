@@ -67,6 +67,7 @@ completed: 2026-04-22
 
 - Kept a single `MenuBarExtra` scene and switched only the rendered root view, matching SwiftUI `SceneBuilder` constraints.
 - Adapted the plan to the current `MenuBarRootView` API, which no longer takes a setup-state binding.
+- OK now uses a monochrome system status symbol in the menu bar; the app logo is reserved for the app icon.
 
 ## Deviations from Plan
 

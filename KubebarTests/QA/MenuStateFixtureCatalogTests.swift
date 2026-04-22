@@ -41,7 +41,7 @@ struct MenuStateFixtureCatalogTests {
         #expect(firstUse.isShowingSetup == true)
         #expect(firstUse.setupState.selectedContext == nil)
         #expect(emptyWatchlist.isShowingSetup == true)
-        #expect(emptyWatchlist.setupState.selectedContext == "prod")
+        #expect(emptyWatchlist.setupState.selectedContext == "QA fixture")
         #expect(emptyWatchlist.setupState.watchlist.isEmpty == true)
         #expect(firstUse.setupState != emptyWatchlist.setupState)
     }

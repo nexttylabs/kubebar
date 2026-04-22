@@ -40,7 +40,7 @@ Evidence must not include raw command transcripts, tokens, kubeconfig paths, ful
 | Stale refresh failure | Menu shows Stale while preserving last known status. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
 | Stale age-out | Menu shows Stale because the last successful refresh is too old. | `docs/assets/qa/phase-07-stale-age-out.png` |
 | first-use | Menu shows setup before any saved context exists. | `docs/assets/qa/phase-07-first-use.png` |
-| empty-watchlist | Menu shows setup because prod has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
+| empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
 | kubectl failure | Menu shows Stale with a safe failure message and retained prior status. | `docs/assets/qa/phase-07-kubectl-failure.png` |
 
 ## When To Mark pending-human-verification

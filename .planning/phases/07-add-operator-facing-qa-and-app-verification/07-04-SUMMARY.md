@@ -69,6 +69,7 @@ completed: 2026-04-22
 - Left state rows as `pending-human-verification` because screenshots were not captured.
 - Marked automated verification as passing separately from visual menu proof.
 - Did not expand the root README.
+- QA fixture labels use explicit QA names so they do not look like real cluster data during visual checks.
 
 ## Deviations from Plan
 

@@ -15,7 +15,7 @@ public struct MenuBarStatusPresentation: Equatable, Sendable {
     public var icon: IconSource {
         switch state {
         case .ok:
-            .custom("KubebarLogo")
+            .system("checkmark.circle")
         case .watch:
             .system("exclamationmark.triangle")
         case .bad:

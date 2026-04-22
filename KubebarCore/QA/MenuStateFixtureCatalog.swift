@@ -109,7 +109,7 @@ public enum MenuStateFixtureCatalog {
                 display: setupRequiredDisplay(reason: "No watched namespace selected."),
                 setupState: emptyWatchlistSetupState(),
                 isShowingSetup: true,
-                expectedBehavior: "Menu opens the setup-required state when prod has no selected namespaces.",
+                expectedBehavior: "Menu opens the setup-required state when the QA fixture context has no selected namespaces.",
                 limitations: "Requires visible menu inspection to confirm the empty watchlist action is visible."
             )
         case .kubectlFailure:
@@ -163,18 +163,18 @@ public enum MenuStateFixtureCatalog {
 
     private static func healthySnapshot() -> ClusterSnapshot {
         ClusterSnapshot(
-            contextName: "prod",
+            contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             podsSection: .available(PodSummary(running: 12, total: 12)),
             warningEventsSection: .available([]),
             workloadsSection: .available([
                 TrackedItemStatus(
-                    target: .namespace("api"),
+                    target: .namespace("qa-api"),
                     state: .ok,
                     reason: "6/6 watched pods running"
                 ),
                 TrackedItemStatus(
-                    target: .namespace("monitoring"),
+                    target: .namespace("qa-monitoring"),
                     state: .ok,
                     reason: "3/3 watched pods running"
                 )
@@ -185,15 +185,15 @@ public enum MenuStateFixtureCatalog {
 
     private static func watchSnapshot() -> ClusterSnapshot {
         ClusterSnapshot(
-            contextName: "prod",
+            contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             podsSection: .available(PodSummary(running: 11, total: 12)),
             warningEventsSection: .available([
                 WarningEventRecord(
                     reason: "BackOff",
-                    namespace: "api",
+                    namespace: "qa-api",
                     objectKind: "Pod",
-                    objectName: "checkout-7f9",
+                    objectName: "qa-checkout-7f9",
                     message: "Container is backing off after repeated restarts.",
                     observedAt: warningObservedAt,
                     count: 2
@@ -201,16 +201,16 @@ public enum MenuStateFixtureCatalog {
             ]),
             workloadsSection: .available([
                 TrackedItemStatus(
-                    target: .namespace("api"),
+                    target: .namespace("qa-api"),
                     state: .watch,
                     reason: "1 pod restarting",
                     affectedPodCount: 1,
-                    examplePodNames: ["checkout-7f9"],
+                    examplePodNames: ["qa-checkout-7f9"],
                     latestWarning: WarningEventRecord(
                         reason: "BackOff",
-                        namespace: "api",
+                        namespace: "qa-api",
                         objectKind: "Pod",
-                        objectName: "checkout-7f9",
+                        objectName: "qa-checkout-7f9",
                         message: "Container is backing off after repeated restarts.",
                         observedAt: warningObservedAt,
                         count: 2
@@ -223,20 +223,20 @@ public enum MenuStateFixtureCatalog {
 
     private static func badSnapshot() -> ClusterSnapshot {
         ClusterSnapshot(
-            contextName: "prod",
+            contextName: "QA fixture",
             nodesSection: .available(NodeSummary(ready: 2, total: 3)),
             podsSection: .available(PodSummary(running: 10, total: 12)),
             warningEventsSection: .available([]),
             workloadsSection: .available([
                 TrackedItemStatus(
-                    target: .namespace("payments"),
+                    target: .namespace("qa-payments"),
                     state: .bad,
                     reason: "2 pods unavailable",
                     affectedPodCount: 2,
-                    examplePodNames: ["payments-api-0", "payments-worker-1"]
+                    examplePodNames: ["qa-payments-api-0", "qa-payments-worker-1"]
                 ),
                 TrackedItemStatus(
-                    target: .namespace("api"),
+                    target: .namespace("qa-api"),
                     state: .ok,
                     reason: "6/6 watched pods running"
                 )
@@ -255,11 +255,11 @@ public enum MenuStateFixtureCatalog {
 
     private static func configuredSetupState() -> SetupFlowState {
         SetupFlowState(
-            selectedContext: "prod",
-            availableContexts: ["prod", "staging"],
+            selectedContext: "QA fixture",
+            availableContexts: ["QA fixture", "QA standby"],
             watchlist: WatchlistSelectionState(
-                availableNamespaces: ["api", "monitoring", "payments"],
-                selectedTargets: [.namespace("api"), .namespace("monitoring")]
+                availableNamespaces: ["qa-api", "qa-monitoring", "qa-payments"],
+                selectedTargets: [.namespace("qa-api"), .namespace("qa-monitoring")]
             ),
             refreshCadence: .oneMinute
         )
@@ -268,7 +268,7 @@ public enum MenuStateFixtureCatalog {
     private static func firstUseSetupState() -> SetupFlowState {
         SetupFlowState(
             selectedContext: nil,
-            availableContexts: ["prod", "staging"],
+            availableContexts: ["QA fixture", "QA standby"],
             watchlist: WatchlistSelectionState(availableNamespaces: []),
             refreshCadence: .oneMinute
         )
@@ -276,10 +276,10 @@ public enum MenuStateFixtureCatalog {
 
     private static func emptyWatchlistSetupState() -> SetupFlowState {
         SetupFlowState(
-            selectedContext: "prod",
-            availableContexts: ["prod", "staging"],
+            selectedContext: "QA fixture",
+            availableContexts: ["QA fixture", "QA standby"],
             watchlist: WatchlistSelectionState(
-                availableNamespaces: ["api", "monitoring", "payments"],
+                availableNamespaces: ["qa-api", "qa-monitoring", "qa-payments"],
                 selectedTargets: []
             ),
             refreshCadence: .oneMinute
