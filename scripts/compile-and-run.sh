@@ -4,6 +4,24 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
+QA_STATE="${KUBEBAR_QA_STATE:-}"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --qa-state)
+      if [ "$#" -lt 2 ]; then
+        echo "--qa-state requires a value" >&2
+        exit 1
+      fi
+      QA_STATE="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
 CONFIGURATION="${XCODE_CONFIGURATION:-Debug}"
 DERIVED_DATA_PATH="${XCODE_DERIVED_DATA_PATH:-DerivedData}"
 APP_NAME="Kubebar"
@@ -40,13 +58,22 @@ if pgrep -x "$APP_NAME" >/dev/null 2>&1; then
 fi
 
 echo "Launching ${APP_PATH}"
-open -n "$APP_PATH"
+if [ -n "$QA_STATE" ]; then
+  open -n "$APP_PATH" --args --kubebar-qa-state "$QA_STATE"
+else
+  open -n "$APP_PATH"
+fi
 
 for _ in $(seq 1 50); do
   pid="$(pgrep -x "$APP_NAME" | head -n 1 || true)"
   if [ -n "$pid" ]; then
     echo "${APP_NAME} is running with PID ${pid}"
     echo "App path: ${APP_PATH}"
+    if [ -n "$QA_STATE" ]; then
+      echo "QA state: ${QA_STATE}"
+    else
+      echo "QA state: live"
+    fi
     exit 0
   fi
   sleep 0.2

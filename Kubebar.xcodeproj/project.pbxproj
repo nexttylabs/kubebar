@@ -53,6 +53,7 @@
 		9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4602F3AD3687ABB356E1C266 /* NodesTabView.swift */; };
 		9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */; };
 		A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */; };
+		AB13FDF1DD2848688F89CE90 /* MenuStateFixtureCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */; };
 		AC13EC97905550E7D830828B /* MenuTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8BD7D4374CA280EB08BF3E /* MenuTab.swift */; };
 		C37388D088AFEA095E3E172E /* RefreshGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */; };
 		C7D835EE9941E87F99EAF0DE /* WatchlistSelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */; };
@@ -62,10 +63,12 @@
 		E557AF4691C5FFE49437ADB4 /* EventsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A022D6D54A801257E7493047 /* EventsTabView.swift */; };
 		E5ACFCA3A8AF5731A614DD75 /* ContextCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */; };
 		E72D650497668E687AFC0027 /* StaleBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */; };
+		EA0C0E575B5F1256F7E02BA5 /* MenuStateFixtureCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA51E83142889F2105180C9 /* MenuStateFixtureCatalog.swift */; };
 		EA3A58433537560B8EFFE763 /* WatchTargetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEA42B12E1A80F663E483332 /* WatchTargetTests.swift */; };
 		ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */; };
 		F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */; };
 		F3BA3AEB1BF36707FCBA26E7 /* KubebarCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F9B5425A8538F60891B080EA /* QALaunchMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44ED769495D3CCF49456FB7B /* QALaunchMode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +118,7 @@
 		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
 		044436EFC75907A7253A3A7A /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
 		09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReader.swift; sourceTree = "<group>"; };
+		0BA51E83142889F2105180C9 /* MenuStateFixtureCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuStateFixtureCatalog.swift; sourceTree = "<group>"; };
 		12938B9D8A040BCC4053F8EA /* RefreshCadenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCadenceTests.swift; sourceTree = "<group>"; };
 		16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalog.swift; sourceTree = "<group>"; };
 		2080726BE2E75B3415FEFB68 /* KubebarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KubebarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,6 +129,7 @@
 		3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KubectlClusterReaderTests.swift; sourceTree = "<group>"; };
 		3F556EADE794276836644739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		41CF64AA3581163BEA218DFB /* WatchlistCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistCandidate.swift; sourceTree = "<group>"; };
+		44ED769495D3CCF49456FB7B /* QALaunchMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QALaunchMode.swift; sourceTree = "<group>"; };
 		4602F3AD3687ABB356E1C266 /* NodesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodesTabView.swift; sourceTree = "<group>"; };
 		5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCadence.swift; sourceTree = "<group>"; };
 		5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KubebarCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -157,6 +162,7 @@
 		C221382EB43B27DF73F677E5 /* SetupFlowState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowState.swift; sourceTree = "<group>"; };
 		C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuDisplayModel.swift; sourceTree = "<group>"; };
 		CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaleBannerView.swift; sourceTree = "<group>"; };
+		DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuStateFixtureCatalogTests.swift; sourceTree = "<group>"; };
 		DB85B2A6F35FE8060AA9C798 /* ClusterHealthStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterHealthStateTests.swift; sourceTree = "<group>"; };
 		DE730D4112D2CD5963295F5C /* Kubebar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kubebar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E309AEA967A6E63FE865DCFA /* MenuRuntimeStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuRuntimeStateTests.swift; sourceTree = "<group>"; };
@@ -201,6 +207,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		5663DE3B59BC4F465122A99D /* QA */ = {
+			isa = PBXGroup;
+			children = (
+				DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */,
+			);
+			path = QA;
+			sourceTree = "<group>";
+		};
 		65BEA123B761654EB99872DE /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -239,6 +253,14 @@
 				AEA42B12E1A80F663E483332 /* WatchTargetTests.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		6AB087AB485DCDC493985DBB /* QA */ = {
+			isa = PBXGroup;
+			children = (
+				44ED769495D3CCF49456FB7B /* QALaunchMode.swift */,
+			);
+			path = QA;
 			sourceTree = "<group>";
 		};
 		7336F0782032895BE48EA51F /* Services */ = {
@@ -302,9 +324,18 @@
 			isa = PBXGroup;
 			children = (
 				83DF995219C93DBAE4855014 /* Models */,
+				C0BD3998FD058338A3A5D92E /* QA */,
 				941D406EBB4AD367FB25FAD8 /* Services */,
 			);
 			path = KubebarCore;
+			sourceTree = "<group>";
+		};
+		C0BD3998FD058338A3A5D92E /* QA */ = {
+			isa = PBXGroup;
+			children = (
+				0BA51E83142889F2105180C9 /* MenuStateFixtureCatalog.swift */,
+			);
+			path = QA;
 			sourceTree = "<group>";
 		};
 		D2BCD599CB5852F278B05F8B /* Kubebar */ = {
@@ -313,6 +344,7 @@
 				3F556EADE794276836644739 /* Assets.xcassets */,
 				7528D0CB7EF7F022D9CD0E8D /* KubebarApp.swift */,
 				73F6AD42A08C3FCF7AFC66B5 /* MenuBarViewModel.swift */,
+				6AB087AB485DCDC493985DBB /* QA */,
 				65BEA123B761654EB99872DE /* Views */,
 			);
 			path = Kubebar;
@@ -322,6 +354,7 @@
 			isa = PBXGroup;
 			children = (
 				6A53CC16B911EA25E91802EB /* Models */,
+				5663DE3B59BC4F465122A99D /* QA */,
 				7336F0782032895BE48EA51F /* Services */,
 			);
 			path = KubebarTests;
@@ -453,6 +486,7 @@
 				52BA949618FBE1B3F59CFFA0 /* MenuBarStatusPresentationTests.swift in Sources */,
 				0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */,
 				2CDAFBC7CB5608475636A49F /* MenuRuntimeStateTests.swift in Sources */,
+				AB13FDF1DD2848688F89CE90 /* MenuStateFixtureCatalogTests.swift in Sources */,
 				53858EF300E94362C9BF167D /* RefreshCadenceTests.swift in Sources */,
 				5AE8C85F4E8EDCB81817F86F /* RefreshCoordinatorTests.swift in Sources */,
 				606AFC7528260D78D8BC9E45 /* RefreshGateTests.swift in Sources */,
@@ -477,6 +511,7 @@
 				ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */,
 				90A3769DF7A535DE88BBA88B /* MenuDisplayModel.swift in Sources */,
 				43A6EE04D05E8CCF4CAD47D1 /* MenuRuntimeState.swift in Sources */,
+				EA0C0E575B5F1256F7E02BA5 /* MenuStateFixtureCatalog.swift in Sources */,
 				A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */,
 				F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */,
 				C37388D088AFEA095E3E172E /* RefreshGate.swift in Sources */,
@@ -505,6 +540,7 @@
 				9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */,
 				55F321A04D2EA4B27B1BFD9D /* OverviewTabView.swift in Sources */,
 				D343AF9AAD2DB31A718A3396 /* PodsTabView.swift in Sources */,
+				F9B5425A8538F60891B080EA /* QALaunchMode.swift in Sources */,
 				9C927DBFB7ECCCB5139CEF39 /* SettingsRootView.swift in Sources */,
 				8455B75AF69EE30EA14B7DFA /* SetupView.swift in Sources */,
 				E72D650497668E687AFC0027 /* StaleBannerView.swift in Sources */,
