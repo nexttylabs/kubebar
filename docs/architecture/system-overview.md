@@ -30,7 +30,8 @@ the product rules.
 - `KubebarCore/Services/CommandRunner.swift` is the injectable subprocess
   boundary.
 - `KubebarCore/Services/KubectlClusterReader.swift` converts `kubectl` JSON
-  output into app-owned cluster data.
+  output into app-owned cluster data. It reads nodes, pods, warning events,
+  workload metadata, and node metrics from the Metrics API through `kubectl`.
 - `KubebarCore/Services/RefreshCoordinator.swift` ties config, reader, and
   evaluator together.
 
@@ -40,8 +41,11 @@ The menu never asks Kubernetes directly. It reads a display model that already
 includes:
 
 - the selected context name,
-- the health sentence,
-- compact node, pod, and warning counts,
+- the top-row state text,
+- Overview cards for Nodes, Pods, CPU, and Memory,
+- capped reason-first `Recent Warnings` rows with object scope, age, repeat
+  count, and secondary message text,
+- compact node, pod, and warning counts for secondary tabs,
 - visible watchlist rows,
 - overflow count for hidden watched items,
 - stale banner content when the last refresh is no longer fresh.
@@ -49,6 +53,10 @@ includes:
 When refresh succeeds, the coordinator stores the new snapshot and the
 evaluator produces a current display model. When refresh fails, the last
 snapshot can still be shown, but only as stale state.
+
+CPU and Memory cards use the node metrics section when it is available. If the
+Metrics API is unavailable, those cards show unavailable while valid node, pod,
+warning, and tracked-object data stays visible.
 
 ## Where The UI Stops
 
@@ -58,4 +66,3 @@ The menu is allowed to show state and actions. It is not allowed to:
 - read raw `kubectl` output,
 - infer the terminal context,
 - expand into a troubleshooting console.
-

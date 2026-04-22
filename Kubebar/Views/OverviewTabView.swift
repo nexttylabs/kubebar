@@ -4,57 +4,165 @@ import KubebarCore
 struct OverviewTabView: View {
     let display: MenuDisplayModel
 
+    private let columns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             StatusSummaryView(display: display)
             StaleBannerView(banner: display.staleBanner)
-            primaryScanContent
 
-            if let notice = display.overviewNotice {
-                OverviewNoticeView(notice: notice)
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                ForEach(display.overview.cards) { card in
+                    OverviewCardView(card: card)
+                }
             }
-        }
-    }
 
-    private var primaryScanContent: some View {
-        Group {
-            if shouldPrioritizeWatching {
-                WatchlistSectionView(display: display)
-                CompactCountersView(counters: display.counters)
-            } else {
-                CompactCountersView(counters: display.counters)
-                WatchlistSectionView(display: display)
-            }
+            RecentWarningsOverviewView(display: display.overview)
         }
-    }
-
-    private var shouldPrioritizeWatching: Bool {
-        display.visibleWatchItems.isEmpty || display.visibleWatchItems.contains { $0.state != .ok }
     }
 }
 
-private struct OverviewNoticeView: View {
-    let notice: OverviewNoticeDisplay
+private struct OverviewCardView: View {
+    let card: OverviewCardDisplay
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: card.systemImageName)
+                    .foregroundStyle(iconStyle)
+                    .frame(width: 14)
+
+                Text(card.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Text(card.value)
+                .font(.headline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Text(card.detail)
+                .font(.caption)
+                .foregroundStyle(detailStyle)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(Text(card.detail))
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(borderStyle, lineWidth: 1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(card.accessibilityLabel)
+        .help(Text(card.accessibilityLabel))
+        .focusable()
+    }
+
+    private var iconStyle: Color {
+        switch card.state {
+        case .current:
+            return .accentColor
+        case .stale:
+            return .secondary
+        case .unavailable:
+            return .orange
+        }
+    }
+
+    private var detailStyle: HierarchicalShapeStyle {
+        switch card.state {
+        case .current, .stale:
+            return .secondary
+        case .unavailable:
+            return .tertiary
+        }
+    }
+
+    private var borderStyle: Color {
+        switch card.state {
+        case .current:
+            return .clear
+        case .stale:
+            return .secondary.opacity(0.25)
+        case .unavailable:
+            return .orange.opacity(0.35)
+        }
+    }
+}
+
+private struct RecentWarningsOverviewView: View {
+    let display: OverviewDisplay
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(notice.title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .help(Text(notice.title))
-                .accessibilityLabel(notice.title)
+            HStack {
+                Text("Recent Warnings")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
-            Text(notice.message)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .help(Text(notice.message))
-                .accessibilityLabel(notice.message)
+                Spacer()
+
+                if display.recentWarningsOverflowCount > 0 {
+                    Text("+\(display.recentWarningsOverflowCount) in Events")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("\(display.recentWarningsOverflowCount) more warnings in Events")
+                        .focusable()
+                }
+            }
+
+            if let unavailableMessage = display.recentWarningsUnavailableMessage {
+                readableText(unavailableMessage)
+            } else if display.recentWarnings.isEmpty {
+                readableText(display.recentWarningsEmptyMessage)
+            } else {
+                ForEach(display.recentWarnings) { row in
+                    WarningEventRowView(row: row)
+                }
+            }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(notice.title), \(notice.message)")
-        .focusable()
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(accessibilitySummary)
+    }
+
+    private func readableText(_ value: String) -> some View {
+        Text(value)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .help(Text(value))
+            .accessibilityLabel(value)
+            .focusable()
+    }
+
+    private var accessibilitySummary: String {
+        var parts = ["Recent Warnings"]
+
+        if let unavailableMessage = display.recentWarningsUnavailableMessage {
+            parts.append(unavailableMessage)
+            return parts.joined(separator: ", ")
+        }
+
+        if display.recentWarnings.isEmpty {
+            parts.append(display.recentWarningsEmptyMessage)
+            return parts.joined(separator: ", ")
+        }
+
+        parts += display.recentWarnings.map(\.accessibilityLabel)
+
+        if display.recentWarningsOverflowCount > 0 {
+            parts.append("\(display.recentWarningsOverflowCount) more in Events")
+        }
+
+        return parts.joined(separator: ", ")
     }
 }

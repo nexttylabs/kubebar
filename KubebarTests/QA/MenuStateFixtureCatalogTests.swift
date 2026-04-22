@@ -24,6 +24,8 @@ struct MenuStateFixtureCatalogTests {
         let staleRefreshFailure = MenuStateFixtureCatalog.fixture(for: .staleRefreshFailure)
         let staleAgeOut = MenuStateFixtureCatalog.fixture(for: .staleAgeOut)
         let kubectlFailure = MenuStateFixtureCatalog.fixture(for: .kubectlFailure)
+        let metricsUnavailable = MenuStateFixtureCatalog.fixture(for: .metricsUnavailable)
+        let warningHeavy = MenuStateFixtureCatalog.fixture(for: .warningHeavy)
 
         #expect(healthy.display.state == .ok)
         #expect(watch.display.state == .watch)
@@ -31,6 +33,28 @@ struct MenuStateFixtureCatalogTests {
         #expect(staleRefreshFailure.display.state == .stale)
         #expect(staleAgeOut.display.state == .stale)
         #expect(kubectlFailure.display.state == .stale)
+        #expect(metricsUnavailable.display.state == .ok)
+        #expect(metricsUnavailable.display.overview.cards.first(where: { $0.id == "cpu" })?.state == .unavailable)
+        #expect(warningHeavy.display.state == .watch)
+        #expect(warningHeavy.display.overview.recentWarnings.count == 2)
+        #expect(warningHeavy.display.overview.recentWarnings.first?.reason == "BackOff")
+        #expect(warningHeavy.display.overview.recentWarnings.first?.isTracked == true)
+        #expect(warningHeavy.display.overview.recentWarnings.first?.metadataLabel == "1m ago / x2")
+        #expect(warningHeavy.display.overview.recentWarnings.first?.secondaryText == "qa-api/pod/qa-checkout-7f9 - Container is backing off after repeated restarts.")
+        #expect(warningHeavy.display.overview.recentWarningsOverflowCount == 1)
+    }
+
+    @Test("watch fixture exposes reason first warning details")
+    func watchFixtureExposesReasonFirstWarningDetails() {
+        let fixture = MenuStateFixtureCatalog.fixture(for: .watch)
+        let warning = fixture.display.overview.recentWarnings.first
+
+        #expect(warning?.reason == "BackOff")
+        #expect(warning?.location == "qa-api/pod/qa-checkout-7f9")
+        #expect(warning?.metadataLabel == "30s ago / x2")
+        #expect(warning?.isTracked == true)
+        #expect(warning?.secondaryText == "qa-api/pod/qa-checkout-7f9 - Container is backing off after repeated restarts.")
+        #expect(warning?.accessibilityLabel.contains("Tracked object warning, BackOff") == true)
     }
 
     @Test("first use and empty watchlist remain distinct setup states")
@@ -85,5 +109,15 @@ struct MenuStateFixtureCatalogTests {
         for deniedString in deniedStrings {
             #expect(!metadata.contains(deniedString))
         }
+    }
+
+    @Test("overview fixture copy no longer describes Watching rows")
+    func overviewFixtureCopyNoLongerDescribesWatchingRows() {
+        let metadata = MenuQAState.allCases
+            .map { MenuStateFixtureCatalog.fixture(for: $0).expectedBehavior }
+            .joined(separator: "\n")
+
+        #expect(!metadata.contains("Watching rows"))
+        #expect(!metadata.contains("Watching section"))
     }
 }

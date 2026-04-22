@@ -9,7 +9,7 @@ struct StatusSummaryView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(display.contextName)
                 .font(.headline)
                 .lineLimit(1)
@@ -17,17 +17,22 @@ struct StatusSummaryView: View {
                 .help(Text(display.contextName))
                 .accessibilityLabel(display.contextName)
 
+            Spacer(minLength: 8)
+
             HStack(spacing: 6) {
                 Image(systemName: presentation.symbolName)
                 Text(display.state.label)
                     .fontWeight(.semibold)
-                Text(display.primaryStatusReason)
+                Text(display.overview.statusText)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .truncationMode(.middle)
             }
             .font(.subheadline)
+            .help(Text(display.overview.statusText))
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(presentation.accessibilityLabel), \(display.primaryStatusReason), context \(display.contextName)")
+        .accessibilityLabel(display.overview.statusAccessibilityLabel)
+        .focusable()
     }
 }

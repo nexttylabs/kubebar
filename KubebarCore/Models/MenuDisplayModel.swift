@@ -13,13 +13,69 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
     public let age: String
     public let occurrenceCount: Int
     public let message: String?
+    public let fullMessage: String?
+    public let isTracked: Bool
 
     public var summary: String {
+        let base = "\(reason) \(location) \(age)"
+
         if occurrenceCount > 1 {
-            return "\(reason) x\(occurrenceCount) \(location) \(age)"
+            return "\(base) \(repeatLabel)"
         }
 
-        return "\(reason) \(location) \(age)"
+        return base
+    }
+
+    public var repeatLabel: String {
+        "x\(occurrenceCount)"
+    }
+
+    public var metadataLabel: String {
+        if occurrenceCount > 1 {
+            return "\(age) / \(repeatLabel)"
+        }
+
+        return age
+    }
+
+    public var secondaryText: String {
+        guard let message else {
+            return location
+        }
+
+        return "\(location) - \(message)"
+    }
+
+    public var helpText: String {
+        guard let fullMessage else {
+            return summary
+        }
+
+        return "\(summary), \(fullMessage)"
+    }
+
+    public var accessibilityLabel: String {
+        var parts: [String] = []
+
+        if isTracked {
+            parts.append("Tracked object warning")
+        } else {
+            parts.append("Warning")
+        }
+
+        parts.append(reason)
+        parts.append("object \(location)")
+        parts.append(age)
+
+        if occurrenceCount > 1 {
+            parts.append("repeated \(occurrenceCount) times")
+        }
+
+        if let fullMessage {
+            parts.append(fullMessage)
+        }
+
+        return parts.joined(separator: ", ")
     }
 
     public init(
@@ -28,7 +84,9 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
         location: String,
         age: String,
         occurrenceCount: Int,
-        message: String?
+        message: String?,
+        fullMessage: String? = nil,
+        isTracked: Bool = false
     ) {
         self.id = id
         self.reason = reason
@@ -36,6 +94,8 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
         self.age = age
         self.occurrenceCount = occurrenceCount
         self.message = message
+        self.fullMessage = fullMessage ?? message
+        self.isTracked = isTracked
     }
 }
 
@@ -163,6 +223,68 @@ public struct EventsTabDisplay: Equatable, Sendable {
     }
 }
 
+public enum OverviewCardState: Equatable, Sendable {
+    case current
+    case stale
+    case unavailable
+}
+
+public struct OverviewCardDisplay: Equatable, Sendable, Identifiable {
+    public let id: String
+    public let title: String
+    public let value: String
+    public let detail: String
+    public let systemImageName: String
+    public let state: OverviewCardState
+    public let accessibilityLabel: String
+
+    public init(
+        id: String,
+        title: String,
+        value: String,
+        detail: String,
+        systemImageName: String,
+        state: OverviewCardState,
+        accessibilityLabel: String
+    ) {
+        self.id = id
+        self.title = title
+        self.value = value
+        self.detail = detail
+        self.systemImageName = systemImageName
+        self.state = state
+        self.accessibilityLabel = accessibilityLabel
+    }
+}
+
+public struct OverviewDisplay: Equatable, Sendable {
+    public let statusText: String
+    public let statusAccessibilityLabel: String
+    public let cards: [OverviewCardDisplay]
+    public let recentWarnings: [WarningEventDisplay]
+    public let recentWarningsOverflowCount: Int
+    public let recentWarningsEmptyMessage: String
+    public let recentWarningsUnavailableMessage: String?
+
+    public init(
+        statusText: String,
+        statusAccessibilityLabel: String,
+        cards: [OverviewCardDisplay],
+        recentWarnings: [WarningEventDisplay],
+        recentWarningsOverflowCount: Int,
+        recentWarningsEmptyMessage: String,
+        recentWarningsUnavailableMessage: String? = nil
+    ) {
+        self.statusText = statusText
+        self.statusAccessibilityLabel = statusAccessibilityLabel
+        self.cards = cards
+        self.recentWarnings = recentWarnings
+        self.recentWarningsOverflowCount = recentWarningsOverflowCount
+        self.recentWarningsEmptyMessage = recentWarningsEmptyMessage
+        self.recentWarningsUnavailableMessage = recentWarningsUnavailableMessage
+    }
+}
+
 public struct MenuDisplayModel: Equatable, Sendable {
     public let state: ClusterHealthState
     public let contextName: String
@@ -176,6 +298,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
     public let hiddenWatchItemCount: Int
     public let staleBanner: StaleBannerDisplay?
     public let overviewNotice: OverviewNoticeDisplay?
+    public let overview: OverviewDisplay
     public let nodeTab: NodeTabDisplay
     public let podTab: PodTabDisplay
     public let eventsTab: EventsTabDisplay
@@ -193,6 +316,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
         warningEventSummaries: [WarningEventDisplay] = [],
         sectionNotices: [SectionAvailabilityDisplay] = [],
         overviewNotice: OverviewNoticeDisplay? = nil,
+        overview: OverviewDisplay? = nil,
         nodeTab: NodeTabDisplay? = nil,
         podTab: PodTabDisplay? = nil,
         eventsTab: EventsTabDisplay? = nil
@@ -209,12 +333,55 @@ public struct MenuDisplayModel: Equatable, Sendable {
         self.hiddenWatchItemCount = hiddenWatchItemCount
         self.staleBanner = staleBanner
         self.overviewNotice = overviewNotice ?? Self.makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries)
+        self.overview = overview ?? Self.makeOverview(
+            contextName: contextName,
+            state: state,
+            primaryStatusReason: self.primaryStatusReason,
+            counters: counters,
+            warningEventSummaries: warningEventSummaries
+        )
         self.nodeTab = nodeTab ?? Self.makeNodeTab(counters: counters, sectionNotices: sectionNotices)
         self.podTab = podTab ?? Self.makePodTab(counters: counters, visibleWatchItems: visibleWatchItems, sectionNotices: sectionNotices)
         self.eventsTab = eventsTab ?? Self.makeEventsTab(
             counters: counters,
             warningEventSummaries: warningEventSummaries,
             sectionNotices: sectionNotices
+        )
+    }
+
+    private static func makeOverview(
+        contextName: String,
+        state: ClusterHealthState,
+        primaryStatusReason: String,
+        counters: MenuCounters,
+        warningEventSummaries: [WarningEventDisplay]
+    ) -> OverviewDisplay {
+        OverviewDisplay(
+            statusText: primaryStatusReason,
+            statusAccessibilityLabel: "\(state.label), \(primaryStatusReason), context \(contextName)",
+            cards: [
+                OverviewCardDisplay(
+                    id: "nodes",
+                    title: "Nodes",
+                    value: counters.nodes,
+                    detail: "ready",
+                    systemImageName: "server.rack",
+                    state: .current,
+                    accessibilityLabel: "Nodes \(counters.nodes) ready"
+                ),
+                OverviewCardDisplay(
+                    id: "pods",
+                    title: "Pods",
+                    value: counters.pods,
+                    detail: "running",
+                    systemImageName: "shippingbox",
+                    state: .current,
+                    accessibilityLabel: "Pods \(counters.pods) running"
+                )
+            ],
+            recentWarnings: Array(warningEventSummaries.prefix(2)),
+            recentWarningsOverflowCount: max(0, warningEventSummaries.count - 2),
+            recentWarningsEmptyMessage: warningEventsEmptyMessage(count: counters.warningEvents)
         )
     }
 

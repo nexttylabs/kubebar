@@ -48,35 +48,47 @@ struct WarningEventsView: View {
             return parts.joined(separator: ", ")
         }
 
-        parts += display.rows.map { row in
-            if let message = row.message {
-                return "\(row.summary), \(message)"
-            }
-            return row.summary
-        }
+        parts += display.rows.map(\.accessibilityLabel)
         return parts.joined(separator: ", ")
     }
 }
 
-private struct WarningEventRowView: View {
+struct WarningEventRowView: View {
     let row: WarningEventDisplay
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(row.summary)
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                if row.isTracked {
+                    Image(systemName: "pin.fill")
+                        .font(.caption2)
+                        .foregroundStyle(Color.accentColor)
+                        .accessibilityHidden(true)
+                }
+
+                Text(row.reason)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Spacer(minLength: 6)
+
+                Text(row.metadataLabel)
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Text(row.secondaryText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .help(Text(row.summary))
-                .accessibilityLabel(row.summary)
-
-            if let message = row.message {
-                Text(message)
-                    .lineLimit(2)
-                    .help(Text(message))
-                    .accessibilityLabel(message)
-            }
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
+        .help(Text(row.helpText))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(row.accessibilityLabel)
+        .focusable()
     }
 }
