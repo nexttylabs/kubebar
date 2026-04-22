@@ -72,6 +72,78 @@ Run the built menu bar app and verify that the process starts:
 This reuses the quality gate, opens the built Debug app, and prints the
 running Kubebar process ID.
 
+## Local Install
+
+### Install
+
+Install Kubebar locally without opening Xcode:
+
+```bash
+./scripts/install-local.sh
+```
+
+The default install destination is `~/Applications/Kubebar.app`.
+
+To install into another Applications directory:
+
+```bash
+KUBEBAR_INSTALL_DIR=/Applications ./scripts/install-local.sh
+```
+
+The installer runs the local quality gate, builds the installable app bundle,
+checks the bundle metadata and icon assets, and copies `Kubebar.app` to the
+install destination.
+
+### Update
+
+Updating Kubebar locally means running the same install command again:
+
+```bash
+./scripts/install-local.sh
+```
+
+The update replaces only the copied `Kubebar.app` bundle and preserves Kubebar's
+saved config.
+
+### Uninstall
+
+Quit Kubebar and remove only the copied app bundle:
+
+```bash
+osascript -e 'tell application id "com.nextty.kubebar" to quit' || true
+rm -rf "$HOME/Applications/Kubebar.app"
+```
+
+If you installed to a custom `KUBEBAR_INSTALL_DIR`, remove `Kubebar.app` from
+that custom destination instead.
+
+### Reset Kubebar Config
+
+Kubebar stores local preferences at:
+
+```text
+~/Library/Application Support/Kubebar/config.json
+```
+
+Resetting this file clears Kubebar's saved context, watchlist, and refresh
+cadence.
+
+```bash
+rm -f "$HOME/Library/Application Support/Kubebar/config.json"
+```
+
+This reset does not touch kubeconfig, Kubernetes credentials, or cluster
+resources.
+
+Privacy boundary: Kubebar stores only its selected context, watched targets, and
+refresh cadence. Kubernetes access remains owned by `kubectl`.
+
+### Local Distribution Boundary
+
+This local path does not include notarization, Homebrew, Sparkle, pkg, dmg, or
+public release automation. It is only the first copied `.app` bundle path for
+daily local use.
+
 ## Project Layout
 
 ```text
