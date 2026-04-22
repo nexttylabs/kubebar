@@ -9,12 +9,14 @@ public struct RefreshFailure: Equatable, Sendable {
 }
 
 public struct HealthEvaluator: Sendable {
-    private let visibleWatchItemLimit: Int
+    private let healthyWatchItemLimit: Int
+    private let attentionWatchItemLimit: Int
     private let warningEventSummaryLimit = 3
     private let warningMessageLimit = 96
 
-    public init(visibleWatchItemLimit: Int = 5) {
-        self.visibleWatchItemLimit = visibleWatchItemLimit
+    public init(visibleWatchItemLimit: Int = 5, healthyWatchItemLimit: Int = 3) {
+        self.attentionWatchItemLimit = visibleWatchItemLimit
+        self.healthyWatchItemLimit = min(healthyWatchItemLimit, visibleWatchItemLimit)
     }
 
     public func evaluate(
@@ -65,7 +67,8 @@ public struct HealthEvaluator: Sendable {
         staleAfterSeconds: Int?
     ) -> MenuDisplayModel {
         let sortedItems = sortByAttention(snapshot.trackedItems)
-        let visibleItems = sortedItems.prefix(visibleWatchItemLimit).map { makeDisplayItem($0, now: now) }
+        let visibleLimit = visibleWatchItemLimit(for: sortedItems)
+        let visibleItems = sortedItems.prefix(visibleLimit).map { makeDisplayItem($0, now: now) }
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let freshnessReason = staleAgeOutReason(for: snapshot, now: now, staleAfterSeconds: staleAfterSeconds)
         let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
@@ -238,11 +241,31 @@ public struct HealthEvaluator: Sendable {
 
     private func sortByAttention(_ items: [TrackedItemStatus]) -> [TrackedItemStatus] {
         items.sorted { left, right in
-            if left.state.rawValue != right.state.rawValue {
-                return left.state.rawValue > right.state.rawValue
+            let leftPriority = attentionPriority(for: left.state)
+            let rightPriority = attentionPriority(for: right.state)
+
+            if leftPriority != rightPriority {
+                return leftPriority < rightPriority
             }
 
             return left.target.displayTitle < right.target.displayTitle
+        }
+    }
+
+    private func visibleWatchItemLimit(for items: [TrackedItemStatus]) -> Int {
+        items.contains { $0.state != .ok } ? attentionWatchItemLimit : healthyWatchItemLimit
+    }
+
+    private func attentionPriority(for state: ClusterHealthState) -> Int {
+        switch state {
+        case .bad:
+            0
+        case .watch:
+            1
+        case .stale:
+            2
+        case .ok:
+            3
         }
     }
 

@@ -59,6 +59,10 @@ public struct WatchItemDetailDisplay: Equatable, Sendable {
         self.examplePodNames = examplePodNames
         self.latestWarning = latestWarning
     }
+
+    public var hasExpandedContent: Bool {
+        affectedPodCount != nil || !examplePodNames.isEmpty || latestWarning != nil
+    }
 }
 
 public struct SectionAvailabilityDisplay: Equatable, Sendable, Identifiable {
