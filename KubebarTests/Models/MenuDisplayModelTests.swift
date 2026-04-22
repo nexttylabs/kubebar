@@ -192,6 +192,24 @@ struct MenuDisplayModelTests {
         #expect(row?.memoryLabel == "0%")
     }
 
+    @Test("node tab empty state uses an explicit display flag")
+    func nodeTabEmptyStateUsesExplicitDisplayFlag() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 0, total: 0)),
+            nodeDetailsSection: .available([]),
+            podsSection: .available(PodSummary(running: 0, total: 0)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.nodeTab.rows.isEmpty)
+        #expect(display.nodeTab.showsEmptyMessage == true)
+    }
+
     @Test("overview pods use ready count while pod tab keeps running count")
     func overviewPodsUseReadyCountWhilePodTabKeepsRunningCount() {
         let snapshot = ClusterSnapshot(

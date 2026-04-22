@@ -390,6 +390,7 @@ public struct HealthEvaluator: Sendable {
         NodeTabDisplay(
             summary: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total) nodes ready" } ?? "- nodes ready",
             rows: makeNodeRows(from: snapshot),
+            showsEmptyMessage: snapshot.nodesSection.value?.total == 0,
             unavailableMessage: tabUnavailableMessage(
                 sectionID: SnapshotSectionName.nodes.rawValue,
                 prefix: "Node data unavailable",

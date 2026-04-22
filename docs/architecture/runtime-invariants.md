@@ -32,6 +32,9 @@ These are the rules Kubebar must keep true at runtime.
 - Not Ready node rows must be distinguishable without relying on color alone
   and must include one short issue description when node condition detail is
   available.
+- Node pressure conditions such as `DiskPressure`, `MemoryPressure`, and
+  `PIDPressure` are surfaced as node issues even when the `Ready` condition is
+  still `True`.
 - Missing per-node CPU or memory data shows unavailable values such as `-`;
   missing values must not be rendered as `0`.
 - Kubebar does not query Kubernetes Secrets.

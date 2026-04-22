@@ -9,7 +9,7 @@ struct NodeDetailsView: View {
             summary
 
             if display.unavailableMessage == nil {
-                if display.rows.isEmpty, display.summary.hasPrefix("0/0") || display.summary.hasPrefix("-") {
+                if display.showsEmptyMessage {
                     readableText(display.emptyMessage)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
@@ -49,6 +49,17 @@ struct NodeDetailsView: View {
 private struct NodeRowView: View {
     let row: NodeItemDisplay
 
+    private enum Style {
+        static let errorPadding: CGFloat = 8
+        static let errorCornerRadius: CGFloat = 8
+        static let errorBackgroundOpacity = 0.08
+        static let errorBorderOpacity = 0.35
+    }
+
+    private var isErrorState: Bool {
+        row.readiness == .notReady
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -77,18 +88,18 @@ private struct NodeRowView: View {
                 resourceLabel(title: "Memory", value: row.memoryLabel)
             }
         }
-        .padding(row.readiness == .notReady ? 8 : 0)
+        .padding(isErrorState ? Style.errorPadding : 0)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            if row.readiness == .notReady {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.red.opacity(0.08))
+            if isErrorState {
+                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
+                    .fill(Color.red.opacity(Style.errorBackgroundOpacity))
             }
         }
         .overlay {
-            if row.readiness == .notReady {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(Color.red.opacity(0.35), lineWidth: 1)
+            if isErrorState {
+                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
+                    .strokeBorder(Color.red.opacity(Style.errorBorderOpacity), lineWidth: 1)
             }
         }
         .help(Text(row.helpText))
@@ -99,7 +110,7 @@ private struct NodeRowView: View {
 
     private var statusLabel: some View {
         HStack(spacing: 4) {
-            if row.readiness == .notReady {
+            if isErrorState {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption2)
                     .accessibilityHidden(true)
@@ -108,7 +119,7 @@ private struct NodeRowView: View {
             Text(row.statusLabel)
                 .font(.caption.weight(.semibold))
         }
-        .foregroundStyle(row.readiness == .notReady ? Color.red : Color.secondary)
+        .foregroundStyle(isErrorState ? Color.red : Color.secondary)
         .lineLimit(1)
     }
 

@@ -219,22 +219,18 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
 
         let metricsByName = (metricsRecordsSection.value ?? []).reduce(into: [String: NodeMetricsRecord]()) { result, record in
-            guard let name = normalizedText(record.metadata?.name) else {
-                return
-            }
-
-            result[name] = record
+            result[record.metadata.name] = record
         }
 
         return .available(
-            nodes.enumerated().map { index, node in
-                let name = normalizedText(node.metadata?.name) ?? "unknown-node-\(index + 1)"
+            nodes.map { node in
+                let name = node.metadata.name
                 let metrics = metricsByName[name]
                 let cpuAllocatable = parseNodeQuantity(node, resource: "cpu", scale: .cpuNanocores)
                 let memoryAllocatable = parseNodeQuantity(node, resource: "memory", scale: .memoryBytes)
                 let cpuUsage = parseMetricQuantity(metrics, resource: "cpu", scale: .cpuNanocores)
                 let memoryUsage = parseMetricQuantity(metrics, resource: "memory", scale: .memoryBytes)
-                let issue = node.notReadyIssue
+                let issue = node.healthIssue
 
                 return NodeDetail(
                     name: name,
@@ -728,18 +724,18 @@ private struct NodeRecord: Decodable, Equatable, Sendable {
         let message: String?
     }
 
-    let metadata: Metadata?
+    let metadata: Metadata
     let status: Status
 
     var isReady: Bool {
-        readyCondition?.status == "True"
+        readyCondition?.status == "True" && healthIssue.reason == nil && healthIssue.message == nil
     }
 
     private var readyCondition: Condition? {
         status.conditions.first { $0.type == "Ready" }
     }
 
-    var notReadyIssue: (reason: String?, message: String?) {
+    var healthIssue: (reason: String?, message: String?) {
         if let readyCondition, readyCondition.status != "True" {
             return (
                 reason: normalizedNodeText(readyCondition.reason) ?? "Ready \(readyCondition.status)",
@@ -751,10 +747,7 @@ private struct NodeRecord: Decodable, Equatable, Sendable {
             return (reason: "Ready status missing", message: nil)
         }
 
-        if let pressureCondition = status.conditions.first(where: { condition in
-            ["DiskPressure", "MemoryPressure", "PIDPressure", "NetworkUnavailable"].contains(condition.type) &&
-                condition.status == "True"
-        }) {
+        if let pressureCondition {
             return (
                 reason: normalizedNodeText(pressureCondition.reason) ?? pressureCondition.type,
                 message: normalizedNodeText(pressureCondition.message)
@@ -762,6 +755,13 @@ private struct NodeRecord: Decodable, Equatable, Sendable {
         }
 
         return (reason: nil, message: nil)
+    }
+
+    private var pressureCondition: Condition? {
+        status.conditions.first { condition in
+            ["DiskPressure", "MemoryPressure", "PIDPressure", "NetworkUnavailable"].contains(condition.type) &&
+                condition.status == "True"
+        }
     }
 }
 
@@ -774,7 +774,7 @@ private struct NodeMetricsRecord: Decodable, Equatable, Sendable {
         let name: String
     }
 
-    let metadata: Metadata?
+    let metadata: Metadata
     let usage: [String: String]
 }
 

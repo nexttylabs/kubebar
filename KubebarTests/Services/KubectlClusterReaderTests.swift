@@ -102,6 +102,26 @@ struct KubectlClusterReaderTests {
         #expect(row.issueMessage == "Kubelet stopped posting node status.")
     }
 
+    @Test("pressure condition is surfaced as a not ready node issue")
+    func pressureConditionIsSurfacedAsNotReadyNodeIssue() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: pressureNodeJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: pressureNodeMetricsJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+        let row = try #require(snapshot.nodeDetailsSection.value?.first)
+
+        #expect(snapshot.nodesSection.value == NodeSummary(ready: 0, total: 1))
+        #expect(row.name == "worker-pressure")
+        #expect(row.isReady == false)
+        #expect(row.issueReason == "KubeletHasDiskPressure")
+        #expect(row.issueMessage == "kubelet has disk pressure")
+    }
+
     @Test("metrics API failure only marks metrics unavailable")
     func metricsAPIFailureOnlyMarksMetricsUnavailable() throws {
         let runner = FakeMultiCommandRunner(results: [
@@ -589,8 +609,8 @@ private let deploymentsCommand = ["--context", "prod", "get", "deployments", "--
 private let nodesJSON = """
 {
   "items": [
-    {"status": {"allocatable": {"cpu": "2", "memory": "8Gi"}, "conditions": [{"type": "Ready", "status": "True"}]}},
-    {"status": {"allocatable": {"cpu": "1500m", "memory": "4096Mi"}, "conditions": [{"type": "Ready", "status": "False"}]}}
+    {"metadata": {"name": "worker-a"}, "status": {"allocatable": {"cpu": "2", "memory": "8Gi"}, "conditions": [{"type": "Ready", "status": "True"}]}},
+    {"metadata": {"name": "worker-b"}, "status": {"allocatable": {"cpu": "1500m", "memory": "4096Mi"}, "conditions": [{"type": "Ready", "status": "False"}]}}
   ]
 }
 """
@@ -598,8 +618,8 @@ private let nodesJSON = """
 private let nodesWithoutAllocatableJSON = """
 {
   "items": [
-    {"status": {"conditions": [{"type": "Ready", "status": "True"}]}},
-    {"status": {"conditions": [{"type": "Ready", "status": "False"}]}}
+    {"metadata": {"name": "worker-a"}, "status": {"conditions": [{"type": "Ready", "status": "True"}]}},
+    {"metadata": {"name": "worker-b"}, "status": {"conditions": [{"type": "Ready", "status": "False"}]}}
   ]
 }
 """
@@ -607,8 +627,8 @@ private let nodesWithoutAllocatableJSON = """
 private let nodeMetricsJSON = """
 {
   "items": [
-    {"usage": {"cpu": "500m", "memory": "1024Mi"}},
-    {"usage": {"cpu": "250000000n", "memory": "1Gi"}}
+    {"metadata": {"name": "worker-a"}, "usage": {"cpu": "500m", "memory": "1024Mi"}},
+    {"metadata": {"name": "worker-b"}, "usage": {"cpu": "250000000n", "memory": "1Gi"}}
   ]
 }
 """
@@ -616,7 +636,7 @@ private let nodeMetricsJSON = """
 private let exponentNodesJSON = """
 {
   "items": [
-    {"status": {"allocatable": {"cpu": "1e0", "memory": "2G"}, "conditions": [{"type": "Ready", "status": "True"}]}}
+    {"metadata": {"name": "worker-exponent"}, "status": {"allocatable": {"cpu": "1e0", "memory": "2G"}, "conditions": [{"type": "Ready", "status": "True"}]}}
   ]
 }
 """
@@ -624,7 +644,7 @@ private let exponentNodesJSON = """
 private let zeroNodeMetricsJSON = """
 {
   "items": [
-    {"usage": {"cpu": "0", "memory": "0"}}
+    {"metadata": {"name": "worker-exponent"}, "usage": {"cpu": "0", "memory": "0"}}
   ]
 }
 """
@@ -675,6 +695,31 @@ private let unknownReadyNodeJSON = """
         ]
       }
     }
+  ]
+}
+"""
+
+private let pressureNodeJSON = """
+{
+  "items": [
+    {
+      "metadata": {"name": "worker-pressure"},
+      "status": {
+        "allocatable": {"cpu": "2", "memory": "8Gi"},
+        "conditions": [
+          {"type": "Ready", "status": "True", "reason": "KubeletReady", "message": "kubelet is posting ready status"},
+          {"type": "DiskPressure", "status": "True", "reason": "KubeletHasDiskPressure", "message": "kubelet has disk pressure"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let pressureNodeMetricsJSON = """
+{
+  "items": [
+    {"metadata": {"name": "worker-pressure"}, "usage": {"cpu": "500m", "memory": "1024Mi"}}
   ]
 }
 """

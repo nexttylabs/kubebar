@@ -217,17 +217,20 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
 public struct NodeTabDisplay: Equatable, Sendable {
     public let summary: String
     public let rows: [NodeItemDisplay]
+    public let showsEmptyMessage: Bool
     public let unavailableMessage: String?
     public let emptyMessage: String
 
     public init(
         summary: String,
         rows: [NodeItemDisplay] = [],
+        showsEmptyMessage: Bool = false,
         unavailableMessage: String? = nil,
         emptyMessage: String = "No node data yet. Refresh or check Settings."
     ) {
         self.summary = summary
         self.rows = rows
+        self.showsEmptyMessage = showsEmptyMessage
         self.unavailableMessage = unavailableMessage
         self.emptyMessage = emptyMessage
     }
