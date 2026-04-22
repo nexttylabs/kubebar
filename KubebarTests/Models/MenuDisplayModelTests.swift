@@ -129,8 +129,8 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 warning event")
     }
 
-    @Test("first screen caps watchlist and reports overflow")
-    func firstScreenCapsWatchlistAndReportsOverflow() {
+    @Test("healthy first screen caps watchlist at three and reports overflow")
+    func healthyFirstScreenCapsWatchlistAtThreeAndReportsOverflow() {
         let items = (1...7).map { index in
             TrackedItemStatus(target: .workload(namespace: "team", name: "service-\(index)"), state: .ok, reason: "ready")
         }
@@ -145,8 +145,38 @@ struct MenuDisplayModelTests {
 
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
-        #expect(display.visibleWatchItems.count == 5)
-        #expect(display.hiddenWatchItemCount == 2)
+        #expect(display.visibleWatchItems.count == 3)
+        #expect(display.hiddenWatchItemCount == 4)
+    }
+
+    @Test("attention watchlist is ranked bad watch stale ok and can show five")
+    func attentionWatchlistIsRankedBadWatchStaleOKAndCanShowFive() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 18, total: 20),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .workload(namespace: "team", name: "ok-b"), state: .ok, reason: "ready"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "stale-a"), state: .stale, reason: "No recent data"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "bad-b"), state: .bad, reason: "2 pods failed"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "watch-a"), state: .watch, reason: "1 pod restarting"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "bad-a"), state: .bad, reason: "3 pods pending"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "ok-a"), state: .ok, reason: "ready")
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.visibleWatchItems.map(\.title) == [
+            "team/bad-a",
+            "team/bad-b",
+            "team/watch-a",
+            "team/stale-a",
+            "team/ok-a"
+        ])
+        #expect(display.hiddenWatchItemCount == 1)
     }
 
     @Test("long watch item titles stay full for middle truncation")
@@ -269,6 +299,24 @@ struct MenuDisplayModelTests {
         )
 
         #expect(item.detail.reason == "1 pod not ready")
+        #expect(item.detail.hasExpandedContent == false)
+    }
+
+    @Test("watch item detail reports expanded content only when extra detail exists")
+    func watchItemDetailReportsExpandedContentOnlyWhenExtraDetailExists() {
+        let warning = WarningEventDisplay(
+            id: "warning",
+            reason: "BackOff",
+            location: "api/pod/checkout",
+            age: "2m ago",
+            occurrenceCount: 1,
+            message: nil
+        )
+
+        #expect(WatchItemDetailDisplay(stateLabel: "OK", reason: "ready").hasExpandedContent == false)
+        #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", affectedPodCount: 2).hasExpandedContent)
+        #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", examplePodNames: ["checkout-a"]).hasExpandedContent)
+        #expect(WatchItemDetailDisplay(stateLabel: "Watch", reason: "BackOff", latestWarning: warning).hasExpandedContent)
     }
 
     @Test("warning event display summary includes occurrence count only when repeated")
