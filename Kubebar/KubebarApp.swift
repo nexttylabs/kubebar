@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import KubebarCore
 
@@ -9,16 +10,13 @@ struct KubebarApp: App {
         MenuBarExtra {
             MenuBarRootView(
                 display: viewModel.display,
-                setupState: $viewModel.setupState,
                 isShowingSetup: viewModel.isShowingSetup,
                 refreshCadence: viewModel.refreshCadence,
                 isRefreshing: viewModel.isRefreshing,
                 onRefresh: viewModel.refreshNow,
-                onEditWatchlist: viewModel.openSetup,
-                onCompleteSetup: viewModel.completeSetup,
-                onSelectContext: viewModel.selectSetupContext,
-                onSelectRefreshCadence: viewModel.selectRefreshCadence,
-                onRetryTargets: viewModel.retryWatchTargetLoad
+                onPrepareSettings: viewModel.prepareSettings,
+                onQuit: { NSApplication.shared.terminate(nil) },
+                onSelectRefreshCadence: viewModel.selectRefreshCadence
             )
         } label: {
             let presentation = MenuBarStatusPresentation(state: viewModel.display.state)
