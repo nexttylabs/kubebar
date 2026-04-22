@@ -84,6 +84,37 @@ run_quality_gate() {
     ./scripts/swift-quality-gate.sh local
 }
 
+quit_existing_app() {
+  local pid
+
+  osascript -e "tell application id \"${BUNDLE_ID}\" to quit" >/dev/null 2>&1 || true
+
+  for _ in $(seq 1 20); do
+    if ! pgrep -x "$APP_NAME" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.2
+  done
+
+  if pgrep -x "$APP_NAME" >/dev/null 2>&1; then
+    while IFS= read -r pid; do
+      [ -n "$pid" ] && kill "$pid"
+    done < <(pgrep -x "$APP_NAME")
+  fi
+}
+
+install_app_bundle() {
+  mkdir -p "$INSTALL_DIR"
+  quit_existing_app
+
+  if [ -e "$INSTALL_APP_PATH" ]; then
+    rm -rf "$INSTALL_APP_PATH"
+  fi
+
+  ditto "$BUILT_APP_PATH" "$INSTALL_APP_PATH"
+  verify_app_bundle "$INSTALL_APP_PATH" "installed"
+}
+
 main() {
   if [ "$#" -gt 1 ]; then
     usage >&2
@@ -107,6 +138,12 @@ main() {
   verify_app_bundle "$BUILT_APP_PATH" "built"
 
   echo "Built app: ${BUILT_APP_PATH}"
+
+  install_app_bundle
+
+  echo "Install destination: ${INSTALL_DIR}"
+  echo "Installed app: ${INSTALL_APP_PATH}"
+  echo "Run the same command again to update Kubebar."
 }
 
 main "$@"
