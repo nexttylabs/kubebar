@@ -46,7 +46,24 @@ public enum CommandRunnerError: Error, Equatable, Sendable {
 }
 
 public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
-    public init() {}
+    static let defaultExecutableSearchPaths = [
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        "/usr/sbin",
+        "/sbin"
+    ]
+
+    private let additionalExecutableSearchPaths: [String]
+
+    public convenience init() {
+        self.init(additionalExecutableSearchPaths: Self.defaultExecutableSearchPaths)
+    }
+
+    init(additionalExecutableSearchPaths: [String]) {
+        self.additionalExecutableSearchPaths = additionalExecutableSearchPaths
+    }
 
     public func run(_ request: CommandRequest) throws -> CommandResult {
         let process = Process()
@@ -59,6 +76,10 @@ public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = [request.executable] + request.arguments
+        process.environment = Self.launchEnvironment(
+            base: ProcessInfo.processInfo.environment,
+            additionalExecutableSearchPaths: additionalExecutableSearchPaths
+        )
         process.standardOutput = stdout
         process.standardError = stderr
 
@@ -109,6 +130,28 @@ public final class ProcessCommandRunner: CommandRunning, @unchecked Sendable {
             stderr: String(data: stderrData.data, encoding: .utf8) ?? "",
             exitCode: process.terminationStatus
         )
+    }
+
+    static func launchEnvironment(
+        base: [String: String],
+        additionalExecutableSearchPaths: [String] = defaultExecutableSearchPaths
+    ) -> [String: String] {
+        var environment = base
+        let inheritedSearchPaths = base["PATH"]?.split(separator: ":").map(String.init) ?? []
+        var seenSearchPaths = Set<String>()
+        var searchPaths: [String] = []
+
+        for path in inheritedSearchPaths + additionalExecutableSearchPaths {
+            let normalizedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalizedPath.isEmpty, seenSearchPaths.insert(normalizedPath).inserted else {
+                continue
+            }
+
+            searchPaths.append(normalizedPath)
+        }
+
+        environment["PATH"] = searchPaths.joined(separator: ":")
+        return environment
     }
 }
 
