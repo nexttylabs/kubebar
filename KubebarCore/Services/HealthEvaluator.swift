@@ -90,7 +90,11 @@ public struct HealthEvaluator: Sendable {
                 now: now
             ),
             warningEventSummaries: warningEventSummaries,
-            sectionNotices: sectionNotices
+            sectionNotices: sectionNotices,
+            overviewNotice: makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries),
+            nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
+            podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
+            eventsTab: makeEventsTab(rows: warningEventSummaries, sectionNotices: sectionNotices)
         )
     }
 
@@ -135,6 +139,80 @@ public struct HealthEvaluator: Sendable {
                 reason: sanitizedSectionReason(failure.reason)
             )
         }
+    }
+
+    private func makeOverviewNotice(
+        sectionNotices: [SectionAvailabilityDisplay],
+        warningEventSummaries: [WarningEventDisplay]
+    ) -> OverviewNoticeDisplay? {
+        if let notice = sectionNotices.first {
+            return OverviewNoticeDisplay(
+                id: "section-\(notice.id)",
+                title: "\(notice.title) unavailable",
+                message: notice.reason
+            )
+        }
+
+        return warningEventSummaries.first.map { event in
+            OverviewNoticeDisplay(
+                id: "event-\(event.id)",
+                title: event.reason,
+                message: event.summary
+            )
+        }
+    }
+
+    private func makeNodeTab(from snapshot: ClusterSnapshot, sectionNotices: [SectionAvailabilityDisplay]) -> NodeTabDisplay {
+        NodeTabDisplay(
+            summary: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total) nodes ready" } ?? "- nodes ready",
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.nodes.rawValue,
+                prefix: "Node data unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func makePodTab(
+        from snapshot: ClusterSnapshot,
+        visibleItems: [WatchItemDisplay],
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> PodTabDisplay {
+        PodTabDisplay(
+            summary: snapshot.podsSection.value.map { "\($0.running)/\($0.total) pods running" } ?? "- pods running",
+            rows: visibleItems,
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.pods.rawValue,
+                prefix: "Pod data unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func makeEventsTab(
+        rows: [WarningEventDisplay],
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> EventsTabDisplay {
+        EventsTabDisplay(
+            rows: rows,
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.warningEvents.rawValue,
+                prefix: "Warning events unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func tabUnavailableMessage(
+        sectionID: String,
+        prefix: String,
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> String? {
+        guard let notice = sectionNotices.first(where: { $0.id == sectionID }) else {
+            return nil
+        }
+
+        return "\(prefix): \(notice.reason)"
     }
 
     private func sanitizedSectionReason(_ value: String) -> String {

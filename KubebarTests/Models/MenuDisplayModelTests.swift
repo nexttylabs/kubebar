@@ -28,7 +28,9 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "Cluster looks healthy")
         #expect(display.lastUpdated == "20s ago")
         #expect(display.nodeTab.summary == "3/3 nodes ready")
+        #expect(display.nodeTab.emptyMessage == "No node data yet. Refresh or check Settings.")
         #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.emptyMessage == "No pod data yet. Refresh or check Settings.")
         #expect(display.eventsTab.emptyMessage == "No current warning events")
     }
 
@@ -486,6 +488,7 @@ struct MenuDisplayModelTests {
         #expect(display.nodeTab.summary == "3/3 nodes ready")
         #expect(display.podTab.summary == "12/12 pods running")
         #expect(display.podTab.rows.first?.title == "api/checkout")
+        #expect(display.eventsTab.emptyMessage == "No current warning events")
         #expect(display.staleBanner?.reason == "kubectl timed out")
     }
 
