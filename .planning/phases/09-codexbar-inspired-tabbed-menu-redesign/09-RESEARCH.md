@@ -578,22 +578,22 @@ All claims in this research were verified against local files, official Apple/OW
 |---|-------|---------|---------------|
 | None | No `[ASSUMED]` claims were used. | All sections | No user confirmation needed from unverified assumptions. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **How reliably can `Overview` reset on every menu reopen?**  
    - What we know: Phase 09 requires reset to Overview every time the menu opens, and Apple docs verified here show `MenuBarExtra` insertion binding, not a popover open-state binding. [VERIFIED: 09-CONTEXT.md] [CITED: Context7 Apple MenuBarExtra docs]  
-   - What's unclear: Whether `.onAppear` on the menu root fires for every `MenuBarExtra.window` open in the current app lifecycle. [CITED: Context7 Apple MenuBarExtra docs]  
-   - Recommendation: Plan a small implementation spike or UAT row that switches tabs, closes the menu, reopens it, and records whether Overview is selected. [VERIFIED: 09-UI-SPEC.md]
+   - Resolved risk: `.onAppear` may not fire for every `MenuBarExtra.window` open on every macOS lifecycle path, so the plan requires UAT proof instead of assuming automation can prove it. [CITED: Context7 Apple MenuBarExtra docs]  
+   - RESOLVED: Plan 01 uses `.onAppear` to reset local tab state to `Overview`, and Plan 03 requires a UAT row that switches tabs, closes the menu, reopens it, and records whether `Overview` is selected. [VERIFIED: 09-01-PLAN.md, 09-03-PLAN.md]
 
 2. **Should Events cap remain 3 or become a separate value for Events vs Overview?**  
    - What we know: Runtime invariants cap warning summaries at 3; UI spec says Overview at most 1 and Events at most 3 under current invariant. [VERIFIED: docs/architecture/runtime-invariants.md, 09-UI-SPEC.md]  
-   - What's unclear: Whether the implementation should expose separate model fields or let views apply `prefix(1)` for Overview. [VERIFIED: MenuDisplayModel.swift]  
-   - Recommendation: Use view-level `prefix(1)` only if copy remains identical; otherwise add explicit model fields so the cap stays testable in `HealthEvaluator`. [VERIFIED: AGENTS.md, HealthEvaluator.swift]
+   - Resolved choice: Use explicit model fields rather than view-only `prefix(1)` so caps remain testable in `HealthEvaluator`. [VERIFIED: MenuDisplayModel.swift]  
+   - RESOLVED: Plan 01 requires explicit core-owned fields `overviewNotice` and `eventsTab`, with `HealthEvaluator` tests proving Overview has at most one notice and Events stays capped at 3 grouped rows. [VERIFIED: 09-01-PLAN.md]
 
 3. **How much should `SetupView` copy change for editing existing settings?**  
    - What we know: UI spec requires `Finish setup` for first use and `Save Settings` for existing config editing. [VERIFIED: 09-UI-SPEC.md]  
-   - What's unclear: Current `SetupView` always renders the primary button as `Finish setup`. [VERIFIED: SetupView.swift]  
-   - Recommendation: Plan a small state/copy parameter for first-use vs existing settings mode, with model tests if the state is moved into `SetupFlowState`. [VERIFIED: SetupFlowStateTests.swift]
+   - Resolved choice: Keep `SetupView` reusable by passing the primary button title instead of duplicating the setup form. [VERIFIED: SetupView.swift]  
+   - RESOLVED: Plan 02 requires `SetupView(primaryActionTitle:)`, `Save Settings` for existing configuration editing, `Finish setup` for first use, and focused tests for both labels. [VERIFIED: 09-02-PLAN.md]
 
 ## Environment Availability
 
