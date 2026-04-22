@@ -35,6 +35,93 @@ struct KubectlClusterReaderTests {
         #expect(snapshot.trackedItems.first?.examplePodNames == ["checkout-8a1b"])
     }
 
+    @Test("builds per-node detail rows from node and metrics JSON")
+    func buildsPerNodeDetailRowsFromNodeAndMetricsJSON() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodeDetailsJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeDetailsMetricsJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+        let rows = try #require(snapshot.nodeDetailsSection.value)
+
+        #expect(rows.count == 2)
+        #expect(rows[0].name == "worker-a")
+        #expect(rows[0].isReady == true)
+        #expect(rows[0].cpuUsageNanocores == 500_000_000)
+        #expect(rows[0].cpuAllocatableNanocores == 2_000_000_000)
+        #expect(rows[0].memoryUsageBytes == 1_073_741_824)
+        #expect(rows[0].memoryAllocatableBytes == 8_589_934_592)
+        #expect(rows[1].name == "worker-b")
+        #expect(rows[1].isReady == false)
+        #expect(rows[1].issueReason == "KubeletNotReady")
+        #expect(rows[1].issueMessage == "container runtime is down")
+        #expect(rows[1].cpuUsageNanocores == 250_000_000)
+        #expect(rows[1].cpuAllocatableNanocores == 1_500_000_000)
+        #expect(rows[1].memoryUsageBytes == 1_073_741_824)
+        #expect(rows[1].memoryAllocatableBytes == 4_294_967_296)
+    }
+
+    @Test("metrics failure keeps per-node detail rows without usage")
+    func metricsFailureKeepsPerNodeDetailRowsWithoutUsage() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodeDetailsJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: "", error: "metrics API unavailable", exitCode: 1),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+        let rows = try #require(snapshot.nodeDetailsSection.value)
+
+        #expect(rows.map(\.name) == ["worker-a", "worker-b"])
+        #expect(rows.allSatisfy { $0.cpuUsageNanocores == nil })
+        #expect(rows.allSatisfy { $0.memoryUsageBytes == nil })
+    }
+
+    @Test("unknown ready condition is treated as not ready")
+    func unknownReadyConditionIsTreatedAsNotReady() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: unknownReadyNodeJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+        let row = try #require(snapshot.nodeDetailsSection.value?.first)
+
+        #expect(row.name == "worker-missing")
+        #expect(row.isReady == false)
+        #expect(row.issueReason == "NodeStatusUnknown")
+        #expect(row.issueMessage == "Kubelet stopped posting node status.")
+    }
+
+    @Test("pressure condition is surfaced as a not ready node issue")
+    func pressureConditionIsSurfacedAsNotReadyNodeIssue() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: pressureNodeJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: pressureNodeMetricsJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(contextName: "prod", watchTargets: [], now: Date(timeIntervalSince1970: 100))
+        let row = try #require(snapshot.nodeDetailsSection.value?.first)
+
+        #expect(snapshot.nodesSection.value == NodeSummary(ready: 0, total: 1))
+        #expect(row.name == "worker-pressure")
+        #expect(row.isReady == false)
+        #expect(row.issueReason == "KubeletHasDiskPressure")
+        #expect(row.issueMessage == "kubelet has disk pressure")
+    }
+
     @Test("metrics API failure only marks metrics unavailable")
     func metricsAPIFailureOnlyMarksMetricsUnavailable() throws {
         let runner = FakeMultiCommandRunner(results: [
@@ -522,8 +609,8 @@ private let deploymentsCommand = ["--context", "prod", "get", "deployments", "--
 private let nodesJSON = """
 {
   "items": [
-    {"status": {"allocatable": {"cpu": "2", "memory": "8Gi"}, "conditions": [{"type": "Ready", "status": "True"}]}},
-    {"status": {"allocatable": {"cpu": "1500m", "memory": "4096Mi"}, "conditions": [{"type": "Ready", "status": "False"}]}}
+    {"metadata": {"name": "worker-a"}, "status": {"allocatable": {"cpu": "2", "memory": "8Gi"}, "conditions": [{"type": "Ready", "status": "True"}]}},
+    {"metadata": {"name": "worker-b"}, "status": {"allocatable": {"cpu": "1500m", "memory": "4096Mi"}, "conditions": [{"type": "Ready", "status": "False"}]}}
   ]
 }
 """
@@ -531,8 +618,8 @@ private let nodesJSON = """
 private let nodesWithoutAllocatableJSON = """
 {
   "items": [
-    {"status": {"conditions": [{"type": "Ready", "status": "True"}]}},
-    {"status": {"conditions": [{"type": "Ready", "status": "False"}]}}
+    {"metadata": {"name": "worker-a"}, "status": {"conditions": [{"type": "Ready", "status": "True"}]}},
+    {"metadata": {"name": "worker-b"}, "status": {"conditions": [{"type": "Ready", "status": "False"}]}}
   ]
 }
 """
@@ -540,8 +627,8 @@ private let nodesWithoutAllocatableJSON = """
 private let nodeMetricsJSON = """
 {
   "items": [
-    {"usage": {"cpu": "500m", "memory": "1024Mi"}},
-    {"usage": {"cpu": "250000000n", "memory": "1Gi"}}
+    {"metadata": {"name": "worker-a"}, "usage": {"cpu": "500m", "memory": "1024Mi"}},
+    {"metadata": {"name": "worker-b"}, "usage": {"cpu": "250000000n", "memory": "1Gi"}}
   ]
 }
 """
@@ -549,7 +636,7 @@ private let nodeMetricsJSON = """
 private let exponentNodesJSON = """
 {
   "items": [
-    {"status": {"allocatable": {"cpu": "1e0", "memory": "2G"}, "conditions": [{"type": "Ready", "status": "True"}]}}
+    {"metadata": {"name": "worker-exponent"}, "status": {"allocatable": {"cpu": "1e0", "memory": "2G"}, "conditions": [{"type": "Ready", "status": "True"}]}}
   ]
 }
 """
@@ -557,7 +644,82 @@ private let exponentNodesJSON = """
 private let zeroNodeMetricsJSON = """
 {
   "items": [
-    {"usage": {"cpu": "0", "memory": "0"}}
+    {"metadata": {"name": "worker-exponent"}, "usage": {"cpu": "0", "memory": "0"}}
+  ]
+}
+"""
+
+private let nodeDetailsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"name": "worker-a"},
+      "status": {
+        "allocatable": {"cpu": "2", "memory": "8Gi"},
+        "conditions": [
+          {"type": "Ready", "status": "True", "reason": "KubeletReady", "message": "kubelet is posting ready status"}
+        ]
+      }
+    },
+    {
+      "metadata": {"name": "worker-b"},
+      "status": {
+        "allocatable": {"cpu": "1500m", "memory": "4096Mi"},
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "KubeletNotReady", "message": "container runtime is down"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let nodeDetailsMetricsJSON = """
+{
+  "items": [
+    {"metadata": {"name": "worker-a"}, "usage": {"cpu": "500m", "memory": "1024Mi"}},
+    {"metadata": {"name": "worker-b"}, "usage": {"cpu": "250000000n", "memory": "1Gi"}}
+  ]
+}
+"""
+
+private let unknownReadyNodeJSON = """
+{
+  "items": [
+    {
+      "metadata": {"name": "worker-missing"},
+      "status": {
+        "allocatable": {"cpu": "1", "memory": "2Gi"},
+        "conditions": [
+          {"type": "Ready", "status": "Unknown", "reason": "NodeStatusUnknown", "message": "Kubelet stopped posting node status."}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let pressureNodeJSON = """
+{
+  "items": [
+    {
+      "metadata": {"name": "worker-pressure"},
+      "status": {
+        "allocatable": {"cpu": "2", "memory": "8Gi"},
+        "conditions": [
+          {"type": "Ready", "status": "True", "reason": "KubeletReady", "message": "kubelet is posting ready status"},
+          {"type": "DiskPressure", "status": "True", "reason": "KubeletHasDiskPressure", "message": "kubelet has disk pressure"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let pressureNodeMetricsJSON = """
+{
+  "items": [
+    {"metadata": {"name": "worker-pressure"}, "usage": {"cpu": "500m", "memory": "1024Mi"}}
   ]
 }
 """

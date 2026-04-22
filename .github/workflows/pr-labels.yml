@@ -12,7 +12,7 @@ permissions:
 jobs:
   scope-labels:
     name: Scope labels
-    runs-on: arc-small
+    runs-on: ubuntu-latest 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/labeler@v5
@@ -22,7 +22,7 @@ jobs:
 
   classify:
     name: Size / Risk / Tier
-    runs-on: arc-small
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Classify PR

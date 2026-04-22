@@ -27,6 +27,16 @@ These are the rules Kubebar must keep true at runtime.
 - CPU and memory cards use `kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes`
   and node allocatable values. Missing Metrics API data is a card-level
   unavailable state, not a cluster-health failure by itself.
+- Nodes tab rows come from `MenuDisplayModel` node display data. They show node
+  name, readiness, CPU, and memory without letting the view decide health.
+- Not Ready node rows must be distinguishable without relying on color alone
+  and must include one short issue description when node condition detail is
+  available.
+- Node pressure conditions such as `DiskPressure`, `MemoryPressure`, and
+  `PIDPressure` are surfaced as node issues even when the `Ready` condition is
+  still `True`.
+- Missing per-node CPU or memory data shows unavailable values such as `-`;
+  missing values must not be rendered as `0`.
 - Kubebar does not query Kubernetes Secrets.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out

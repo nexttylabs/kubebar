@@ -135,6 +135,81 @@ struct MenuDisplayModelTests {
         #expect(display.overview.cards.first(where: { $0.id == "memory" })?.detail == "metrics API unavailable")
     }
 
+    @Test("node tab rows show sorted readiness and metrics")
+    func nodeTabRowsShowSortedReadinessAndMetrics() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            nodeDetailsSection: .available([
+                nodeDetail(name: "worker-z", isReady: true),
+                nodeDetail(
+                    name: "worker-a",
+                    isReady: false,
+                    issueReason: "KubeletNotReady",
+                    issueMessage: "container runtime is down"
+                ),
+                nodeDetail(name: "worker-b", isReady: true, cpuUsageNanocores: nil, memoryUsageBytes: nil)
+            ]),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let rows = display.nodeTab.rows
+
+        #expect(rows.map(\.name) == ["worker-a", "worker-b", "worker-z"])
+        #expect(rows[0].statusLabel == "Not Ready")
+        #expect(rows[0].issueText == "KubeletNotReady: container runtime is down")
+        #expect(rows[0].cpuLabel == "25%")
+        #expect(rows[0].memoryLabel == "25%")
+        #expect(rows[1].statusLabel == "Ready")
+        #expect(rows[1].cpuLabel == "-")
+        #expect(rows[1].memoryLabel == "-")
+        #expect(rows[2].statusLabel == "Ready")
+        #expect(rows[2].accessibilityLabel == "worker-z, Ready, CPU 25%, Memory 25%")
+    }
+
+    @Test("zero per node metrics remain visible as zero percent")
+    func zeroPerNodeMetricsRemainVisibleAsZeroPercent() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 1, total: 1)),
+            nodeDetailsSection: .available([
+                nodeDetail(name: "worker-a", isReady: true, cpuUsageNanocores: 0, memoryUsageBytes: 0)
+            ]),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = display.nodeTab.rows.first
+
+        #expect(row?.cpuLabel == "0%")
+        #expect(row?.memoryLabel == "0%")
+    }
+
+    @Test("node tab empty state uses an explicit display flag")
+    func nodeTabEmptyStateUsesExplicitDisplayFlag() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 0, total: 0)),
+            nodeDetailsSection: .available([]),
+            podsSection: .available(PodSummary(running: 0, total: 0)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.nodeTab.rows.isEmpty)
+        #expect(display.nodeTab.showsEmptyMessage == true)
+    }
+
     @Test("overview pods use ready count while pod tab keeps running count")
     func overviewPodsUseReadyCountWhilePodTabKeepsRunningCount() {
         let snapshot = ClusterSnapshot(
@@ -849,5 +924,27 @@ private func metricsSummary() -> ClusterMetricsSummary {
         cpuAllocatableNanocores: 3_500_000_000,
         memoryUsageBytes: 2_147_483_648,
         memoryAllocatableBytes: 12_884_901_888
+    )
+}
+
+private func nodeDetail(
+    name: String,
+    isReady: Bool,
+    issueReason: String? = nil,
+    issueMessage: String? = nil,
+    cpuUsageNanocores: Int64? = 500_000_000,
+    cpuAllocatableNanocores: Int64? = 2_000_000_000,
+    memoryUsageBytes: Int64? = 1_073_741_824,
+    memoryAllocatableBytes: Int64? = 4_294_967_296
+) -> NodeDetail {
+    NodeDetail(
+        name: name,
+        isReady: isReady,
+        issueReason: issueReason,
+        issueMessage: issueMessage,
+        cpuUsageNanocores: cpuUsageNanocores,
+        cpuAllocatableNanocores: cpuAllocatableNanocores,
+        memoryUsageBytes: memoryUsageBytes,
+        memoryAllocatableBytes: memoryAllocatableBytes
     )
 }

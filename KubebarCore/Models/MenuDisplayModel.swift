@@ -176,13 +176,61 @@ public struct OverviewNoticeDisplay: Equatable, Sendable, Identifiable {
     }
 }
 
+public enum NodeItemReadiness: Equatable, Sendable {
+    case ready
+    case notReady
+}
+
+public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
+    public let id: String
+    public let name: String
+    public let readiness: NodeItemReadiness
+    public let statusLabel: String
+    public let cpuLabel: String
+    public let memoryLabel: String
+    public let issueText: String?
+    public let helpText: String
+    public let accessibilityLabel: String
+
+    public init(
+        name: String,
+        readiness: NodeItemReadiness,
+        statusLabel: String,
+        cpuLabel: String,
+        memoryLabel: String,
+        issueText: String? = nil,
+        helpText: String,
+        accessibilityLabel: String
+    ) {
+        self.id = name
+        self.name = name
+        self.readiness = readiness
+        self.statusLabel = statusLabel
+        self.cpuLabel = cpuLabel
+        self.memoryLabel = memoryLabel
+        self.issueText = issueText
+        self.helpText = helpText
+        self.accessibilityLabel = accessibilityLabel
+    }
+}
+
 public struct NodeTabDisplay: Equatable, Sendable {
     public let summary: String
+    public let rows: [NodeItemDisplay]
+    public let showsEmptyMessage: Bool
     public let unavailableMessage: String?
     public let emptyMessage: String
 
-    public init(summary: String, unavailableMessage: String? = nil, emptyMessage: String = "No node data yet. Refresh or check Settings.") {
+    public init(
+        summary: String,
+        rows: [NodeItemDisplay] = [],
+        showsEmptyMessage: Bool = false,
+        unavailableMessage: String? = nil,
+        emptyMessage: String = "No node data yet. Refresh or check Settings."
+    ) {
         self.summary = summary
+        self.rows = rows
+        self.showsEmptyMessage = showsEmptyMessage
         self.unavailableMessage = unavailableMessage
         self.emptyMessage = emptyMessage
     }

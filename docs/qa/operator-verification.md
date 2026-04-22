@@ -40,13 +40,13 @@ Evidence must not include raw command transcripts, tokens, kubeconfig paths, ful
 |-------|---------------------------|---------------|
 | Healthy | Menu shows OK with top status row, four Overview cards, and neutral Recent Warnings. | `docs/assets/qa/phase-07-healthy.png` |
 | Watch | Menu shows Watch with a pinned BackOff warning row: reason first, object scope, age/repeat count, and message. | `docs/assets/qa/phase-07-watch.png` |
-| Bad | Menu shows Bad and prioritizes the broken tracked target in the top row. | `docs/assets/qa/phase-07-bad.png` |
+| Bad | Menu shows Bad and prioritizes the broken tracked target in the top row; Nodes tab shows a Not Ready node row with issue text. | `docs/assets/qa/phase-07-bad.png` |
 | Stale refresh failure | Menu shows Stale while preserving last known top row and cards with stale marking. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
 | Stale age-out | Menu shows Stale because the last successful refresh is too old and cards are visibly stale. | `docs/assets/qa/phase-07-stale-age-out.png` |
 | first-use | Menu shows setup before any saved context exists. | `docs/assets/qa/phase-07-first-use.png` |
 | empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
 | kubectl failure | Menu shows Stale with a safe failure message and retained prior status. | `docs/assets/qa/phase-07-kubectl-failure.png` |
-| metrics-unavailable | Menu keeps OK cluster status while CPU and Memory cards show unavailable metrics. | `docs/assets/qa/phase-07-metrics-unavailable.png` |
+| metrics-unavailable | Menu keeps OK cluster status while CPU and Memory cards show unavailable metrics; Nodes tab keeps rows visible with `-` resource values. | `docs/assets/qa/phase-07-metrics-unavailable.png` |
 | warning-heavy | Menu shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events. | `docs/assets/qa/phase-07-warning-heavy.png` |
 
 ## Keyboard Check
@@ -62,6 +62,14 @@ For warning rows, confirm the row reads as reason first, then affected object,
 age/repeat count, and secondary message. Tracked-object warnings must be
 recognizable without the word `Watching`. Empty, unavailable, and overflow
 states must be distinct.
+
+## Nodes Tab Check
+
+For the Nodes tab, confirm rows show node name, readiness, CPU, and Memory.
+Not Ready rows must appear before Ready rows, use a non-color-only error cue,
+and show a one-line issue description. In the metrics-unavailable state, node
+rows should remain visible while CPU and Memory show `-`. If the node list is
+taller than the menu, confirm the rows remain reachable by scrolling.
 
 ## When To Mark pending-human-verification
 

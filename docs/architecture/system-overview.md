@@ -46,6 +46,8 @@ includes:
 - capped reason-first `Recent Warnings` rows with object scope, age, repeat
   count, and secondary message text,
 - compact node, pod, and warning counts for secondary tabs,
+- per-node rows for the Nodes tab with node name, readiness, CPU, memory, and
+  Not Ready issue text,
 - visible watchlist rows,
 - overflow count for hidden watched items,
 - stale banner content when the last refresh is no longer fresh.
