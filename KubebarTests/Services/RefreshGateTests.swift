@@ -1,4 +1,5 @@
 import Testing
+@testable import Kubebar
 @testable import KubebarCore
 
 @Suite("Refresh gate")
@@ -56,5 +57,19 @@ struct RefreshGateTests {
 
         #expect(gate.shouldApply(ticket, currentConfig: original) == true)
         #expect(gate.shouldApply(ticket, currentConfig: updated) == false)
+    }
+}
+
+@Suite("Menu bar root view")
+struct MenuBarRootViewTests {
+    @Test("screen visible height update ignores non-positive values and small deltas")
+    func screenVisibleHeightUpdateIgnoresNonPositiveValuesAndSmallDeltas() {
+        #expect(MenuBarRootView.ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 0) == nil)
+        #expect(MenuBarRootView.ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 900.5) == nil)
+    }
+
+    @Test("screen visible height update accepts meaningful delta")
+    func screenVisibleHeightUpdateAcceptsMeaningfulDelta() {
+        #expect(MenuBarRootView.ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 902) == 902)
     }
 }
