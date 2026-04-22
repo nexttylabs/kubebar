@@ -428,6 +428,18 @@ struct MenuDisplayModelTests {
         #expect(display.eventsTab.unavailableMessage == "Warning events unavailable: invalid event JSON")
     }
 
+    @Test("missing warning event count does not look empty")
+    func missingWarningEventCountDoesNotLookEmpty() {
+        let display = HealthEvaluator().evaluate(
+            snapshot: nil,
+            failure: RefreshFailure(reason: "Waiting for first refresh"),
+            now: Date(timeIntervalSince1970: 220)
+        )
+
+        #expect(display.counters.warningEvents == "-")
+        #expect(display.eventsTab.emptyMessage == "Warning event count unavailable")
+    }
+
     @Test("unavailable pods use dash counter")
     func unavailablePodsUseDashCounter() {
         let snapshot = ClusterSnapshot(
@@ -444,6 +456,24 @@ struct MenuDisplayModelTests {
         #expect(display.counters.pods == "-")
         #expect(display.state == .watch)
         #expect(display.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+    }
+
+    @Test("pods tab surfaces workload section failures")
+    func podsTabSurfacesWorkloadSectionFailures() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .unavailable(reason: "invalid workload JSON"),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.rows.isEmpty)
+        #expect(display.podTab.unavailableMessage == "Workloads unavailable: invalid workload JSON")
     }
 
     @Test("tab unavailable copy uses safe section reasons")

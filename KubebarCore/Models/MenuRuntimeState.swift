@@ -40,6 +40,10 @@ public struct MenuRuntimeState: Equatable, Sendable {
     }
 
     public mutating func prepareSettings(config: AppConfig) {
+        guard !hasUnsavedSettingsChanges(comparedTo: config) else {
+            return
+        }
+
         setupState = SetupFlowState(
             selectedContext: config.selectedContext,
             watchlist: WatchlistSelectionState(selectedTargets: Set(config.watchTargets)),
@@ -112,5 +116,11 @@ public struct MenuRuntimeState: Equatable, Sendable {
             watchTargets: setupState.watchlist.selectedTargets.sorted { $0.displayTitle < $1.displayTitle },
             refreshIntervalSeconds: setupState.refreshCadence.seconds
         )
+    }
+
+    private func hasUnsavedSettingsChanges(comparedTo config: AppConfig) -> Bool {
+        setupState.selectedContext != config.selectedContext ||
+            setupState.watchlist.selectedTargets != Set(config.watchTargets) ||
+            setupState.refreshCadence.seconds != config.refreshIntervalSeconds
     }
 }

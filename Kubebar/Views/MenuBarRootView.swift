@@ -83,7 +83,6 @@ struct MenuBarRootView: View {
     }
 
     private func openSettingsFromMenu() {
-        onPrepareSettings()
         openSettings()
     }
 

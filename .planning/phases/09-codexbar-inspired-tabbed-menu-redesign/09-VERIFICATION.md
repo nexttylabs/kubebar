@@ -7,7 +7,7 @@ source:
   - 09-UAT.md
   - 09-01-SUMMARY.md
   - 09-02-SUMMARY.md
-updated: 2026-04-22T07:07:45Z
+updated: 2026-04-22T07:20:13Z
 ---
 
 # Phase 09 Verification
@@ -18,18 +18,18 @@ Phase 09 automated checks passed. Visible app smoke launched the built app, but 
 
 | Command | Result | Evidence |
 | --- | --- | --- |
-| `swift test --filter MenuDisplayModelTests` | pass | Swift Testing ran 27 tests in the Menu display model suite. Covered OK/Watch/Bad/Stale display, watchlist caps, stale fallback, tab display fields, unavailable copy, event grouping, event caps, warning count preservation, and long-name model preservation. |
-| `swift test --filter MenuRuntimeStateTests` | pass | Swift Testing ran 9 tests in the Menu runtime state suite. Covered configured and setup surfaces, target loading, completed config sorting, and `prepareSettings()` preserving saved configuration fields without switching the opened menu to setup. |
+| `swift test --filter MenuDisplayModelTests` | pass | Swift Testing ran 29 tests in the Menu display model suite. Covered OK/Watch/Bad/Stale display, watchlist caps, stale fallback, tab display fields, unavailable copy, pod/workload failure copy, event grouping, event caps, warning count preservation, and long-name model preservation. |
+| `swift test --filter MenuRuntimeStateTests` | pass | Swift Testing ran 10 tests in the Menu runtime state suite. Covered configured and setup surfaces, target loading, completed config sorting, and `prepareSettings()` preserving saved configuration fields and unsaved edits without switching the opened menu to setup. |
 | `swift test --filter SetupFlowStateTests` | pass | Swift Testing ran 7 tests in the Setup flow state suite. Covered first-use `Finish setup`, existing-config `Save Settings`, save-failure copy, and setup completion requirements. |
 | `swift build` | pass | SwiftPM debug build completed successfully. |
-| `./scripts/swift-quality-gate.sh local` | pass | Xcode build passed, Xcode test passed with 103 Swift Testing tests in 15 suites, SwiftPM build passed, and SwiftPM test passed with 103 tests in 15 suites. |
-| `./scripts/compile-and-run.sh` | pass | The visible-app smoke rebuilt and tested the app, then launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `50212`. |
+| `./scripts/swift-quality-gate.sh local` | pass | Xcode build passed, Xcode test passed with 106 Swift Testing tests in 15 suites, SwiftPM build passed, and SwiftPM test passed with 106 tests in 15 suites. |
+| `./scripts/compile-and-run.sh` | pass | The visible-app smoke rebuilt and tested the app, then launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `92356`. |
 
 ## Visible App Smoke
 
 | Check | Result | Evidence | Limitation |
 | --- | --- | --- | --- |
-| Built app exists and launches | pass | `./scripts/compile-and-run.sh` launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `50212`. | Launch evidence does not prove the opened menu content, Settings window behavior, keyboard traversal, or Quit behavior. |
+| Built app exists and launches | pass | `./scripts/compile-and-run.sh` launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `92356`. | Launch evidence does not prove the opened menu content, Settings window behavior, keyboard traversal, or Quit behavior. |
 | Opened menu traversal | pending-human-verification | `09-UAT.md` keeps all opened-menu state rows pending. | Current automation cannot reliably open and inspect `MenuBarExtra.window` content. |
 | Settings window inspection | pending-human-verification | `09-UAT.md` keeps the `Settings...` row pending. | Current automation cannot reliably inspect the native Settings presentation from the menu. |
 | Quit flow and config preservation | pending-human-verification | `09-UAT.md` keeps the Quit row pending. | Current automation did not activate the menu Quit action or compare saved config after relaunch. |

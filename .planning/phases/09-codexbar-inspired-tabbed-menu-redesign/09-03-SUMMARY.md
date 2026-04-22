@@ -78,12 +78,12 @@ completed: 2026-04-22
 
 | Command | Result | Evidence |
 | --- | --- | --- |
-| `swift test --filter MenuDisplayModelTests` | pass | 27 tests passed. |
-| `swift test --filter MenuRuntimeStateTests` | pass | 9 tests passed. |
+| `swift test --filter MenuDisplayModelTests` | pass | 29 tests passed. |
+| `swift test --filter MenuRuntimeStateTests` | pass | 10 tests passed. |
 | `swift test --filter SetupFlowStateTests` | pass | 7 tests passed. |
 | `swift build` | pass | SwiftPM debug build succeeded. |
-| `./scripts/swift-quality-gate.sh local` | pass | Xcode build/test and SwiftPM build/test passed; full test run reported 103 tests in 15 suites. |
-| `./scripts/compile-and-run.sh` | pass | Built and launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `50212`. |
+| `./scripts/swift-quality-gate.sh local` | pass | Xcode build/test and SwiftPM build/test passed; full test run reported 106 tests in 15 suites. |
+| `./scripts/compile-and-run.sh` | pass | Built and launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `92356`. |
 | Source guard checks | pass | No deferred dashboard/provider/raw-output/deep-debugging scope found in `Kubebar`, `KubebarCore`, or `KubebarTests`. |
 
 ## Human-Needed Items

@@ -185,6 +185,10 @@ public struct HealthEvaluator: Sendable {
                 sectionID: SnapshotSectionName.pods.rawValue,
                 prefix: "Pod data unavailable",
                 sectionNotices: sectionNotices
+            ) ?? tabUnavailableMessage(
+                sectionID: SnapshotSectionName.workloads.rawValue,
+                prefix: "Workloads unavailable",
+                sectionNotices: sectionNotices
             )
         )
     }

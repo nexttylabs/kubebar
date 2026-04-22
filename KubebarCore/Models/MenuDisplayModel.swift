@@ -251,6 +251,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
             summary: "\(counters.pods) pods running",
             rows: visibleWatchItems,
             unavailableMessage: unavailableMessage(for: "pods", prefix: "Pod data unavailable", sectionNotices: sectionNotices)
+                ?? unavailableMessage(for: "workloads", prefix: "Workloads unavailable", sectionNotices: sectionNotices)
         )
     }
 
@@ -272,8 +273,10 @@ public struct MenuDisplayModel: Equatable, Sendable {
 
     private static func warningEventsEmptyMessage(count: String) -> String {
         switch count {
-        case "0", "-":
+        case "0":
             return "No current warning events"
+        case "-":
+            return "Warning event count unavailable"
         case "1":
             return "1 warning event needs review"
         default:

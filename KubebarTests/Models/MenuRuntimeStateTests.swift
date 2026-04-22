@@ -88,6 +88,27 @@ struct MenuRuntimeStateTests {
         #expect(!state.isShowingSetup)
     }
 
+    @Test("preparing settings preserves unsaved edits")
+    func preparingSettingsPreservesUnsavedEdits() {
+        let config = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")],
+            refreshIntervalSeconds: 60
+        )
+        var state = MenuRuntimeState(config: config)
+
+        _ = state.selectContext("staging")
+        state.setupState.watchlist.toggle(.workload(namespace: "ops", name: "worker", kind: .deployment))
+        state.selectRefreshCadence(.twoMinutes)
+
+        state.prepareSettings(config: config)
+
+        #expect(state.setupState.selectedContext == "staging")
+        #expect(state.setupState.watchlist.isSelected(.workload(namespace: "ops", name: "worker", kind: .deployment)))
+        #expect(state.setupState.refreshCadence == .twoMinutes)
+        #expect(state.surface == .menu)
+    }
+
     @Test("selecting context clears candidates and requests target load")
     func selectingContextClearsCandidatesAndRequestsTargetLoad() {
         var state = MenuRuntimeState(config: AppConfig())

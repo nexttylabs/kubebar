@@ -7,7 +7,7 @@ source:
   - 09-01-SUMMARY.md
   - 09-02-SUMMARY.md
 started: 2026-04-22T07:05:48Z
-updated: 2026-04-22T07:07:45Z
+updated: 2026-04-22T07:20:13Z
 ---
 
 # Phase 09 UAT
@@ -46,7 +46,7 @@ Evidence in this file is intentionally limited to safe summaries, source-backed 
 
 | Check | Result | Evidence | Limitation |
 | --- | --- | --- | --- |
-| `./scripts/compile-and-run.sh` | pass | Built and launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `50212`. | This confirms launch only. It does not inspect the opened menu, Settings window, keyboard traversal, or Quit behavior. |
+| `./scripts/compile-and-run.sh` | pass | Built and launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `92356`. | This confirms launch only. It does not inspect the opened menu, Settings window, keyboard traversal, or Quit behavior. |
 
 ## Requirement Coverage
 
