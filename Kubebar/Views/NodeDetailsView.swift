@@ -64,7 +64,7 @@ private struct NodeRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(row.name)
-                    .font(.caption.weight(.semibold))
+                    .fontWeight(.semibold)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .help(Text(row.name))

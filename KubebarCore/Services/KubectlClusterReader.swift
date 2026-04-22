@@ -468,9 +468,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         guard !matchingPods.isEmpty else {
             return TrackedItemStatus(
                 target: target,
-                state: .bad,
+                state: .watch,
                 reason: "no matching pods",
-                affectedPodCount: 0,
                 latestWarning: latestWarning
             )
         }

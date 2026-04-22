@@ -324,7 +324,7 @@ struct MenuDisplayModelTests {
             podDetailsSection: .available([]),
             warningEventsSection: .available([]),
             workloadsSection: .available([
-                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "no matching pods")
+                TrackedItemStatus(target: .namespace("api"), state: .watch, reason: "no matching pods")
             ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
@@ -333,6 +333,8 @@ struct MenuDisplayModelTests {
         let emptyDisplay = HealthEvaluator().evaluate(snapshot: empty, now: Date(timeIntervalSince1970: 120))
 
         #expect(unavailableDisplay.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+        #expect(emptyDisplay.state == .watch)
+        #expect(emptyDisplay.primaryStatusReason == "no matching pods")
         #expect(emptyDisplay.podTab.unavailableMessage == nil)
         #expect(emptyDisplay.podTab.sections.isEmpty)
         #expect(emptyDisplay.podTab.emptyMessage == "No watched pods found")

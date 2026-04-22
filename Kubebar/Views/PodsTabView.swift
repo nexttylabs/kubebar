@@ -143,7 +143,7 @@ private struct PodRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(row.name)
-                        .font(.caption.weight(.semibold))
+                        .fontWeight(.semibold)
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .help(Text(row.name))

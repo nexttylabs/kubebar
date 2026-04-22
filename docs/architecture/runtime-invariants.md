@@ -50,6 +50,8 @@ These are the rules Kubebar must keep true at runtime.
   values must not be rendered as `0`.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
+- A watched target with no matching Pods is a visible Watch condition, not a
+  Bad Pod failure.
 - Kubebar does not query Kubernetes Secrets.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
