@@ -11,7 +11,7 @@ struct WatchlistSectionView: View {
                 .foregroundStyle(.secondary)
 
             if display.visibleWatchItems.isEmpty {
-                Text("No tracked workloads yet")
+                Text("No tracked namespaces yet")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {

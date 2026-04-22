@@ -58,13 +58,21 @@ struct MenuBarRootView: View {
                         .tag(tab)
                 }
             }
+            .labelsHidden()
             .pickerStyle(.segmented)
 
             ScrollView {
-                selectedTabContent
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 0) {
+                    selectedTabContent
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxHeight: Layout.maxContentHeight, alignment: .top)
+            .frame(
+                minHeight: Layout.minContentHeight,
+                maxHeight: Layout.maxContentHeight,
+                alignment: .top
+            )
         }
     }
 
@@ -83,11 +91,14 @@ struct MenuBarRootView: View {
     }
 
     private func openSettingsFromMenu() {
+        onPrepareSettings()
         openSettings()
+        SettingsWindowPresenter.bringToFrontAfterOpening()
     }
 
     private enum Layout {
         static let menuWidth: CGFloat = 360
+        static let minContentHeight: CGFloat = 220
         static let maxContentHeight: CGFloat = 520
     }
 }

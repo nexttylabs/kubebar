@@ -11,60 +11,64 @@ struct MenuFooterView: View {
     let onSelectRefreshCadence: (RefreshCadence) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            refreshControls
-            primaryActions
-            Divider()
-            quitAction
-        }
-    }
-
-    private var refreshControls: some View {
-        HStack(spacing: 8) {
-            Text("Refresh")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Picker("Refresh cadence", selection: refreshCadenceBinding) {
-                ForEach(RefreshCadence.allCases) { cadence in
-                    Text(cadence.label).tag(cadence)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 96)
-
-            Text("Last updated \(lastUpdated)")
+        HStack(spacing: 10) {
+            Text("Updated \(lastUpdated)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .truncationMode(.middle)
 
-            Spacer()
+            Spacer(minLength: 12)
+
+            footerToolbar
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var primaryActions: some View {
-        HStack {
-            Button("Retry now", action: onRefresh)
-                .keyboardShortcut("r", modifiers: .command)
-                .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
-                .disabled(isRefreshing)
+    private var footerToolbar: some View {
+        HStack(spacing: 6) {
+            Button(action: onRefresh) {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .keyboardShortcut("r", modifiers: .command)
+            .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
+            .accessibilityLabel(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
+            .disabled(isRefreshing)
 
-            Spacer()
+            Menu {
+                Picker("Refresh cadence", selection: refreshCadenceBinding) {
+                    ForEach(RefreshCadence.allCases) { cadence in
+                        Text(cadence.label).tag(cadence)
+                    }
+                }
+            } label: {
+                Label(refreshCadence.label, systemImage: "timer")
+            }
+            .labelStyle(.iconOnly)
+            .menuStyle(.borderlessButton)
+            .controlSize(.small)
+            .help(Text("Refresh cadence: \(refreshCadence.label)"))
+            .accessibilityLabel(Text("Refresh cadence: \(refreshCadence.label)"))
 
-            Button("Settings...", action: onOpenSettings)
-                .keyboardShortcut(",", modifiers: .command)
-                .help(Text("Open Settings"))
-        }
-    }
+            Button(action: onOpenSettings) {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .keyboardShortcut(",", modifiers: .command)
+            .help(Text("Open Settings"))
+            .accessibilityLabel(Text("Open Settings"))
 
-    private var quitAction: some View {
-        HStack {
-            Spacer()
-
-            Button("Quit Kubebar", action: onQuit)
-                .keyboardShortcut("q", modifiers: .command)
-                .help(Text("Quit Kubebar"))
+            Button(action: onQuit) {
+                Image(systemName: "power")
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .keyboardShortcut("q", modifiers: .command)
+            .help(Text("Quit Kubebar"))
+            .accessibilityLabel(Text("Quit Kubebar"))
         }
     }
 

@@ -19,28 +19,50 @@ public struct WatchlistSelectionState: Equatable, Sendable {
         selectedTargets.isEmpty
     }
 
+    public var isNamespaceSelectionEmpty: Bool {
+        selectedNamespaceTargets.isEmpty
+    }
+
     public var selectedCount: Int {
         selectedTargets.count
     }
 
+    public var selectedNamespaceCount: Int {
+        selectedNamespaceTargets.count
+    }
+
     public var hasAvailableTargets: Bool {
-        !availableNamespaces.isEmpty || !availableWorkloads.isEmpty
+        !availableNamespaces.isEmpty
     }
 
     public var emptyStateTitle: String {
-        hasAvailableTargets ? "No watch targets selected" : "No watch targets available"
+        hasAvailableTargets ? "No namespaces selected" : "No namespaces available"
     }
 
     public var emptyStateMessage: String {
         if hasAvailableTargets {
-            "Choose namespaces or workloads to keep Kubebar focused on the first screen."
+            "Choose namespaces to keep Kubebar focused on the first screen."
         } else {
-            "Choose a cluster context or retry loading watch targets."
+            "Choose a cluster context or retry loading namespaces."
         }
     }
 
     public var selectionSummary: String {
         selectedCount == 1 ? "1 target selected" : "\(selectedCount) targets selected"
+    }
+
+    public var namespaceSelectionSummary: String {
+        selectedNamespaceCount == 1 ? "1 namespace selected" : "\(selectedNamespaceCount) namespaces selected"
+    }
+
+    public var selectedNamespaceTargets: Set<WatchTarget> {
+        Set(selectedTargets.filter { target in
+            if case .namespace = target {
+                return true
+            }
+
+            return false
+        })
     }
 
     public func isSelected(_ target: WatchTarget) -> Bool {
@@ -73,7 +95,7 @@ public struct WatchlistSelectionState: Equatable, Sendable {
 
     public mutating func replaceAvailableTargets(_ candidates: WatchlistCandidates) {
         availableNamespaces = candidates.namespaces
-        availableWorkloads = candidates.workloads
+        availableWorkloads = []
     }
 
     public mutating func clearAvailableTargets() {

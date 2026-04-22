@@ -33,7 +33,6 @@ struct WatchlistPickerView: View {
         case .idle:
             if state.hasAvailableTargets {
                 namespaceSection
-                workloadSection
             } else {
                 emptyTargetsView
             }
@@ -45,11 +44,11 @@ struct WatchlistPickerView: View {
             Text("Watchlist")
                 .font(.headline)
 
-            Text(state.isEmpty ? state.emptyStateTitle : state.selectionSummary)
+            Text(state.isNamespaceSelectionEmpty ? state.emptyStateTitle : state.namespaceSelectionSummary)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            if state.isEmpty {
+            if state.isNamespaceSelectionEmpty {
                 Text(state.emptyStateMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -61,7 +60,7 @@ struct WatchlistPickerView: View {
         SectionCard(
             title: "Namespaces",
             emptyTitle: "No namespaces yet",
-            emptyMessage: "Namespaces keep the watchlist compact when you want whole areas of the cluster on the first screen.",
+            emptyMessage: "Choose a cluster context or retry loading namespaces.",
             hasItems: !state.availableNamespaces.isEmpty
         ) {
             ForEach(state.availableNamespaces, id: \.self) { namespace in
@@ -76,45 +75,13 @@ struct WatchlistPickerView: View {
         }
     }
 
-    private var workloadSection: some View {
-        SectionCard(
-            title: "Workloads",
-            emptyTitle: "No workloads yet",
-            emptyMessage: "Watch individual workloads when one service needs regular attention.",
-            hasItems: !state.availableWorkloads.isEmpty
-        ) {
-            ForEach(groupedWorkloads, id: \.key) { group in
-                DisclosureGroup(
-                    content: {
-                        ForEach(group.value, id: \.self) { workload in
-                            Toggle(isOn: binding(for: workload.target)) {
-                                Text(workload.displayTitle)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                    .help(Text(workload.displayTitle))
-                                    .accessibilityLabel(workload.displayTitle)
-                            }
-                        }
-                    },
-                    label: {
-                        Text(group.key)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .help(Text(group.key))
-                            .accessibilityLabel(group.key)
-                    }
-                )
-            }
-        }
-    }
-
     private var loadingView: some View {
         StateCard {
             HStack(spacing: 10) {
                 ProgressView()
                     .controlSize(.small)
 
-                Text("Loading watch targets...")
+                Text("Loading namespaces...")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -124,16 +91,16 @@ struct WatchlistPickerView: View {
     private func failureView(reason: String) -> some View {
         StateCard {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Could not load watch targets")
+                Text("Could not load namespaces")
                     .font(.subheadline.weight(.medium))
 
-                Text(reason.isEmpty ? "Try loading targets again." : reason)
+                Text(reason.isEmpty ? "Try loading namespaces again." : reason)
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Button("Retry", action: onRetryTargets)
                     .keyboardShortcut("r", modifiers: .command)
-                    .help(Text("Retry loading watch targets"))
+                    .help(Text("Retry loading namespaces"))
             }
         }
     }
@@ -141,16 +108,16 @@ struct WatchlistPickerView: View {
     private var emptyTargetsView: some View {
         StateCard {
             VStack(alignment: .leading, spacing: 8) {
-                Text("No watch targets found")
+                Text("No namespaces found")
                     .font(.subheadline.weight(.medium))
 
-                Text("Kubebar could not find namespaces or supported workloads for this context.")
+                Text("Kubebar could not find namespaces for this context.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Button("Retry", action: onRetryTargets)
                     .keyboardShortcut("r", modifiers: .command)
-                    .help(Text("Retry loading watch targets"))
+                    .help(Text("Retry loading namespaces"))
             }
         }
     }
@@ -160,11 +127,6 @@ struct WatchlistPickerView: View {
             get: { state.isSelected(target) },
             set: { state.setSelected(target, to: $0) }
         )
-    }
-
-    private var groupedWorkloads: [(key: String, value: [WatchlistCandidate])] {
-        Dictionary(grouping: state.availableWorkloads, by: { $0.namespace })
-            .sorted { $0.key < $1.key }
     }
 }
 

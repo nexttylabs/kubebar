@@ -54,8 +54,8 @@ struct MenuRuntimeStateTests {
         #expect(state.targetContextToLoad == "prod")
     }
 
-    @Test("preparing settings preserves saved configuration fields")
-    func preparingSettingsPreservesSavedConfigurationFields() {
+    @Test("preparing settings preserves namespace configuration fields")
+    func preparingSettingsPreservesNamespaceConfigurationFields() {
         let config = AppConfig(
             selectedContext: "prod",
             watchTargets: [
@@ -69,7 +69,7 @@ struct MenuRuntimeStateTests {
         state.prepareSettings(config: config)
 
         #expect(state.setupState.selectedContext == "prod")
-        #expect(state.setupState.watchlist.selectedTargets == Set(config.watchTargets))
+        #expect(state.setupState.watchlist.selectedTargets == [.namespace("api")])
         #expect(state.setupState.refreshCadence == .twoMinutes)
         #expect(state.setupState.configurationMessage == nil)
     }
@@ -98,13 +98,13 @@ struct MenuRuntimeStateTests {
         var state = MenuRuntimeState(config: config)
 
         _ = state.selectContext("staging")
-        state.setupState.watchlist.toggle(.workload(namespace: "ops", name: "worker", kind: .deployment))
+        state.setupState.watchlist.toggle(.namespace("ops"))
         state.selectRefreshCadence(.twoMinutes)
 
         state.prepareSettings(config: config)
 
         #expect(state.setupState.selectedContext == "staging")
-        #expect(state.setupState.watchlist.isSelected(.workload(namespace: "ops", name: "worker", kind: .deployment)))
+        #expect(state.setupState.watchlist.isSelected(.namespace("ops")))
         #expect(state.setupState.refreshCadence == .twoMinutes)
         #expect(state.surface == .menu)
     }
@@ -133,7 +133,7 @@ struct MenuRuntimeStateTests {
         var state = MenuRuntimeState(
             config: AppConfig(
                 selectedContext: "prod",
-                watchTargets: [.workload(namespace: "api", name: "checkout", kind: .deployment)]
+                watchTargets: [.namespace("api")]
             )
         )
 
@@ -141,12 +141,12 @@ struct MenuRuntimeStateTests {
         state.applyTargetLoadFailure("forbidden", for: "prod")
 
         #expect(state.setupState.selectedContext == "prod")
-        #expect(state.setupState.watchlist.isSelected(.workload(namespace: "api", name: "checkout", kind: .deployment)))
+        #expect(state.setupState.watchlist.isSelected(.namespace("api")))
         #expect(state.setupState.targetLoadingState == .failed("forbidden"))
     }
 
-    @Test("completed config sorts targets and preserves refresh interval")
-    func completedConfigSortsTargetsAndPreservesRefreshInterval() throws {
+    @Test("completed config saves namespaces and preserves refresh interval")
+    func completedConfigSavesNamespacesAndPreservesRefreshInterval() throws {
         var state = MenuRuntimeState(config: AppConfig())
         _ = state.selectContext("prod")
         state.setupState.watchlist.toggle(.workload(namespace: "z", name: "worker", kind: .deployment))
@@ -157,7 +157,7 @@ struct MenuRuntimeStateTests {
         let config = try #require(state.completedConfig())
 
         #expect(config.selectedContext == "prod")
-        #expect(config.watchTargets.map(\.displayTitle) == ["api", "z/worker"])
+        #expect(config.watchTargets.map(\.displayTitle) == ["api"])
         #expect(config.refreshIntervalSeconds == 120)
     }
 }

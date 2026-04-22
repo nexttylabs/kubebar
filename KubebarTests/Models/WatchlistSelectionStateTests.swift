@@ -8,8 +8,8 @@ struct WatchlistSelectionStateTests {
         let state = WatchlistSelectionState()
 
         #expect(state.isEmpty)
-        #expect(state.emptyStateTitle == "No watch targets available")
-        #expect(state.emptyStateMessage == "Choose a cluster context or retry loading watch targets.")
+        #expect(state.emptyStateTitle == "No namespaces available")
+        #expect(state.emptyStateMessage == "Choose a cluster context or retry loading namespaces.")
     }
 
     @Test("toggle helpers select and clear targets")
@@ -31,6 +31,7 @@ struct WatchlistSelectionStateTests {
         #expect(!state.isSelected(.namespace("api")))
         #expect(state.selectedCount == 1)
         #expect(state.selectionSummary == "1 target selected")
+        #expect(state.namespaceSelectionSummary == "0 namespaces selected")
     }
 
     @Test("candidate replacement preserves selected targets")
@@ -47,7 +48,7 @@ struct WatchlistSelectionStateTests {
         )
 
         #expect(state.availableNamespaces == ["api"])
-        #expect(state.availableWorkloads.map(\.displayTitle) == ["Deployment checkout"])
+        #expect(state.availableWorkloads.isEmpty)
         #expect(state.isSelected(.workload(namespace: "api", name: "checkout", kind: .deployment)))
 
         state.clearAvailableTargets()

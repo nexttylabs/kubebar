@@ -146,9 +146,10 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
-    func completeSetup() {
+    @discardableResult
+    func completeSetup() -> Bool {
         guard let completedConfig = runtimeState.completedConfig() else {
-            return
+            return false
         }
 
         config = completedConfig
@@ -161,9 +162,11 @@ final class MenuBarViewModel: ObservableObject {
             publishRuntimeState()
             performRefresh(queueIfBusy: true)
             startRefreshLoopIfConfigured()
+            return true
         } catch {
             runtimeState.markConfigurationSaveFailed(SetupFlowState.settingsSaveFailureMessage)
             publishRuntimeState()
+            return false
         }
     }
 
