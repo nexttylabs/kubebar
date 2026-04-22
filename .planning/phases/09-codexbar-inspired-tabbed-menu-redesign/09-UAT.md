@@ -7,7 +7,7 @@ source:
   - 09-01-SUMMARY.md
   - 09-02-SUMMARY.md
 started: 2026-04-22T07:05:48Z
-updated: 2026-04-22T07:05:48Z
+updated: 2026-04-22T07:07:45Z
 ---
 
 # Phase 09 UAT
@@ -41,6 +41,12 @@ Evidence in this file is intentionally limited to safe summaries, source-backed 
 | Settings | Observation that `Settings...` opens a separate Settings dialog/window. | Do not include local filesystem paths unless they are the built app path. |
 | Quit | Observation that app exits and saved config fields remain unchanged after relaunch. | Summarize preserved field names only. |
 | Keyboard and long names | Observation that focus traversal and truncation behave as expected. | Avoid screenshots or text containing sensitive cluster identifiers. |
+
+## Visible App Smoke Evidence
+
+| Check | Result | Evidence | Limitation |
+| --- | --- | --- | --- |
+| `./scripts/compile-and-run.sh` | pass | Built and launched `DerivedData/Build/Products/Debug/Kubebar.app` with PID `50212`. | This confirms launch only. It does not inspect the opened menu, Settings window, keyboard traversal, or Quit behavior. |
 
 ## Requirement Coverage
 
