@@ -46,6 +46,10 @@ created: 2026-04-22
 | 09-02-01 | 02 | 2 | REQ-09-07 Settings independent dialog/window | T-09-04 | Settings saves local app config only and introduces no account/cloud sync. | build + UAT | `swift build` and `./scripts/compile-and-run.sh` | no UI automation | pending |
 | 09-02-02 | 02 | 2 | REQ-09-08 visible Quit Kubebar preserves config | T-09-05 | Quit terminates the app without mutating `AppConfigStore`. | build + UAT | `swift build` and `./scripts/compile-and-run.sh` | no UI automation | pending |
 | 09-03-01 | 03 | 3 | REQ-09-09/10 keyboard, truncation, and UAT evidence | T-09-06 | UAT evidence avoids raw transcripts, tokens, kubeconfig paths, and full JSON. | docs/manual | `rg -n "Overview|Nodes|Pods|Events|Settings\\.\\.\\.|Quit Kubebar|pending-human-verification" .planning/phases/09-codexbar-inspired-tabbed-menu-redesign/09-UAT.md` | no | pending |
+| 09-04-01 | 04 | 4 | REQ-09-03 attention-first `Watching` rows and caps | T-09-04-01/T-09-04-04 | Watched rows are ranked by urgency and healthy rows do not dominate the menu. | unit | `swift test --filter MenuDisplayModelTests` | partial | pending |
+| 09-04-02 | 04 | 4 | REQ-09-01/02 auto-height tab shell with visible footer | T-09-04-02 | Selected tab content may scroll only after the menu reaches its maximum height; footer stays reachable. | build + UAT | `swift build` and `./scripts/compile-and-run.sh` | no UI automation | pending |
+| 09-04-03 | 04 | 4 | REQ-09-07/08/09 footer language and controls | T-09-04-02 | Refresh, cadence, Settings, and Quit remain visible, keyboard reachable, and concise. | build + source | `swift build` plus source copy checks | partial | pending |
+| 09-04-04 | 04 | 4 | REQ-09-10 visible copy, truncation, and evidence refresh | T-09-04-03 | UAT and verification distinguish automated proof from visible-menu inspection. | docs/manual | `rg -n "Auto-height menu|Footer language|Last checked|Watching|09-04" .planning/phases/09-codexbar-inspired-tabbed-menu-redesign/09-UAT.md .planning/phases/09-codexbar-inspired-tabbed-menu-redesign/09-VERIFICATION.md` | no | pending |
 
 Status: pending, green, red, flaky.
 
@@ -70,6 +74,8 @@ Status: pending, green, red, flaky.
 | Quit exits without config loss | REQ-09-08 | Actual app termination and post-quit config preservation need visible app evidence. | Record config before launching, activate `Quit Kubebar`, relaunch, confirm context/watchlist/cadence remain present, and summarize in `09-UAT.md`. |
 | Keyboard reaches tabs, refresh, settings, quit, details, and sections | REQ-09-09 | Native macOS keyboard traversal depends on visible controls and system settings. | Enable Full Keyboard Access if needed, traverse controls, and record `09-UAT.md`; leave `pending-human-verification` if not completed. |
 | Long-name truncation and tooltip/accessibility behavior | REQ-09-10 | Visual truncation and hover help require visible UI inspection. | Use long context/namespace/workload/event names, confirm middle truncation and full help/accessibility labels, and record `09-UAT.md`. |
+| Auto-height menu avoids unnecessary scrollbars | REQ-09-01, REQ-09-03 | Visual scrollbar presence and footer placement require visible menu inspection. | Run `./scripts/compile-and-run.sh`, open the menu in healthy and common warning states, confirm the menu fits naturally where possible and footer actions stay visible; leave `pending-human-verification` if not completed. |
+| Footer language and cadence help are concise | REQ-09-07, REQ-09-08, REQ-09-09 | Tooltip/accessibility help is app-shell behavior. | Confirm the footer reads `Last checked {age}` and the timer help/accessibility text says `Refresh every {cadence}`; record `09-UAT.md` or leave pending. |
 
 ---
 
