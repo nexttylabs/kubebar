@@ -57,21 +57,23 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: healthySnapshot(), now: now),
                 expectedBehavior: "Overview shows OK with a top status row, four cards, and neutral Recent Warnings."
-                    + " Tracked namespaces affect the top row without a separate tracked section.",
+                    + " Pods tab groups watched Pods by namespace with ready counts.",
                 limitations: "Requires visible menu inspection to confirm the top row, four-card grid, and capped warning area."
             )
         case .watch:
             return makeFixture(
                 id: state,
                 display: evaluator.evaluate(snapshot: watchSnapshot(), now: now),
-                expectedBehavior: "Overview shows Watch with a pinned BackOff warning row: reason first, object scope, age/repeat count, and message.",
+                expectedBehavior: "Overview shows Watch with a pinned BackOff warning row."
+                    + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text.",
                 limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, and card readability."
             )
         case .bad:
             return makeFixture(
                 id: state,
                 display: evaluator.evaluate(snapshot: badSnapshot(), now: now),
-                expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row.",
+                expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row."
+                    + " Pods tab shows failed Pods first with red dots and issue text.",
                 limitations: "Requires visible menu inspection to confirm top-row priority and card state."
             )
         case .staleRefreshFailure:
@@ -131,14 +133,16 @@ public enum MenuStateFixtureCatalog {
             return makeFixture(
                 id: state,
                 display: evaluator.evaluate(snapshot: metricsUnavailableSnapshot(), now: now),
-                expectedBehavior: "Overview keeps OK cluster status while CPU and Memory cards show unavailable metrics.",
+                expectedBehavior: "Overview keeps OK cluster status while CPU and Memory cards show unavailable metrics."
+                    + " Pods tab still shows watched Pods.",
                 limitations: "Requires visible menu inspection to confirm unavailable metrics are distinct from normal current values."
             )
         case .warningHeavy:
             return makeFixture(
                 id: state,
                 display: evaluator.evaluate(snapshot: warningHeavySnapshot(), now: now),
-                expectedBehavior: "Overview shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events.",
+                expectedBehavior: "Overview shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events."
+                    + " Pods tab keeps attention rows before ready rows.",
                 limitations: "Requires visible menu inspection to confirm warning rows stay clear and overflow does not hide the top row or four cards."
             )
         }
@@ -184,6 +188,7 @@ public enum MenuStateFixtureCatalog {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
+            podDetailsSection: .available(healthyPodDetails()),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([]),
             workloadsSection: .available([
@@ -208,6 +213,7 @@ public enum MenuStateFixtureCatalog {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(ready: 11, running: 11, total: 12)),
+            podDetailsSection: .available(watchPodDetails()),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([
                 WarningEventRecord(
@@ -248,6 +254,7 @@ public enum MenuStateFixtureCatalog {
             nodesSection: .available(NodeSummary(ready: 2, total: 3)),
             nodeDetailsSection: .available(badNodeDetails()),
             podsSection: .available(PodSummary(ready: 10, running: 10, total: 12)),
+            podDetailsSection: .available(badPodDetails()),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([]),
             workloadsSection: .available([
@@ -274,6 +281,7 @@ public enum MenuStateFixtureCatalog {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             nodeDetailsSection: .available(metricsUnavailableNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
+            podDetailsSection: .available(healthyPodDetails()),
             metricsSection: .unavailable(reason: "metrics API unavailable"),
             warningEventsSection: .available([]),
             workloadsSection: .available([
@@ -303,6 +311,7 @@ public enum MenuStateFixtureCatalog {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             nodeDetailsSection: .available(healthyNodeDetails()),
             podsSection: .available(PodSummary(running: 12, total: 12)),
+            podDetailsSection: .available(warningHeavyPodDetails()),
             metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([
                 WarningEventRecord(
@@ -402,6 +411,120 @@ public enum MenuStateFixtureCatalog {
             NodeDetail(name: "qa-worker-1", isReady: true),
             NodeDetail(name: "qa-worker-2", isReady: true),
             NodeDetail(name: "qa-worker-3", isReady: true)
+        ]
+    }
+
+    private static func healthyPodDetails() -> [PodDetail] {
+        [
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-7f9",
+                phase: "Running",
+                readyContainerCount: 1,
+                totalContainerCount: 1
+            ),
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-8a1",
+                phase: "Running",
+                readyContainerCount: 1,
+                totalContainerCount: 1
+            ),
+            PodDetail(
+                namespace: "qa-monitoring",
+                name: "qa-prometheus-0",
+                phase: "Running",
+                readyContainerCount: 2,
+                totalContainerCount: 2
+            )
+        ]
+    }
+
+    private static func watchPodDetails() -> [PodDetail] {
+        [
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-7f9",
+                phase: "Running",
+                readyContainerCount: 0,
+                totalContainerCount: 1,
+                notReadyConditionReason: "ContainersNotReady",
+                notReadyConditionMessage: "containers with unready status",
+                hasUnreadyContainer: true,
+                isNotReady: true
+            ),
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-8a1",
+                phase: "Running",
+                readyContainerCount: 1,
+                totalContainerCount: 1
+            )
+        ]
+    }
+
+    private static func badPodDetails() -> [PodDetail] {
+        [
+            PodDetail(
+                namespace: "qa-payments",
+                name: "qa-payments-api-0",
+                phase: "Failed",
+                readyContainerCount: 0,
+                totalContainerCount: 1,
+                terminatedReason: "Error",
+                terminatedMessage: "container exited with code 1",
+                hasUnreadyContainer: true,
+                isFailed: true,
+                isNotReady: true
+            ),
+            PodDetail(
+                namespace: "qa-payments",
+                name: "qa-payments-worker-1",
+                phase: "Running",
+                readyContainerCount: 0,
+                totalContainerCount: 1,
+                waitingReason: "CrashLoopBackOff",
+                waitingMessage: "back-off restarting container",
+                hasUnreadyContainer: true,
+                isNotReady: true
+            ),
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-7f9",
+                phase: "Running",
+                readyContainerCount: 1,
+                totalContainerCount: 1
+            )
+        ]
+    }
+
+    private static func warningHeavyPodDetails() -> [PodDetail] {
+        [
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-api-probe-0",
+                phase: "Running",
+                readyContainerCount: 0,
+                totalContainerCount: 1,
+                notReadyConditionReason: "ReadinessProbeFailed",
+                notReadyConditionMessage: "readiness probe failed",
+                hasUnreadyContainer: true,
+                isNotReady: true
+            ),
+            PodDetail(
+                namespace: "qa-api",
+                name: "qa-checkout-7f9",
+                phase: "Running",
+                readyContainerCount: 1,
+                totalContainerCount: 1
+            ),
+            PodDetail(
+                namespace: "qa-monitoring",
+                name: "qa-metrics-0",
+                phase: "Pending",
+                isPending: true,
+                isNotReady: true
+            )
         ]
     }
 

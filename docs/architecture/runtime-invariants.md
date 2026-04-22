@@ -11,6 +11,8 @@ These are the rules Kubebar must keep true at runtime.
   ordering.
 - The first screen shows the top status row, Nodes card, Pods card, CPU card,
   Memory card, and capped `Recent Warnings`; warning overflow belongs in Events.
+- The menu must stay within the visible screen height. Long tab content scrolls
+  inside the menu instead of pushing the menu off screen.
 - Deep troubleshooting stays out of version 1.
 
 ## Data Rules
@@ -37,6 +39,17 @@ These are the rules Kubebar must keep true at runtime.
   still `True`.
 - Missing per-node CPU or memory data shows unavailable values such as `-`;
   missing values must not be rendered as `0`.
+- Pods tab rows come from `MenuDisplayModel` Pod display data. They group by
+  namespace and show Pod name, status dot, ready/all count, and one short issue
+  line when attention is needed.
+- When watched Pod rows exceed the available menu space, the Pod item list
+  scrolls vertically while the Pods tab summary remains visible.
+- Pod row status must not rely on color alone. Help and accessibility text must
+  include the row status.
+- Missing per-Pod container totals show unavailable values such as `-`; missing
+  values must not be rendered as `0`.
+- Historical restart count alone must not make a Pod item Bad. Current failed,
+  waiting, or crash-looping state may make a Pod item Bad.
 - Kubebar does not query Kubernetes Secrets.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out

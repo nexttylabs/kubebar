@@ -486,8 +486,12 @@ public struct HealthEvaluator: Sendable {
         visibleItems: [WatchItemDisplay],
         sectionNotices: [SectionAvailabilityDisplay]
     ) -> PodTabDisplay {
-        PodTabDisplay(
-            summary: snapshot.podsSection.value.map { "\($0.running)/\($0.total) pods running" } ?? "- pods running",
+        let podDetails = snapshot.podDetailsSection.value
+        let sections = podDetails.map(makePodSections) ?? []
+
+        return PodTabDisplay(
+            summary: podTabSummary(from: snapshot, podDetails: podDetails),
+            sections: sections,
             rows: visibleItems,
             unavailableMessage: tabUnavailableMessage(
                 sectionID: SnapshotSectionName.pods.rawValue,
@@ -497,8 +501,207 @@ public struct HealthEvaluator: Sendable {
                 sectionID: SnapshotSectionName.workloads.rawValue,
                 prefix: "Workloads unavailable",
                 sectionNotices: sectionNotices
-            )
+            ) ?? snapshot.podDetailsSection.unavailableReason.map { "Pod data unavailable: \(sanitizedSectionReason($0))" },
+            emptyMessage: podTabEmptyMessage(from: snapshot, podDetails: podDetails)
         )
+    }
+
+    private func podTabSummary(from snapshot: ClusterSnapshot, podDetails: [PodDetail]?) -> String {
+        if let podDetails {
+            if !podDetails.isEmpty || !snapshot.trackedItems.isEmpty {
+                let ready = podDetails.filter { podItemState(from: $0) == .ready }.count
+                return "\(ready)/\(podDetails.count) watched pods ready"
+            }
+        }
+
+        return snapshot.podsSection.value.map { "\($0.running)/\($0.total) pods running" } ?? "- pods running"
+    }
+
+    private func podTabEmptyMessage(from snapshot: ClusterSnapshot, podDetails: [PodDetail]?) -> String {
+        if let podDetails, podDetails.isEmpty, !snapshot.trackedItems.isEmpty {
+            return "No watched pods found"
+        }
+
+        return "No pod data yet. Refresh or check Settings."
+    }
+
+    private func makePodSections(from podDetails: [PodDetail]) -> [PodNamespaceDisplay] {
+        let rowsByNamespace = Dictionary(grouping: podDetails.map(makePodRow), by: \.namespace)
+
+        return rowsByNamespace
+            .map { namespace, rows in
+                PodNamespaceDisplay(
+                    namespace: namespace,
+                    rows: rows.sorted { left, right in
+                        let leftPriority = podAttentionPriority(for: left.state)
+                        let rightPriority = podAttentionPriority(for: right.state)
+
+                        if leftPriority != rightPriority {
+                            return leftPriority < rightPriority
+                        }
+
+                        return left.name < right.name
+                    }
+                )
+            }
+            .sorted { left, right in
+                let leftNeedsAttention = left.rows.contains { $0.state != .ready }
+                let rightNeedsAttention = right.rows.contains { $0.state != .ready }
+
+                if leftNeedsAttention != rightNeedsAttention {
+                    return leftNeedsAttention
+                }
+
+                return left.namespace < right.namespace
+            }
+    }
+
+    private func makePodRow(from detail: PodDetail) -> PodItemDisplay {
+        let state = podItemState(from: detail)
+        let readyLabel = podReadyLabel(from: detail)
+        let fullIssueText = podIssueText(from: detail, state: state)
+        let issueText = shortenedText(fullIssueText)
+        let helpText = podHelpText(
+            detail: detail,
+            state: state,
+            readyLabel: readyLabel,
+            issueText: fullIssueText
+        )
+
+        return PodItemDisplay(
+            namespace: detail.namespace,
+            name: detail.name,
+            state: state,
+            readyLabel: readyLabel,
+            issueText: issueText,
+            helpText: helpText,
+            accessibilityLabel: helpText
+        )
+    }
+
+    private func podItemState(from detail: PodDetail) -> PodItemState {
+        if detail.isFailed ||
+            isBadWaitingReason(detail.waitingReason) ||
+            isBadTerminatedReason(detail.terminatedReason) {
+            return .bad
+        }
+
+        if detail.isPending ||
+            detail.isUnknown ||
+            detail.isNotReady ||
+            detail.hasUnreadyContainer {
+            return .watch
+        }
+
+        return .ready
+    }
+
+    private func podAttentionPriority(for state: PodItemState) -> Int {
+        switch state {
+        case .bad:
+            0
+        case .watch:
+            1
+        case .ready:
+            2
+        }
+    }
+
+    private func podReadyLabel(from detail: PodDetail) -> String {
+        guard
+            let ready = detail.readyContainerCount,
+            let total = detail.totalContainerCount,
+            total > 0
+        else {
+            return "-"
+        }
+
+        return "\(ready)/\(total)"
+    }
+
+    private func podIssueText(from detail: PodDetail, state: PodItemState) -> String? {
+        guard state != .ready else {
+            return nil
+        }
+
+        if let issue = joinedIssue(reason: detail.waitingReason, message: detail.waitingMessage),
+           isBadWaitingReason(detail.waitingReason) {
+            return issue
+        }
+
+        if let issue = joinedIssue(reason: detail.terminatedReason, message: detail.terminatedMessage),
+           isBadTerminatedReason(detail.terminatedReason) {
+            return issue
+        }
+
+        if let issue = joinedIssue(reason: detail.statusReason, message: detail.statusMessage) {
+            return issue
+        }
+
+        if let issue = joinedIssue(reason: detail.notReadyConditionReason, message: detail.notReadyConditionMessage) {
+            return issue
+        }
+
+        if let phase = normalizedText(detail.phase), phase != "Running" {
+            return phase
+        }
+
+        if detail.hasUnreadyContainer {
+            return "Containers not ready"
+        }
+
+        return state == .bad ? "Pod needs attention" : "Pod is not ready"
+    }
+
+    private func joinedIssue(reason: String?, message: String?) -> String? {
+        let reason = normalizedText(reason)
+        let message = normalizedText(message)
+
+        if let reason, let message, reason != message {
+            return "\(reason): \(message)"
+        }
+
+        return reason ?? message
+    }
+
+    private func podHelpText(
+        detail: PodDetail,
+        state: PodItemState,
+        readyLabel: String,
+        issueText: String?
+    ) -> String {
+        var parts = [
+            "\(detail.namespace)/\(detail.name)",
+            state.label,
+            readyLabel == "-" ? "container readiness unavailable" : "\(readyLabel) containers ready"
+        ]
+
+        if let issueText {
+            parts.append(issueText)
+        }
+
+        return parts.joined(separator: ", ")
+    }
+
+    private func isBadWaitingReason(_ reason: String?) -> Bool {
+        guard let reason = normalizedText(reason)?.lowercased() else {
+            return false
+        }
+
+        return reason == "crashloopbackoff" ||
+            reason == "imagepullbackoff" ||
+            reason == "errimagepull" ||
+            reason == "invalidimagename" ||
+            reason.hasPrefix("createcontainer") ||
+            reason.hasPrefix("runcontainer")
+    }
+
+    private func isBadTerminatedReason(_ reason: String?) -> Bool {
+        guard let reason = normalizedText(reason)?.lowercased() else {
+            return false
+        }
+
+        return reason != "completed"
     }
 
     private func makeEventsTab(
@@ -803,6 +1006,10 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func shortenedWarningMessage(_ value: String?) -> String? {
+        shortenedText(value)
+    }
+
+    private func shortenedText(_ value: String?) -> String? {
         guard let value = normalizedText(value) else {
             return nil
         }

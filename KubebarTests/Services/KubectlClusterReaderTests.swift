@@ -479,6 +479,79 @@ struct KubectlClusterReaderTests {
         #expect(item?.reason == "2/2 pods running")
     }
 
+    @Test("namespace target preserves watched pod details")
+    func namespaceTargetPreservesWatchedPodDetails() throws {
+        let snapshot = try readSnapshot(
+            pods: podsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(details.map(\.name).sorted() == ["checkout-7f9d", "checkout-8a1b", "checkout-worker-1"])
+        #expect(details.allSatisfy { $0.namespace == "api" })
+    }
+
+    @Test("workload target preserves only matching pod details")
+    func workloadTargetPreservesOnlyMatchingPodDetails() throws {
+        let snapshot = try readSnapshot(
+            pods: podsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.workload(namespace: "api", name: "checkout")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(details.map(\.name).sorted() == ["checkout-7f9d", "checkout-8a1b"])
+    }
+
+    @Test("overlapping watched targets deduplicate pod details")
+    func overlappingWatchedTargetsDeduplicatePodDetails() throws {
+        let snapshot = try readSnapshot(
+            pods: podsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [
+                .namespace("api"),
+                .workload(namespace: "api", name: "checkout")
+            ]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(details.map(\.name).sorted() == ["checkout-7f9d", "checkout-8a1b", "checkout-worker-1"])
+    }
+
+    @Test("pod details preserve container readiness facts")
+    func podDetailsPreserveContainerReadinessFacts() throws {
+        let snapshot = try readSnapshot(
+            pods: partiallyReadyPodJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+
+        #expect(detail.readyContainerCount == 1)
+        #expect(detail.totalContainerCount == 2)
+        #expect(detail.isNotReady == true)
+        #expect(detail.notReadyConditionReason == "ContainersNotReady")
+    }
+
+    @Test("pod detail failures preserve safe unavailable reasons")
+    func podDetailFailuresPreserveSafeUnavailableReasons() throws {
+        let invalidPods = try readSnapshot(
+            pods: "{",
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let invalidWorkload = try readSnapshot(
+            pods: podsJSON,
+            warningEvents: emptyListJSON,
+            workloadMetadata: "{",
+            watchTargets: [.workload(namespace: "api", name: "checkout")]
+        )
+
+        #expect(invalidPods.podDetailsSection.unavailableReason == "invalid pod JSON")
+        #expect(invalidWorkload.podDetailsSection.unavailableReason == "invalid workload JSON")
+    }
+
     @Test("reads independent kubectl resources concurrently")
     func readsIndependentKubectlResourcesConcurrently() throws {
         let runner = SlowRecordingCommandRunner(results: [
@@ -908,6 +981,26 @@ private let selectorMatchedPodsJSON = """
         "conditions": [{"type": "Ready", "status": "True"}],
         "containerStatuses": [
           {"ready": true, "restartCount": 0}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let partiallyReadyPodJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-partial"},
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {"type": "ContainersReady", "status": "False", "reason": "ContainersNotReady", "message": "containers with unready status"}
+        ],
+        "containerStatuses": [
+          {"ready": true, "restartCount": 0},
+          {"ready": false, "restartCount": 0}
         ]
       }
     }

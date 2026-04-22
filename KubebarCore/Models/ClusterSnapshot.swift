@@ -53,6 +53,67 @@ public struct PodSummary: Equatable, Sendable {
     }
 }
 
+public struct PodDetail: Equatable, Sendable {
+    public let namespace: String
+    public let name: String
+    public let phase: String?
+    public let readyContainerCount: Int?
+    public let totalContainerCount: Int?
+    public let statusReason: String?
+    public let statusMessage: String?
+    public let waitingReason: String?
+    public let waitingMessage: String?
+    public let terminatedReason: String?
+    public let terminatedMessage: String?
+    public let notReadyConditionReason: String?
+    public let notReadyConditionMessage: String?
+    public let hasUnreadyContainer: Bool
+    public let isFailed: Bool
+    public let isPending: Bool
+    public let isUnknown: Bool
+    public let isNotReady: Bool
+
+    public init(
+        namespace: String,
+        name: String,
+        phase: String? = nil,
+        readyContainerCount: Int? = nil,
+        totalContainerCount: Int? = nil,
+        statusReason: String? = nil,
+        statusMessage: String? = nil,
+        waitingReason: String? = nil,
+        waitingMessage: String? = nil,
+        terminatedReason: String? = nil,
+        terminatedMessage: String? = nil,
+        notReadyConditionReason: String? = nil,
+        notReadyConditionMessage: String? = nil,
+        hasUnreadyContainer: Bool = false,
+        isFailed: Bool = false,
+        isPending: Bool = false,
+        isUnknown: Bool = false,
+        isNotReady: Bool = false
+    ) {
+        self.namespace = namespace
+        self.name = name
+        self.phase = phase
+        self.readyContainerCount = readyContainerCount
+        self.totalContainerCount = totalContainerCount
+        self.statusReason = statusReason
+        self.statusMessage = statusMessage
+        self.waitingReason = waitingReason
+        self.waitingMessage = waitingMessage
+        self.terminatedReason = terminatedReason
+        self.terminatedMessage = terminatedMessage
+        self.notReadyConditionReason = notReadyConditionReason
+        self.notReadyConditionMessage = notReadyConditionMessage
+        self.hasUnreadyContainer = hasUnreadyContainer
+        self.isFailed = isFailed
+        self.isPending = isPending
+        self.isUnknown = isUnknown
+        self.isNotReady = isNotReady
+    }
+}
+
 public struct ClusterMetricsSummary: Equatable, Sendable {
     public let cpuUsageNanocores: Int64
     public let cpuAllocatableNanocores: Int64
@@ -167,6 +228,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
     public let nodesSection: SnapshotSection<NodeSummary>
     public let nodeDetailsSection: SnapshotSection<[NodeDetail]>
     public let podsSection: SnapshotSection<PodSummary>
+    public let podDetailsSection: SnapshotSection<[PodDetail]>
     public let metricsSection: SnapshotSection<ClusterMetricsSummary>
     public let warningEventsSection: SnapshotSection<[WarningEventRecord]>
     public let workloadsSection: SnapshotSection<[TrackedItemStatus]>
@@ -179,6 +241,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         warningEventCount: Int,
         trackedItems: [TrackedItemStatus],
         nodeDetailsSection: SnapshotSection<[NodeDetail]> = .available([]),
+        podDetailsSection: SnapshotSection<[PodDetail]> = .available([]),
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
         capturedAt: Date
     ) {
@@ -191,6 +254,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         self.nodesSection = .available(nodeSummary)
         self.nodeDetailsSection = nodeDetailsSection
         self.podsSection = .available(podSummary)
+        self.podDetailsSection = podDetailsSection
         self.metricsSection = metricsSection
         self.warningEventsSection = .available([])
         self.workloadsSection = .available(trackedItems)
@@ -202,6 +266,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         nodesSection: SnapshotSection<NodeSummary>,
         nodeDetailsSection: SnapshotSection<[NodeDetail]>? = nil,
         podsSection: SnapshotSection<PodSummary>,
+        podDetailsSection: SnapshotSection<[PodDetail]>? = nil,
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
         warningEventsSection: SnapshotSection<[WarningEventRecord]>,
         workloadsSection: SnapshotSection<[TrackedItemStatus]>,
@@ -223,6 +288,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         self.nodesSection = nodesSection
         self.nodeDetailsSection = nodeDetailsSection ?? Self.makeNodeDetailsSection(from: nodesSection)
         self.podsSection = podsSection
+        self.podDetailsSection = podDetailsSection ?? Self.makePodDetailsSection(from: podsSection)
         self.metricsSection = metricsSection
         self.warningEventsSection = warningEventsSection
         self.workloadsSection = workloadsSection
@@ -236,6 +302,15 @@ public struct ClusterSnapshot: Equatable, Sendable {
 
     private static func makeNodeDetailsSection(from nodesSection: SnapshotSection<NodeSummary>) -> SnapshotSection<[NodeDetail]> {
         switch nodesSection {
+        case .available:
+            .available([])
+        case let .unavailable(reason):
+            .unavailable(reason: reason)
+        }
+    }
+
+    private static func makePodDetailsSection(from podsSection: SnapshotSection<PodSummary>) -> SnapshotSection<[PodDetail]> {
+        switch podsSection {
         case .available:
             .available([])
         case let .unavailable(reason):

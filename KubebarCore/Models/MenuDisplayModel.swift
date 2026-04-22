@@ -236,19 +236,81 @@ public struct NodeTabDisplay: Equatable, Sendable {
     }
 }
 
+public enum PodItemState: Equatable, Sendable {
+    case ready
+    case watch
+    case bad
+
+    public var label: String {
+        switch self {
+        case .ready:
+            "Ready"
+        case .watch:
+            "Watch"
+        case .bad:
+            "Bad"
+        }
+    }
+}
+
+public struct PodItemDisplay: Equatable, Sendable, Identifiable {
+    public let id: String
+    public let namespace: String
+    public let name: String
+    public let state: PodItemState
+    public let readyLabel: String
+    public let issueText: String?
+    public let helpText: String
+    public let accessibilityLabel: String
+
+    public init(
+        namespace: String,
+        name: String,
+        state: PodItemState,
+        readyLabel: String,
+        issueText: String? = nil,
+        helpText: String,
+        accessibilityLabel: String
+    ) {
+        self.id = "\(namespace)/\(name)"
+        self.namespace = namespace
+        self.name = name
+        self.state = state
+        self.readyLabel = readyLabel
+        self.issueText = issueText
+        self.helpText = helpText
+        self.accessibilityLabel = accessibilityLabel
+    }
+}
+
+public struct PodNamespaceDisplay: Equatable, Sendable, Identifiable {
+    public let id: String
+    public let namespace: String
+    public let rows: [PodItemDisplay]
+
+    public init(namespace: String, rows: [PodItemDisplay]) {
+        self.id = namespace
+        self.namespace = namespace
+        self.rows = rows
+    }
+}
+
 public struct PodTabDisplay: Equatable, Sendable {
     public let summary: String
+    public let sections: [PodNamespaceDisplay]
     public let rows: [WatchItemDisplay]
     public let unavailableMessage: String?
     public let emptyMessage: String
 
     public init(
         summary: String,
+        sections: [PodNamespaceDisplay] = [],
         rows: [WatchItemDisplay] = [],
         unavailableMessage: String? = nil,
         emptyMessage: String = "No pod data yet. Refresh or check Settings."
     ) {
         self.summary = summary
+        self.sections = sections
         self.rows = rows
         self.unavailableMessage = unavailableMessage
         self.emptyMessage = emptyMessage

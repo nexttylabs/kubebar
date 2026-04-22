@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import KubebarCore
 
@@ -13,6 +14,7 @@ struct MenuBarRootView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
     @State private var selectedTabContentHeight: CGFloat = 0
+    @State private var screenVisibleHeight = Layout.defaultScreenVisibleHeight
 
     var body: some View {
         menuContent
@@ -35,6 +37,8 @@ struct MenuBarRootView: View {
         }
         .frame(width: Layout.menuWidth)
         .padding(16)
+        .frame(maxHeight: menuMaxHeight, alignment: .topLeading)
+        .background(VisibleScreenHeightReader(onChange: updateScreenVisibleHeight))
         .onAppear {
             selectedTab = .overview
         }
@@ -71,13 +75,15 @@ struct MenuBarRootView: View {
 
     @ViewBuilder
     private var selectedTabContentContainer: some View {
-        if selectedTabContentHeight > Layout.maxContentHeight {
+        let maxContentHeight = selectedTabMaxContentHeight
+
+        if selectedTabContentHeight > maxContentHeight {
             ScrollView {
                 measuredSelectedTabContent
             }
             .scrollIndicators(.hidden)
             .frame(maxWidth: .infinity, alignment: .topLeading)
-            .frame(height: Layout.maxContentHeight, alignment: .top)
+            .frame(height: maxContentHeight, alignment: .top)
         } else {
             measuredSelectedTabContent
         }
@@ -102,10 +108,22 @@ struct MenuBarRootView: View {
         case .nodes:
             NodesTabView(display: display)
         case .pods:
-            PodsTabView(display: display)
+            PodsTabView(display: display, itemsMaxHeight: podItemsMaxHeight)
         case .events:
             EventsTabView(display: display)
         }
+    }
+
+    private var menuMaxHeight: CGFloat {
+        Layout.menuMaxHeight(forScreenVisibleHeight: screenVisibleHeight)
+    }
+
+    private var selectedTabMaxContentHeight: CGFloat {
+        Layout.selectedTabMaxContentHeight(forScreenVisibleHeight: screenVisibleHeight)
+    }
+
+    private var podItemsMaxHeight: CGFloat {
+        Layout.podItemsMaxHeight(forSelectedTabContentHeight: selectedTabMaxContentHeight)
     }
 
     private func openSettingsFromMenu() {
@@ -114,9 +132,85 @@ struct MenuBarRootView: View {
         SettingsWindowPresenter.bringToFrontAfterOpening()
     }
 
+    private func updateScreenVisibleHeight(_ height: CGFloat) {
+        guard height > 0, abs(screenVisibleHeight - height) > Layout.heightTolerance else {
+            return
+        }
+
+        screenVisibleHeight = height
+    }
+
     private enum Layout {
         static let menuWidth: CGFloat = 360
-        static let maxContentHeight: CGFloat = 560
+        static let preferredContentHeight: CGFloat = 560
+        static let minimumContentHeight: CGFloat = 220
+        static let defaultScreenVisibleHeight: CGFloat = 900
+        static let screenEdgeInset: CGFloat = 48
+        static let nonTabContentHeightBudget: CGFloat = 170
+        static let podTabNonItemContentHeightBudget: CGFloat = 110
+        static let minimumPodItemsHeight: CGFloat = 160
+        static let heightTolerance: CGFloat = 1
+
+        static func menuMaxHeight(forScreenVisibleHeight visibleHeight: CGFloat) -> CGFloat {
+            let safeVisibleHeight = max(visibleHeight, minimumContentHeight)
+            return max(minimumContentHeight, safeVisibleHeight - screenEdgeInset)
+        }
+
+        static func selectedTabMaxContentHeight(forScreenVisibleHeight visibleHeight: CGFloat) -> CGFloat {
+            let availableHeight = menuMaxHeight(forScreenVisibleHeight: visibleHeight) - nonTabContentHeightBudget
+            return min(preferredContentHeight, max(minimumContentHeight, availableHeight))
+        }
+
+        static func podItemsMaxHeight(forSelectedTabContentHeight contentHeight: CGFloat) -> CGFloat {
+            max(minimumPodItemsHeight, contentHeight - podTabNonItemContentHeightBudget)
+        }
+    }
+}
+
+private struct VisibleScreenHeightReader: NSViewRepresentable {
+    let onChange: (CGFloat) -> Void
+
+    func makeNSView(context: Context) -> VisibleScreenHeightProbeView {
+        VisibleScreenHeightProbeView(onChange: onChange)
+    }
+
+    func updateNSView(_ nsView: VisibleScreenHeightProbeView, context: Context) {
+        nsView.onChange = onChange
+        nsView.reportVisibleHeight()
+    }
+}
+
+private final class VisibleScreenHeightProbeView: NSView {
+    var onChange: (CGFloat) -> Void
+
+    init(onChange: @escaping (CGFloat) -> Void) {
+        self.onChange = onChange
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) {
+        self.onChange = { _ in }
+        super.init(coder: coder)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        reportVisibleHeight()
+    }
+
+    func reportVisibleHeight() {
+        guard let screen = window?.screen ?? Self.screenContainingPointer() ?? NSScreen.main else {
+            return
+        }
+
+        onChange(screen.visibleFrame.height)
+    }
+
+    private static func screenContainingPointer() -> NSScreen? {
+        let pointerLocation = NSEvent.mouseLocation
+        return NSScreen.screens.first { screen in
+            screen.frame.contains(pointerLocation)
+        }
     }
 }
 
