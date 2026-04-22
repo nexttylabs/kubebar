@@ -3,20 +3,26 @@ import KubebarCore
 
 struct SetupView: View {
     @Binding var state: SetupFlowState
+    let primaryActionTitle: String
     let onComplete: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
+    let onContentHeightChange: (CGFloat) -> Void
 
     init(
         state: Binding<SetupFlowState>,
+        primaryActionTitle: String = "Finish setup",
         onComplete: @escaping () -> Void = {},
         onSelectContext: @escaping (String?) -> Void = { _ in },
-        onRetryTargets: @escaping () -> Void = {}
+        onRetryTargets: @escaping () -> Void = {},
+        onContentHeightChange: @escaping (CGFloat) -> Void = { _ in }
     ) {
         _state = state
+        self.primaryActionTitle = primaryActionTitle
         self.onComplete = onComplete
         self.onSelectContext = onSelectContext
         self.onRetryTargets = onRetryTargets
+        self.onContentHeightChange = onContentHeightChange
     }
 
     var body: some View {
@@ -30,6 +36,7 @@ struct SetupView: View {
             }
             .padding(20)
             .frame(maxWidth: 560, alignment: .leading)
+            .background(ContentHeightReader(onChange: onContentHeightChange))
         }
     }
 
@@ -90,10 +97,6 @@ struct SetupView: View {
             Text("Refresh cadence")
                 .font(.headline)
 
-            Text(state.refreshCadenceHelpText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
             Picker("Refresh cadence", selection: $state.refreshCadence) {
                 ForEach(RefreshCadence.allCases) { cadence in
                     Text(cadence.label).tag(cadence)
@@ -117,7 +120,7 @@ struct SetupView: View {
 
             Spacer()
 
-            Button("Finish setup", action: onComplete)
+            Button(primaryActionTitle, action: onComplete)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!state.isConfigured)
@@ -136,5 +139,25 @@ struct SetupView: View {
             get: { state.watchlist },
             set: { state.watchlist = $0 }
         )
+    }
+}
+
+private struct ContentHeightReader: View {
+    let onChange: (CGFloat) -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            Color.clear
+                .preference(key: ContentHeightPreferenceKey.self, value: proxy.size.height)
+        }
+        .onPreferenceChange(ContentHeightPreferenceKey.self, perform: onChange)
+    }
+}
+
+private struct ContentHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }

@@ -27,6 +27,11 @@ struct MenuDisplayModelTests {
         #expect(display.healthSentence == "Cluster looks healthy")
         #expect(display.primaryStatusReason == "Cluster looks healthy")
         #expect(display.lastUpdated == "20s ago")
+        #expect(display.nodeTab.summary == "3/3 nodes ready")
+        #expect(display.nodeTab.emptyMessage == "No node data yet. Refresh or check Settings.")
+        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.emptyMessage == "No pod data yet. Refresh or check Settings.")
+        #expect(display.eventsTab.emptyMessage == "No current warning events")
     }
 
     @Test("bad tracked items become first-screen attention")
@@ -124,8 +129,8 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 warning event")
     }
 
-    @Test("first screen caps watchlist and reports overflow")
-    func firstScreenCapsWatchlistAndReportsOverflow() {
+    @Test("healthy first screen caps watchlist at three and reports overflow")
+    func healthyFirstScreenCapsWatchlistAtThreeAndReportsOverflow() {
         let items = (1...7).map { index in
             TrackedItemStatus(target: .workload(namespace: "team", name: "service-\(index)"), state: .ok, reason: "ready")
         }
@@ -140,8 +145,38 @@ struct MenuDisplayModelTests {
 
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
-        #expect(display.visibleWatchItems.count == 5)
-        #expect(display.hiddenWatchItemCount == 2)
+        #expect(display.visibleWatchItems.count == 3)
+        #expect(display.hiddenWatchItemCount == 4)
+    }
+
+    @Test("attention watchlist is ranked bad watch stale ok and can show five")
+    func attentionWatchlistIsRankedBadWatchStaleOKAndCanShowFive() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 18, total: 20),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .workload(namespace: "team", name: "ok-b"), state: .ok, reason: "ready"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "stale-a"), state: .stale, reason: "No recent data"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "bad-b"), state: .bad, reason: "2 pods failed"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "watch-a"), state: .watch, reason: "1 pod restarting"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "bad-a"), state: .bad, reason: "3 pods pending"),
+                TrackedItemStatus(target: .workload(namespace: "team", name: "ok-a"), state: .ok, reason: "ready")
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.visibleWatchItems.map(\.title) == [
+            "team/bad-a",
+            "team/bad-b",
+            "team/watch-a",
+            "team/stale-a",
+            "team/ok-a"
+        ])
+        #expect(display.hiddenWatchItemCount == 1)
     }
 
     @Test("long watch item titles stay full for middle truncation")
@@ -264,6 +299,24 @@ struct MenuDisplayModelTests {
         )
 
         #expect(item.detail.reason == "1 pod not ready")
+        #expect(item.detail.hasExpandedContent == false)
+    }
+
+    @Test("watch item detail reports expanded content only when extra detail exists")
+    func watchItemDetailReportsExpandedContentOnlyWhenExtraDetailExists() {
+        let warning = WarningEventDisplay(
+            id: "warning",
+            reason: "BackOff",
+            location: "api/pod/checkout",
+            age: "2m ago",
+            occurrenceCount: 1,
+            message: nil
+        )
+
+        #expect(WatchItemDetailDisplay(stateLabel: "OK", reason: "ready").hasExpandedContent == false)
+        #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", affectedPodCount: 2).hasExpandedContent)
+        #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", examplePodNames: ["checkout-a"]).hasExpandedContent)
+        #expect(WatchItemDetailDisplay(stateLabel: "Watch", reason: "BackOff", latestWarning: warning).hasExpandedContent)
     }
 
     @Test("warning event display summary includes occurrence count only when repeated")
@@ -373,6 +426,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
 
         #expect(display.visibleWatchItems.first?.detail.examplePodNames == ["checkout-a", "checkout-b", "checkout-c"])
+        #expect(display.podTab.rows.first?.detail.examplePodNames == ["checkout-a", "checkout-b", "checkout-c"])
     }
 
     @Test("tracked item detail includes affected pod count and latest warning")
@@ -419,6 +473,19 @@ struct MenuDisplayModelTests {
         #expect(display.state == .watch)
         #expect(display.primaryStatusReason == "invalid event JSON")
         #expect(display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
+        #expect(display.eventsTab.unavailableMessage == "Warning events unavailable: invalid event JSON")
+    }
+
+    @Test("missing warning event count does not look empty")
+    func missingWarningEventCountDoesNotLookEmpty() {
+        let display = HealthEvaluator().evaluate(
+            snapshot: nil,
+            failure: RefreshFailure(reason: "Waiting for first refresh"),
+            now: Date(timeIntervalSince1970: 220)
+        )
+
+        #expect(display.counters.warningEvents == "-")
+        #expect(display.eventsTab.emptyMessage == "Warning event count unavailable")
     }
 
     @Test("unavailable pods use dash counter")
@@ -436,6 +503,149 @@ struct MenuDisplayModelTests {
 
         #expect(display.counters.pods == "-")
         #expect(display.state == .watch)
+        #expect(display.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+    }
+
+    @Test("pods tab surfaces workload section failures")
+    func podsTabSurfacesWorkloadSectionFailures() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .unavailable(reason: "invalid workload JSON"),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.rows.isEmpty)
+        #expect(display.podTab.unavailableMessage == "Workloads unavailable: invalid workload JSON")
+    }
+
+    @Test("tab unavailable copy uses safe section reasons")
+    func tabUnavailableCopyUsesSafeSectionReasons() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .unavailable(reason: "invalid node JSON"),
+            podsSection: .unavailable(reason: "invalid pod JSON"),
+            warningEventsSection: .unavailable(reason: "invalid event JSON"),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.nodeTab.unavailableMessage == "Node data unavailable: invalid node JSON")
+        #expect(display.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+        #expect(display.eventsTab.unavailableMessage == "Warning events unavailable: invalid event JSON")
+    }
+
+    @Test("stale tab display preserves previous counters watchlist and stale banner")
+    func staleTabDisplayPreservesPreviousCountersWatchlistAndStaleBanner() {
+        let previous = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(
+            snapshot: nil,
+            previousSnapshot: previous,
+            failure: RefreshFailure(reason: "kubectl timed out"),
+            now: Date(timeIntervalSince1970: 250)
+        )
+
+        #expect(display.counters.nodes == "3/3")
+        #expect(display.nodeTab.summary == "3/3 nodes ready")
+        #expect(display.podTab.summary == "12/12 pods running")
+        #expect(display.podTab.rows.first?.title == "api/checkout")
+        #expect(display.eventsTab.emptyMessage == "No current warning events")
+        #expect(display.staleBanner?.reason == "kubectl timed out")
+    }
+
+    @Test("overview notice is capped at one and prefers unavailable sections")
+    func overviewNoticeIsCappedAtOneAndPrefersUnavailableSections() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .unavailable(reason: "invalid workload JSON"),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.overviewNotice?.id == "section-workloads")
+        #expect(display.overviewNotice?.title == "Workloads unavailable")
+        #expect(display.overviewNotice?.message == "invalid workload JSON")
+    }
+
+    @Test("overview notice falls back to first warning event")
+    func overviewNoticeFallsBackToFirstWarningEvent() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.overviewNotice?.id == "event-BackOff|Pod|api|checkout-a")
+        #expect(display.overviewNotice?.title == "BackOff")
+        #expect(display.overviewNotice?.message == "BackOff api/pod/checkout-a 2m ago")
+    }
+
+    @Test("events tab rows are capped at three grouped warnings")
+    func eventsTabRowsAreCappedAtThreeGroupedWarnings() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", objectName: "checkout-a", observedAt: Date(timeIntervalSince1970: 100), count: 1),
+                warningEvent(reason: "FailedScheduling", objectName: "checkout-b", observedAt: Date(timeIntervalSince1970: 90), count: 1),
+                warningEvent(reason: "Unhealthy", objectName: "checkout-c", observedAt: Date(timeIntervalSince1970: 80), count: 1),
+                warningEvent(reason: "Pulled", objectName: "checkout-d", observedAt: Date(timeIntervalSince1970: 70), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.eventsTab.rows.count == 3)
+    }
+
+    @Test("events tab preserves warning count when grouped rows are unavailable")
+    func eventsTabPreservesWarningCountWhenGroupedRowsAreUnavailable() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 1,
+            trackedItems: [],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.eventsTab.rows.isEmpty)
+        #expect(display.eventsTab.emptyMessage == "1 warning event needs review")
     }
 
     @Test("unavailable section prevents otherwise healthy ok state")

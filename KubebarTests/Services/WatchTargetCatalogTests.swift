@@ -4,34 +4,18 @@ import Testing
 
 @Suite("Watch target catalog")
 struct WatchTargetCatalogTests {
-    @Test("lists namespaces and supported workload candidates")
-    func listsNamespacesAndSupportedWorkloadCandidates() async throws {
+    @Test("lists namespace candidates only")
+    func listsNamespaceCandidatesOnly() async throws {
         let runner = RecordingCommandRunner(results: [
-            ["--context", "prod", "get", "namespaces", "-o", "json"]: CommandResult(stdout: namespacesJSON, stderr: "", exitCode: 0),
-            ["--context", "prod", "get", "deployments", "--all-namespaces", "-o", "json"]: CommandResult(stdout: deploymentJSON, stderr: "", exitCode: 0),
-            ["--context", "prod", "get", "statefulsets", "--all-namespaces", "-o", "json"]: CommandResult(stdout: statefulSetJSON, stderr: "", exitCode: 0),
-            ["--context", "prod", "get", "daemonsets", "--all-namespaces", "-o", "json"]: CommandResult(stdout: daemonSetJSON, stderr: "", exitCode: 0),
-            ["--context", "prod", "get", "cronjobs", "--all-namespaces", "-o", "json"]: CommandResult(stdout: cronJobJSON, stderr: "", exitCode: 0)
+            ["--context", "prod", "get", "namespaces", "-o", "json"]: CommandResult(stdout: namespacesJSON, stderr: "", exitCode: 0)
         ])
         let catalog = WatchTargetCatalog(runner: runner)
 
         let candidates = try await catalog.listCandidates(contextName: "prod")
 
         #expect(candidates.namespaces == ["api", "monitoring"])
-        #expect(candidates.workloads.map(\.displayTitle) == [
-            "Deployment checkout",
-            "StatefulSet postgres",
-            "CronJob nightly-backup",
-            "DaemonSet collector"
-        ])
-        #expect(candidates.workloads.map(\.target) == [
-            .workload(namespace: "api", name: "checkout", kind: .deployment),
-            .workload(namespace: "api", name: "postgres", kind: .statefulSet),
-            .workload(namespace: "jobs", name: "nightly-backup", kind: .cronJob),
-            .workload(namespace: "monitoring", name: "collector", kind: .daemonSet)
-        ])
-        #expect(runner.recordedArguments.contains(["--context", "prod", "get", "namespaces", "-o", "json"]))
-        #expect(!runner.recordedArguments.contains { $0.contains("jobs") })
+        #expect(candidates.workloads.isEmpty)
+        #expect(runner.recordedArguments == [["--context", "prod", "get", "namespaces", "-o", "json"]])
     }
 
     @Test("non zero kubectl exit reports stderr")
@@ -88,38 +72,6 @@ private let namespacesJSON = """
   "items": [
     {"metadata": {"name": "monitoring"}},
     {"metadata": {"name": "api"}}
-  ]
-}
-"""
-
-private let deploymentJSON = """
-{
-  "items": [
-    {"metadata": {"namespace": "api", "name": "checkout"}}
-  ]
-}
-"""
-
-private let statefulSetJSON = """
-{
-  "items": [
-    {"metadata": {"namespace": "api", "name": "postgres"}}
-  ]
-}
-"""
-
-private let daemonSetJSON = """
-{
-  "items": [
-    {"metadata": {"namespace": "monitoring", "name": "collector"}}
-  ]
-}
-"""
-
-private let cronJobJSON = """
-{
-  "items": [
-    {"metadata": {"namespace": "jobs", "name": "nightly-backup"}}
   ]
 }
 """

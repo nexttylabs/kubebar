@@ -13,7 +13,7 @@ public struct MenuRuntimeState: Equatable, Sendable {
         self.surface = config.needsSetup ? .setup : .menu
         self.setupState = SetupFlowState(
             selectedContext: config.selectedContext,
-            watchlist: WatchlistSelectionState(selectedTargets: Set(config.watchTargets)),
+            watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
             refreshCadence: config.refreshCadence
         )
     }
@@ -36,6 +36,19 @@ public struct MenuRuntimeState: Equatable, Sendable {
 
     public mutating func openSetup() {
         surface = .setup
+        setupState.configurationMessage = nil
+    }
+
+    public mutating func prepareSettings(config: AppConfig) {
+        guard !hasUnsavedSettingsChanges(comparedTo: config) else {
+            return
+        }
+
+        setupState = SetupFlowState(
+            selectedContext: config.selectedContext,
+            watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
+            refreshCadence: config.refreshCadence
+        )
         setupState.configurationMessage = nil
     }
 
@@ -94,14 +107,31 @@ public struct MenuRuntimeState: Equatable, Sendable {
     }
 
     public func completedConfig() -> AppConfig? {
-        guard let selectedContext = setupState.selectedContext, !setupState.watchlist.selectedTargets.isEmpty else {
+        let watchTargets = setupState.watchlist.selectedNamespaceTargets.sorted { $0.displayTitle < $1.displayTitle }
+        guard let selectedContext = setupState.selectedContext, !watchTargets.isEmpty else {
             return nil
         }
 
         return AppConfig(
             selectedContext: selectedContext,
-            watchTargets: setupState.watchlist.selectedTargets.sorted { $0.displayTitle < $1.displayTitle },
+            watchTargets: watchTargets,
             refreshIntervalSeconds: setupState.refreshCadence.seconds
         )
+    }
+
+    private func hasUnsavedSettingsChanges(comparedTo config: AppConfig) -> Bool {
+        setupState.selectedContext != config.selectedContext ||
+            setupState.watchlist.selectedNamespaceTargets != Self.namespaceTargets(from: config.watchTargets) ||
+            setupState.refreshCadence.seconds != config.refreshIntervalSeconds
+    }
+
+    private static func namespaceTargets(from targets: [WatchTarget]) -> Set<WatchTarget> {
+        Set(targets.filter { target in
+            if case .namespace = target {
+                return true
+            }
+
+            return false
+        })
     }
 }

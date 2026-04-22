@@ -7,6 +7,8 @@ public enum WatchTargetLoadingState: Equatable, Sendable {
 }
 
 public struct SetupFlowState: Equatable, Sendable {
+    public static let settingsSaveFailureMessage = "Could not save settings. Try again."
+
     public var selectedContext: String?
     public var availableContexts: [String]
     public var watchlist: WatchlistSelectionState
@@ -31,7 +33,7 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public var isConfigured: Bool {
-        selectedContext != nil && !watchlist.isEmpty
+        selectedContext != nil && !watchlist.isNamespaceSelectionEmpty
     }
 
     public var needsSetup: Bool {
@@ -51,7 +53,7 @@ public struct SetupFlowState: Equatable, Sendable {
             return "Kubebar will use your saved context and watchlist."
         }
 
-        return "Choose the context Kubebar should remember, then pick the namespaces and workloads to watch."
+        return "Choose the context Kubebar should remember, then pick the namespaces to watch."
     }
 
     public var contextHelpText: String {
@@ -67,32 +69,32 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public var watchlistHelpText: String {
-        if !watchlist.isEmpty {
-            return watchlist.selectionSummary
+        if !watchlist.isNamespaceSelectionEmpty {
+            return watchlist.namespaceSelectionSummary
         }
 
         switch targetLoadingState {
         case .loading:
-            return "Loading watch targets for the selected context."
+            return "Loading namespaces for the selected context."
         case let .failed(reason):
-            return reason.isEmpty ? "Could not load watch targets." : reason
+            return reason.isEmpty ? "Could not load namespaces." : reason
         case .idle:
             break
         }
 
-        if watchlist.isEmpty {
+        if watchlist.isNamespaceSelectionEmpty {
             return watchlist.emptyStateMessage
         }
 
-        return watchlist.selectionSummary
+        return watchlist.namespaceSelectionSummary
     }
 
     public var emptyWatchlistActionTitle: String {
-        "Add watch target"
+        "Add namespace"
     }
 
-    public var refreshCadenceHelpText: String {
-        "Refresh every \(refreshCadence.label)."
+    public func primaryActionTitle(isEditingExistingConfig: Bool) -> String {
+        isEditingExistingConfig && isConfigured ? "Save Settings" : "Finish setup"
     }
 
     public mutating func selectContext(_ context: String?) {

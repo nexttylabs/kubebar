@@ -9,12 +9,14 @@ public struct RefreshFailure: Equatable, Sendable {
 }
 
 public struct HealthEvaluator: Sendable {
-    private let visibleWatchItemLimit: Int
+    private let healthyWatchItemLimit: Int
+    private let attentionWatchItemLimit: Int
     private let warningEventSummaryLimit = 3
     private let warningMessageLimit = 96
 
-    public init(visibleWatchItemLimit: Int = 5) {
-        self.visibleWatchItemLimit = visibleWatchItemLimit
+    public init(visibleWatchItemLimit: Int = 5, healthyWatchItemLimit: Int = 3) {
+        self.attentionWatchItemLimit = visibleWatchItemLimit
+        self.healthyWatchItemLimit = min(healthyWatchItemLimit, visibleWatchItemLimit)
     }
 
     public func evaluate(
@@ -65,7 +67,8 @@ public struct HealthEvaluator: Sendable {
         staleAfterSeconds: Int?
     ) -> MenuDisplayModel {
         let sortedItems = sortByAttention(snapshot.trackedItems)
-        let visibleItems = sortedItems.prefix(visibleWatchItemLimit).map { makeDisplayItem($0, now: now) }
+        let visibleLimit = visibleWatchItemLimit(for: sortedItems)
+        let visibleItems = sortedItems.prefix(visibleLimit).map { makeDisplayItem($0, now: now) }
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let freshnessReason = staleAgeOutReason(for: snapshot, now: now, staleAfterSeconds: staleAfterSeconds)
         let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
@@ -90,7 +93,11 @@ public struct HealthEvaluator: Sendable {
                 now: now
             ),
             warningEventSummaries: warningEventSummaries,
-            sectionNotices: sectionNotices
+            sectionNotices: sectionNotices,
+            overviewNotice: makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries),
+            nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
+            podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
+            eventsTab: makeEventsTab(from: snapshot, rows: warningEventSummaries, sectionNotices: sectionNotices)
         )
     }
 
@@ -137,17 +144,128 @@ public struct HealthEvaluator: Sendable {
         }
     }
 
+    private func makeOverviewNotice(
+        sectionNotices: [SectionAvailabilityDisplay],
+        warningEventSummaries: [WarningEventDisplay]
+    ) -> OverviewNoticeDisplay? {
+        if let notice = sectionNotices.first {
+            return OverviewNoticeDisplay(
+                id: "section-\(notice.id)",
+                title: "\(notice.title) unavailable",
+                message: notice.reason
+            )
+        }
+
+        return warningEventSummaries.first.map { event in
+            OverviewNoticeDisplay(
+                id: "event-\(event.id)",
+                title: event.reason,
+                message: event.summary
+            )
+        }
+    }
+
+    private func makeNodeTab(from snapshot: ClusterSnapshot, sectionNotices: [SectionAvailabilityDisplay]) -> NodeTabDisplay {
+        NodeTabDisplay(
+            summary: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total) nodes ready" } ?? "- nodes ready",
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.nodes.rawValue,
+                prefix: "Node data unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func makePodTab(
+        from snapshot: ClusterSnapshot,
+        visibleItems: [WatchItemDisplay],
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> PodTabDisplay {
+        PodTabDisplay(
+            summary: snapshot.podsSection.value.map { "\($0.running)/\($0.total) pods running" } ?? "- pods running",
+            rows: visibleItems,
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.pods.rawValue,
+                prefix: "Pod data unavailable",
+                sectionNotices: sectionNotices
+            ) ?? tabUnavailableMessage(
+                sectionID: SnapshotSectionName.workloads.rawValue,
+                prefix: "Workloads unavailable",
+                sectionNotices: sectionNotices
+            )
+        )
+    }
+
+    private func makeEventsTab(
+        from snapshot: ClusterSnapshot,
+        rows: [WarningEventDisplay],
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> EventsTabDisplay {
+        EventsTabDisplay(
+            rows: rows,
+            unavailableMessage: tabUnavailableMessage(
+                sectionID: SnapshotSectionName.warningEvents.rawValue,
+                prefix: "Warning events unavailable",
+                sectionNotices: sectionNotices
+            ),
+            emptyMessage: warningEventsEmptyMessage(count: snapshot.warningEventCount)
+        )
+    }
+
+    private func warningEventsEmptyMessage(count: Int) -> String {
+        switch count {
+        case 0:
+            return "No current warning events"
+        case 1:
+            return "1 warning event needs review"
+        default:
+            return "\(count) warning events need review"
+        }
+    }
+
+    private func tabUnavailableMessage(
+        sectionID: String,
+        prefix: String,
+        sectionNotices: [SectionAvailabilityDisplay]
+    ) -> String? {
+        guard let notice = sectionNotices.first(where: { $0.id == sectionID }) else {
+            return nil
+        }
+
+        return "\(prefix): \(notice.reason)"
+    }
+
     private func sanitizedSectionReason(_ value: String) -> String {
         normalizedText(value) ?? "Section unavailable"
     }
 
     private func sortByAttention(_ items: [TrackedItemStatus]) -> [TrackedItemStatus] {
         items.sorted { left, right in
-            if left.state.rawValue != right.state.rawValue {
-                return left.state.rawValue > right.state.rawValue
+            let leftPriority = attentionPriority(for: left.state)
+            let rightPriority = attentionPriority(for: right.state)
+
+            if leftPriority != rightPriority {
+                return leftPriority < rightPriority
             }
 
             return left.target.displayTitle < right.target.displayTitle
+        }
+    }
+
+    private func visibleWatchItemLimit(for items: [TrackedItemStatus]) -> Int {
+        items.contains { $0.state != .ok } ? attentionWatchItemLimit : healthyWatchItemLimit
+    }
+
+    private func attentionPriority(for state: ClusterHealthState) -> Int {
+        switch state {
+        case .bad:
+            0
+        case .watch:
+            1
+        case .stale:
+            2
+        case .ok:
+            3
         }
     }
 

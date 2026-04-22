@@ -68,6 +68,33 @@ run_swift_package_checks() {
   swift test
 }
 
+run_qa_artifact_check() {
+  local output_dir
+  local generated_file
+  local labels=(
+    "Healthy"
+    "Watch"
+    "Bad"
+    "Stale refresh failure"
+    "Stale age-out"
+    "first-use"
+    "empty-watchlist"
+    "kubectl failure"
+    "pending-human-verification"
+  )
+
+  echo "Running QA artifact generation check"
+  output_dir="$(mktemp -d)"
+  generated_file="${output_dir}/07-UAT.generated.md"
+
+  ./scripts/generate-qa-evidence.sh --output "$output_dir" >/dev/null
+  test -s "$generated_file"
+
+  for label in "${labels[@]}"; do
+    grep -q "$label" "$generated_file"
+  done
+}
+
 run_xcode_checks() {
   local workspaces=()
   local projects=()
@@ -163,6 +190,7 @@ main() {
 
   if [ -f "Package.swift" ]; then
     run_swift_package_checks
+    run_qa_artifact_check
     return 0
   fi
 

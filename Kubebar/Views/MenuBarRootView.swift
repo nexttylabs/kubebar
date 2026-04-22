@@ -3,99 +3,144 @@ import KubebarCore
 
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
-    @Binding var setupState: SetupFlowState
     let isShowingSetup: Bool
     let refreshCadence: RefreshCadence
     let isRefreshing: Bool
     let onRefresh: () -> Void
-    let onEditWatchlist: () -> Void
-    let onCompleteSetup: () -> Void
-    let onSelectContext: (String?) -> Void
+    let onPrepareSettings: () -> Void
+    let onQuit: () -> Void
     let onSelectRefreshCadence: (RefreshCadence) -> Void
-    let onRetryTargets: () -> Void
+    @Environment(\.openSettings) private var openSettings
+    @State private var selectedTab: MenuTab = .overview
+    @State private var selectedTabContentHeight: CGFloat = 0
 
     var body: some View {
-        Group {
-            if isShowingSetup {
-                SetupView(
-                    state: $setupState,
-                    onComplete: onCompleteSetup,
-                    onSelectContext: onSelectContext,
-                    onRetryTargets: onRetryTargets
-                )
-                    .frame(
-                        width: Layout.setupWidth,
-                        height: Layout.setupHeight,
-                        alignment: .topLeading
-                    )
-            } else {
-                menuContent
-            }
-        }
+        menuContent
     }
 
     private var menuContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            StatusSummaryView(display: display)
-            StaleBannerView(banner: display.staleBanner)
-            CompactCountersView(counters: display.counters)
-            WatchlistSectionView(display: display)
-            WarningEventsView(count: display.counters.warningEvents, summaries: display.warningEventSummaries, sectionNotices: display.sectionNotices)
-            NodeDetailsView(summary: display.counters.nodes)
+        VStack(alignment: .leading, spacing: 16) {
+            mainContent
+
             Divider()
-            refreshControls
-            actions
+            MenuFooterView(
+                lastUpdated: display.lastUpdated,
+                refreshCadence: refreshCadence,
+                isRefreshing: isRefreshing,
+                onRefresh: onRefresh,
+                onOpenSettings: openSettingsFromMenu,
+                onQuit: onQuit,
+                onSelectRefreshCadence: onSelectRefreshCadence
+            )
         }
-        .frame(width: 340)
+        .frame(width: Layout.menuWidth)
         .padding(16)
+        .onAppear {
+            selectedTab = .overview
+        }
     }
 
-    private var refreshControls: some View {
-        HStack(spacing: 8) {
-            Text("Refresh")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    @ViewBuilder
+    private var mainContent: some View {
+        switch isShowingSetup {
+        case true:
+            ConfigurationRequiredView(onOpenSettings: openSettingsFromMenu)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case false:
+            configuredMenuContent
+        }
+    }
 
-            Picker("Refresh cadence", selection: refreshCadenceBinding) {
-                ForEach(RefreshCadence.allCases) { cadence in
-                    Text(cadence.label).tag(cadence)
+    private var configuredMenuContent: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Picker("Menu section", selection: $selectedTab) {
+                ForEach(MenuTab.allCases) { tab in
+                    Text(tab.label)
+                        .tag(tab)
                 }
             }
             .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 96)
+            .pickerStyle(.segmented)
 
-            Text("Last updated \(display.lastUpdated)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
-            Spacer()
+            selectedTabContentContainer
+        }
+        .onChange(of: selectedTab) { _, _ in
+            selectedTabContentHeight = 0
         }
     }
 
-    private var actions: some View {
-        HStack {
-            Button("Retry now", action: onRefresh)
-                .keyboardShortcut("r", modifiers: .command)
-                .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
-                .disabled(isRefreshing)
-            Spacer()
-            Button("Edit watchlist", action: onEditWatchlist)
-                .keyboardShortcut("e", modifiers: .command)
-                .help(Text("Edit watchlist"))
+    @ViewBuilder
+    private var selectedTabContentContainer: some View {
+        if selectedTabContentHeight > Layout.maxContentHeight {
+            ScrollView {
+                measuredSelectedTabContent
+            }
+            .scrollIndicators(.hidden)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: Layout.maxContentHeight, alignment: .top)
+        } else {
+            measuredSelectedTabContent
         }
     }
 
-    private var refreshCadenceBinding: Binding<RefreshCadence> {
-        Binding(
-            get: { refreshCadence },
-            set: { onSelectRefreshCadence($0) }
-        )
+    private var measuredSelectedTabContent: some View {
+        selectedTabContent
+            .id(selectedTab)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
+            .onMeasuredHeight { height in
+                guard height > 0, abs(selectedTabContentHeight - height) > 0.5 else { return }
+                selectedTabContentHeight = height
+            }
+    }
+
+    @ViewBuilder
+    private var selectedTabContent: some View {
+        switch selectedTab {
+        case .overview:
+            OverviewTabView(display: display)
+        case .nodes:
+            NodesTabView(display: display)
+        case .pods:
+            PodsTabView(display: display)
+        case .events:
+            EventsTabView(display: display)
+        }
+    }
+
+    private func openSettingsFromMenu() {
+        onPrepareSettings()
+        openSettings()
+        SettingsWindowPresenter.bringToFrontAfterOpening()
     }
 
     private enum Layout {
-        static let setupWidth: CGFloat = 560
-        static let setupHeight: CGFloat = 560
+        static let menuWidth: CGFloat = 360
+        static let maxContentHeight: CGFloat = 560
+    }
+}
+
+private struct MeasuredHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let nextHeight = nextValue()
+        if nextHeight > 0 {
+            value = nextHeight
+        }
+    }
+}
+
+private extension View {
+    func onMeasuredHeight(_ onChange: @escaping (CGFloat) -> Void) -> some View {
+        background {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: MeasuredHeightPreferenceKey.self,
+                    value: ceil(proxy.size.height)
+                )
+            }
+        }
+        .onPreferenceChange(MeasuredHeightPreferenceKey.self, perform: onChange)
     }
 }

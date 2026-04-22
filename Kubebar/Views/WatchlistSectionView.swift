@@ -6,7 +6,7 @@ struct WatchlistSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Watchlist")
+            Text("Watching")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
@@ -16,22 +16,32 @@ struct WatchlistSectionView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(display.visibleWatchItems) { item in
-                    DisclosureGroup(
-                        content: {
-                            TrackedItemDetailView(item: item)
-                        },
-                        label: {
-                            WatchlistRowView(item: item)
-                        }
-                    )
+                    watchlistRow(for: item)
                 }
             }
 
             if display.hiddenWatchItemCount > 0 {
-                Text("View all tracked (\(display.hiddenWatchItemCount) more)")
+                Text("+\(display.hiddenWatchItemCount) more watched")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func watchlistRow(for item: WatchItemDisplay) -> some View {
+        if item.detail.hasExpandedContent {
+            DisclosureGroup(
+                content: {
+                    TrackedItemDetailView(item: item)
+                },
+                label: {
+                    WatchlistRowView(item: item)
+                }
+            )
+        } else {
+            WatchlistRowView(item: item)
+                .focusable()
         }
     }
 }

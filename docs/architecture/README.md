@@ -7,6 +7,7 @@ Current notes:
 
 - `system-overview.md` — major subsystems and request flow
 - `runtime-invariants.md` — defaults and guarantees that must not break
+- `../qa/operator-verification.md` — operator-facing QA commands and evidence rules
 
 Future notes can be added here when a subsystem needs more detail:
 
