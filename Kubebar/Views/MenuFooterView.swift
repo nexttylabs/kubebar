@@ -12,7 +12,7 @@ struct MenuFooterView: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Text("Updated \(lastUpdated)")
+            Text("Last checked \(lastUpdated)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -49,8 +49,8 @@ struct MenuFooterView: View {
             .labelStyle(.iconOnly)
             .menuStyle(.borderlessButton)
             .controlSize(.small)
-            .help(Text("Refresh cadence: \(refreshCadence.label)"))
-            .accessibilityLabel(Text("Refresh cadence: \(refreshCadence.label)"))
+            .help(Text("Refresh every \(refreshCadence.label)"))
+            .accessibilityLabel(Text("Refresh every \(refreshCadence.label)"))
 
             Button(action: onOpenSettings) {
                 Image(systemName: "gearshape")

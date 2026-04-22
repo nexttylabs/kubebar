@@ -8,13 +8,28 @@ struct OverviewTabView: View {
         VStack(alignment: .leading, spacing: 14) {
             StatusSummaryView(display: display)
             StaleBannerView(banner: display.staleBanner)
-            CompactCountersView(counters: display.counters)
-            WatchlistSectionView(display: display)
+            primaryScanContent
 
             if let notice = display.overviewNotice {
                 OverviewNoticeView(notice: notice)
             }
         }
+    }
+
+    private var primaryScanContent: some View {
+        Group {
+            if shouldPrioritizeWatching {
+                WatchlistSectionView(display: display)
+                CompactCountersView(counters: display.counters)
+            } else {
+                CompactCountersView(counters: display.counters)
+                WatchlistSectionView(display: display)
+            }
+        }
+    }
+
+    private var shouldPrioritizeWatching: Bool {
+        display.visibleWatchItems.isEmpty || display.visibleWatchItems.contains { $0.state != .ok }
     }
 }
 

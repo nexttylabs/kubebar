@@ -41,7 +41,7 @@ struct WatchlistPickerView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Watchlist")
+            Text("Watching")
                 .font(.headline)
 
             Text(state.isNamespaceSelectionEmpty ? state.emptyStateTitle : state.namespaceSelectionSummary)

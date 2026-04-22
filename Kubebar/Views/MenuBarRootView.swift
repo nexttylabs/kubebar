@@ -68,11 +68,8 @@ struct MenuBarRootView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(
-                minHeight: Layout.minContentHeight,
-                maxHeight: Layout.maxContentHeight,
-                alignment: .top
-            )
+            .scrollIndicators(.hidden)
+            .frame(maxHeight: Layout.maxContentHeight, alignment: .top)
         }
     }
 
@@ -98,7 +95,6 @@ struct MenuBarRootView: View {
 
     private enum Layout {
         static let menuWidth: CGFloat = 360
-        static let minContentHeight: CGFloat = 220
-        static let maxContentHeight: CGFloat = 520
+        static let maxContentHeight: CGFloat = 560
     }
 }
