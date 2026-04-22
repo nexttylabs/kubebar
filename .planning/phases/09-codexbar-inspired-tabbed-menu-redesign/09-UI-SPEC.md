@@ -33,7 +33,7 @@ reviewed_at: 2026-04-22T06:07:20Z
 | Tool | none |
 | Preset | not applicable - native macOS SwiftUI app |
 | Component library | SwiftUI native controls |
-| Icon library | SF Symbols plus existing `KubebarLogo` asset |
+| Icon library | SF Symbols for status and toolbar actions; app icon assets for app identity only |
 | Font | Native macOS San Francisco through SwiftUI semantic fonts |
 
 Rules:
@@ -41,7 +41,7 @@ Rules:
 - `MenuBarExtra.window` remains the shell. Do not migrate this phase to AppKit `NSStatusItem`.
 - Use restrained native macOS controls: `Picker` with `.segmented` or native tab style for tabs, `Button`, `DisclosureGroup`, `Divider`, `Picker`, `ProgressView`, and standard Settings window/dialog patterns.
 - Do not add decorative gradients, orb backgrounds, bokeh, oversized hero visuals, dashboard cards, nested cards, charts, or widget-like panels.
-- Use the existing `KubebarLogo` only for the healthy menu bar icon. The opened menu must still show explicit `OK` text, symbol, and reason.
+- Use SF Symbols for every menu bar status icon: `OK`, `Watch`, `Bad`, and `Stale`. Do not use the app logo as a health-state icon. The opened menu must still show explicit state text, symbol, and reason.
 - SwiftUI views render `MenuDisplayModel` and setup state. Views must not infer cluster health, read Kubernetes, parse raw command output, or decide freshness.
 
 ---
@@ -52,20 +52,28 @@ Rules:
 | --- | --- |
 | Shell | `MenuBarExtra.window` |
 | Menu width | 360pt fixed target, minimum 340pt, maximum 380pt if native text sizing requires it |
-| Menu height | Fit content until 520pt; selected tab content may scroll after that |
+| Menu height | Content-driven height. The menu grows to fit normal tab content and only scrolls after reaching the screen-aware maximum. |
 | Outer padding | 16pt |
 | Section spacing | 16pt default; 16pt between major groups |
-| Footer | Always visible at the bottom when content height allows; otherwise reachable after a short scroll |
+| Footer | Always visible below the selected tab content. Footer actions must not be inside the scrolling region. |
 | Setup surface | Not embedded as the normal menu body after this phase; Settings opens independently |
 
 Opened menu structure:
 
 1. Compact tab control: `Overview`, `Nodes`, `Pods`, `Events`.
-2. Selected tab content.
+2. Selected tab content, with scrolling only when the selected tab exceeds the available menu height.
 3. Footer divider.
 4. Footer actions: refresh controls, `Settings...`, `Quit Kubebar`.
 
 The selected tab resets to `Overview` every time the menu opens. The selected tab is menu-local UI state and is not persisted.
+
+Height rules:
+
+- Do not force a fixed content area height for normal Overview, Nodes, Pods, or Events states.
+- The menu should fit its content naturally up to the available screen height, with a preferred maximum around 560pt.
+- Avoid visible scrollbars in healthy and common warning states.
+- If scrolling is unavoidable, only the selected tab content scrolls; the tab control and footer remain visible.
+- Empty, unavailable, and stale states must remain compact enough to avoid scrolling unless the user has configured unusually long watched names.
 
 ---
 
@@ -108,7 +116,7 @@ Usage:
 - Tab labels use 13pt semibold when selected and 13pt regular when not selected.
 - Status state labels use 13pt semibold.
 - Counter values use 15pt semibold; counter labels use 11pt regular.
-- Watchlist row title uses 13pt regular; row reason uses 11pt regular.
+- Watched row title uses 13pt regular; row reason uses 11pt regular.
 - Section labels use 11pt semibold with secondary foreground.
 - Do not scale type with viewport/window width.
 - Long names stay one line with middle truncation.
@@ -144,9 +152,9 @@ Status expression:
 
 | Tab | Purpose | Required Content | Caps |
 | --- | --- | --- | --- |
-| `Overview` | Home tab and daily answer | Context, state, primary reason, stale banner when present, compact counters, watchlist, light event/notice summary | 3-5 visible watchlist rows; at most 1 event summary or section notice |
+| `Overview` | Home tab and daily answer | Context, state, primary reason, stale banner when present, compact counters, `Watching`, light event/notice summary | 3-5 visible watched rows; at most 1 event summary or section notice |
 | `Nodes` | Short node readiness reading surface | Node readiness aggregate, node section unavailable state, node-related notice, optional short node rows if core model supports them | 5 node rows maximum |
-| `Pods` | Short pod/workload reading surface | Pod readiness aggregate, affected workload/watchlist detail, affected pod count, 1-3 example pod names | 5 rows maximum; 3 example pod names maximum per row |
+| `Pods` | Short pod/workload reading surface | Pod readiness aggregate, affected workload/watched target detail, affected pod count, 1-3 example pod names | 5 rows maximum; 3 example pod names maximum per row |
 | `Events` | Warning event reading surface | Grouped warning event rows, unavailable/partial event state, reason, location, age, occurrence count, short message | 3 grouped rows maximum under current runtime invariant |
 
 Tab rules:
@@ -166,18 +174,44 @@ Content order:
 
 1. `StatusSummaryView` equivalent: context name, status symbol, `OK/Watch/Bad/Stale`, primary reason.
 2. `StaleBannerView` when stale data is present.
-3. `CompactCountersView`: Nodes, Pods, Events.
-4. `WatchlistSectionView`: primary content area.
-5. One compact notice if Events, Nodes, Pods, or Workloads are unavailable or have a high-priority warning.
+3. Attention-first `Watching` rows when watched items need action.
+4. `CompactCountersView`: Nodes, Pods, Events.
+5. Healthy `Watching` rows when there are no attention items.
+6. One compact notice if Events, Nodes, Pods, or Workloads are unavailable or have a high-priority warning.
 
 Visual rules:
 
-- Watchlist remains the first substantial reading section after the status and counters.
-- Keep 3-5 watchlist rows visible. Five is the maximum.
-- Watchlist rows are one line for title plus one short reason line.
-- Details use `DisclosureGroup` or a native short detail affordance; details must remain compact.
-- Overflow copy must not be inert if implemented as an action. If no expanded view exists yet, use non-action copy: `+N more tracked`.
-- Empty watchlist is not healthy. It must show a next action to open Settings.
+- `Watching` remains the first substantial reading section when anything needs attention.
+- In all-healthy states, counters may appear before `Watching` so the daily scan reads status -> counts -> tracked items.
+- Keep 3 watched rows visible by default in healthy states. Five is the maximum and should be reserved for attention states or when the menu still fits without scrolling.
+- Watched rows are one line for title plus one short reason line.
+- Details use `DisclosureGroup` or a native short detail affordance only when there is meaningful detail to reveal. Do not show chevrons on rows that only repeat the same summary.
+- Overflow copy must not be inert if implemented as an action. If no expanded view exists yet, use non-action copy: `+N more watched`.
+- Empty `Watching` is not healthy. It must show a next action to open Settings.
+
+### Watching Section
+
+Section title:
+
+- Use `Watching`, not `Watchlist`.
+- Do not use demo-like labels such as `prod`, `api`, or `monitoring` in fixtures, screenshots, or docs unless they are real live data from the user's selected context.
+
+Row priority:
+
+1. `Bad`
+2. `Watch`
+3. `Stale`
+4. `OK`
+
+Row contract:
+
+- Title: watched namespace, workload, or configured target name.
+- Reason: one operator-facing sentence fragment, for example `{running}/{total} pods running`, `2 pods restarting`, or `No recent data`.
+- Trailing state label: `OK`, `Watch`, `Bad`, or `Stale`.
+- Long target names use middle truncation with full value in tooltip/accessibility text.
+- Healthy rows should not dominate the menu. Show 3 healthy rows by default and use `+N more watched` for overflow.
+- Attention rows may use up to 5 rows if the menu remains below its maximum height.
+- Rows that open details must reveal new information such as affected pod names, event reason, or stale source. Otherwise they remain plain compact rows.
 
 ---
 
@@ -214,7 +248,7 @@ Required states:
 
 Rules:
 
-- Reuse watchlist/workload detail behavior where possible.
+- Reuse watched target/workload detail behavior where possible.
 - Each row shows workload or namespace, state label, one short reason, affected pod count if present, and 1-3 example pod names.
 - Preserve middle truncation for pod, namespace, and workload names.
 - Do not turn Pods into an all-namespace pod inventory.
@@ -278,18 +312,21 @@ Rules:
 
 Footer order:
 
-1. Refresh cadence picker and `Last updated ...` text.
-2. `Retry now` button.
-3. `Settings...` button.
-4. `Quit Kubebar` button at the bottom edge or trailing edge of the footer group.
+1. Freshness text: `Last checked {age}`.
+2. Refresh button.
+3. Refresh cadence menu, shown as a timer icon without visible cadence text.
+4. `Settings...` button.
+5. `Quit Kubebar` button at the trailing edge of the footer group.
 
 Action rules:
 
-- `Retry now` uses Command-R and is disabled while refresh is already running.
+- Refresh uses Command-R and is disabled while refresh is already running.
+- Refresh cadence help/accessibility copy is `Refresh every {cadence}`. Do not show redundant visible cadence text in the footer.
 - `Settings...` uses Command-Comma if practical and opens the independent Settings dialog/window.
 - `Quit Kubebar` uses Command-Q where practical and exits the app without changing saved context, watchlist, or refresh cadence.
 - `Quit Kubebar` is visible, separated from refresh/settings by spacing or divider, and not styled as a destructive red action.
 - No confirmation is required for `Quit Kubebar` because it preserves saved config and matches standard macOS app behavior.
+- Footer actions use symbol-only controls with tooltips/accessibility labels. The visible footer text should be limited to freshness unless a native control requires a label.
 
 ---
 
@@ -299,15 +336,18 @@ Action rules:
 |---------|------|
 | Primary menu CTA | `Settings...` |
 | Primary stale CTA | `Retry now` |
+| Footer freshness | `Last checked {age}` |
+| Footer refresh action | `Refresh now` |
+| Footer cadence help | `Refresh every {cadence}` |
 | First-use primary CTA | `Finish setup` |
 | Settings primary CTA | `Save Settings` |
-| Empty watchlist heading | `No tracked workloads yet` |
-| Empty watchlist body | `Open Settings to choose namespaces or workloads to watch.` |
+| Empty Watching heading | `No tracked workloads yet` |
+| Empty Watching body | `Open Settings to choose namespaces or workloads to watch.` |
 | Nodes empty state | `No node data yet. Refresh or check Settings.` |
 | Pods empty state | `No pod data yet. Refresh or check Settings.` |
 | Events empty state | `No current warning events` |
 | Section unavailable | `{Section} unavailable: {reason}` |
-| Stale state | `Last updated {age}. {reason}` |
+| Stale state | `Last checked {age}. {reason}` |
 | Refresh disabled help | `Refresh in progress` |
 | Settings open action | `Settings...` |
 | Quit action | `Quit Kubebar` |
@@ -340,8 +380,8 @@ Required reachability:
 - Retry now.
 - Settings...
 - Quit Kubebar.
-- Refresh cadence picker.
-- Watchlist disclosure/details.
+- Refresh cadence menu.
+- Watched target disclosure/details.
 - Warning event section.
 - Node and pod section summaries.
 - Settings fields and save action.
@@ -370,7 +410,7 @@ Keyboard shortcuts:
 
 | Surface | Empty | Unavailable | Stale |
 | --- | --- | --- | --- |
-| Overview | Empty watchlist prompts Settings | Section notice, max 1 visible | Stale banner directly after status |
+| Overview | Empty `Watching` prompts Settings | Section notice, max 1 visible | Stale banner directly after status |
 | Nodes | `No node data yet` | `Node data unavailable: {reason}` | Stale banner plus stale node summary |
 | Pods | `No pod data yet` | `Pod data unavailable: {reason}` | Stale banner plus stale pod summary |
 | Events | `No current warning events` | `Warning events unavailable: {reason}` | Stale banner plus stale event rows |
@@ -378,7 +418,7 @@ Keyboard shortcuts:
 
 Rules:
 
-- Empty watchlist is a configuration state, not a healthy cluster state.
+- Empty `Watching` is a configuration state, not a healthy cluster state.
 - Partial section failures must remain visible on the relevant tab and as a compact Overview notice.
 - Stale state always shows last successful update age and a safe reason when available.
 - Old data must never appear current.
@@ -402,13 +442,15 @@ Manual or visible-app verification must cover:
 
 | Scenario | Expected Result | Evidence |
 | --- | --- | --- |
-| Open menu from `OK` icon | Overview selected, OK text visible, watchlist remains primary | UAT row plus screenshot path or pending-human-verification |
+| Open menu from `OK` icon | Overview selected, OK text visible, `Watching` remains primary | UAT row plus screenshot path or pending-human-verification |
 | Open menu from `Watch` icon | Overview selected, symbol + text + reason visible; not color-only | UAT row plus screenshot path or pending-human-verification |
-| Open menu from `Bad` icon | Overview selected, bad reason visible; watchlist/details reachable | UAT row plus screenshot path or pending-human-verification |
+| Open menu from `Bad` icon | Overview selected, bad reason visible; watched details reachable | UAT row plus screenshot path or pending-human-verification |
 | Open menu from `Stale` icon | Stale banner visible in Overview and stale context not shown as healthy | UAT row plus screenshot path or pending-human-verification |
 | Switch tabs | Nodes, Pods, Events content changes without triggering refresh | UAT row |
 | Reopen menu | Selected tab resets to Overview | UAT row |
-| Empty watchlist | Clear prompt to open Settings; not presented as healthy | UAT row |
+| Empty `Watching` | Clear prompt to open Settings; not presented as healthy | UAT row |
+| Auto-height menu | Healthy and common warning Overview states fit without visible scrollbar; footer remains visible | UAT row plus screenshot path or pending-human-verification |
+| Footer language | Footer reads `Last checked {age}`; cadence appears only through timer help/accessibility text | UAT row |
 | Settings... | Opens independent dialog/window; not a Settings tab | UAT row |
 | Quit Kubebar | Visible bottom action exits app and preserves saved config | UAT row |
 | Keyboard navigation | Tabs, refresh, settings, quit, details, and sections are reachable | UAT row; may be pending-human-verification if automation cannot inspect menu |
