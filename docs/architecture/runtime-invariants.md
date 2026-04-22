@@ -5,6 +5,7 @@ These are the rules Kubebar must keep true at runtime.
 ## Product Rules
 
 - The menu bar icon only uses `OK`, `Watch`, `Bad`, or `Stale`.
+- `OK` uses the brand logo in the menu bar, but the opened menu must explicitly show OK text.
 - The first screen is watchlist-first.
 - The first screen shows only a small set of tracked items, with overflow
   pushed behind a secondary entry.
@@ -26,8 +27,11 @@ These are the rules Kubebar must keep true at runtime.
   and show only reason, location, age, count, and short message.
 - Partial section failures must be visible as unavailable and must not make
   unavailable data look healthy.
-- Menu views must not show raw kubectl output.
+- Menu views must not show unprocessed command transcripts.
 - Kubebar keeps config and displayed cluster status local to the app.
+- Context, namespace, workload, and warning names stay app-owned display
+  strings; tooltips and accessibility labels must not expose command
+  transcripts or JSON.
 
 ## Freshness Rules
 
@@ -49,7 +53,10 @@ These are the rules Kubebar must keep true at runtime.
 ## Watchlist Rules
 
 - Watchlist rows stay short and readable.
-- Tracked item names may truncate, but their meaning should still be clear.
+- Long context, namespace, workload, and warning names use one-line middle
+  truncation in views, preserving full names for tooltip and accessibility text.
+- Primary watchlist rows stay one line; detailed reasons stay in watchlist
+  detail, stale banner, warning event, or section notice areas.
 - The watchlist is ordered by attention, not by raw cluster size.
 - An empty watchlist is a real state and must not be treated as a healthy
   cluster.
@@ -62,6 +69,16 @@ These are the rules Kubebar must keep true at runtime.
 - Tracked item details are limited to state, reason, affected pod count, 1-3
   example pod names, and latest related warning.
 
+## Keyboard Rules
+
+- Setup, refresh, edit watchlist, watchlist detail, warning events, and
+  secondary sections must be reachable through native macOS keyboard
+  navigation.
+- Refresh and setup completion must keep enabled and disabled states visible
+  and testable.
+- Keyboard support uses native SwiftUI controls and shortcuts, not custom app
+  shell handling.
+
 ## Failure Rules
 
 - Timeout, command failure, malformed JSON, and no previous data are distinct
@@ -73,4 +90,6 @@ These are the rules Kubebar must keep true at runtime.
 - No previous successful data uses `No previous cluster data`.
 - A refresh failure must never silently clear the last good data.
 - Warning and failure states must not rely on color alone.
+- Watch, Bad, and Stale must be expressed with symbol, state text, and one
+  short reason; color alone is not enough.
 - Stale or failed reads must use distinct icon semantics from `OK`.

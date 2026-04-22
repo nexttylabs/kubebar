@@ -14,15 +14,27 @@ struct TrackedItemDetailView: View {
             }
 
             if !item.detail.examplePodNames.isEmpty {
-                Text("Examples: \(item.detail.examplePodNames.joined(separator: ", "))")
+                let examples = "Examples: \(item.detail.examplePodNames.joined(separator: ", "))"
+                Text(examples)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(examples))
+                    .accessibilityLabel(examples)
             }
 
             if let latestWarning = item.detail.latestWarning {
-                Text("Latest warning: \(latestWarning.summary)")
+                let latestWarningSummary = "Latest warning: \(latestWarning.summary)"
+                Text(latestWarningSummary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(latestWarningSummary))
+                    .accessibilityLabel(latestWarningSummary)
 
                 if let message = latestWarning.message {
                     Text(message)
                         .lineLimit(2)
+                        .help(Text(message))
+                        .accessibilityLabel(message)
                 }
             }
         }

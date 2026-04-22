@@ -16,11 +16,14 @@ struct WatchlistSectionView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(display.visibleWatchItems) { item in
-                    DisclosureGroup {
-                        TrackedItemDetailView(item: item)
-                    } label: {
-                        WatchlistRowView(item: item)
-                    }
+                    DisclosureGroup(
+                        content: {
+                            TrackedItemDetailView(item: item)
+                        },
+                        label: {
+                            WatchlistRowView(item: item)
+                        }
+                    )
                 }
             }
 
@@ -41,6 +44,9 @@ private struct WatchlistRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(item.title))
+                    .accessibilityLabel(item.title)
                 Text(item.reason)
                     .font(.caption)
                     .foregroundStyle(.secondary)

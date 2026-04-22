@@ -4,22 +4,30 @@ import KubebarCore
 struct StatusSummaryView: View {
     let display: MenuDisplayModel
 
+    private var presentation: MenuBarStatusPresentation {
+        MenuBarStatusPresentation(state: display.state)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(display.contextName)
-                    .font(.headline)
-                    .lineLimit(1)
+            Text(display.contextName)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(Text(display.contextName))
+                .accessibilityLabel(display.contextName)
 
-                Spacer()
-
+            HStack(spacing: 6) {
+                Image(systemName: presentation.symbolName)
                 Text(display.state.label)
-                    .font(.caption.weight(.semibold))
+                    .fontWeight(.semibold)
+                Text(display.primaryStatusReason)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-
-            Text(display.healthSentence)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            .font(.subheadline)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(presentation.accessibilityLabel), \(display.primaryStatusReason), context \(display.contextName)")
     }
 }

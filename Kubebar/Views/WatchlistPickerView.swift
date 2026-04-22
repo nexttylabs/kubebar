@@ -65,10 +65,13 @@ struct WatchlistPickerView: View {
             hasItems: !state.availableNamespaces.isEmpty
         ) {
             ForEach(state.availableNamespaces, id: \.self) { namespace in
-                Toggle(
-                    namespace,
-                    isOn: binding(for: .namespace(namespace))
-                )
+                Toggle(isOn: binding(for: .namespace(namespace))) {
+                    Text(namespace)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(Text(namespace))
+                        .accessibilityLabel(namespace)
+                }
             }
         }
     }
@@ -81,14 +84,26 @@ struct WatchlistPickerView: View {
             hasItems: !state.availableWorkloads.isEmpty
         ) {
             ForEach(groupedWorkloads, id: \.key) { group in
-                DisclosureGroup(group.key) {
-                    ForEach(group.value, id: \.self) { workload in
-                        Toggle(
-                            workload.displayTitle,
-                            isOn: binding(for: workload.target)
-                        )
+                DisclosureGroup(
+                    content: {
+                        ForEach(group.value, id: \.self) { workload in
+                            Toggle(isOn: binding(for: workload.target)) {
+                                Text(workload.displayTitle)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .help(Text(workload.displayTitle))
+                                    .accessibilityLabel(workload.displayTitle)
+                            }
+                        }
+                    },
+                    label: {
+                        Text(group.key)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(group.key))
+                            .accessibilityLabel(group.key)
                     }
-                }
+                )
             }
         }
     }
@@ -117,6 +132,8 @@ struct WatchlistPickerView: View {
                     .foregroundStyle(.secondary)
 
                 Button("Retry", action: onRetryTargets)
+                    .keyboardShortcut("r", modifiers: .command)
+                    .help(Text("Retry loading watch targets"))
             }
         }
     }
@@ -132,6 +149,8 @@ struct WatchlistPickerView: View {
                     .foregroundStyle(.secondary)
 
                 Button("Retry", action: onRetryTargets)
+                    .keyboardShortcut("r", modifiers: .command)
+                    .help(Text("Retry loading watch targets"))
             }
         }
     }

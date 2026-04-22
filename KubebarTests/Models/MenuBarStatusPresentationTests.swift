@@ -5,6 +5,11 @@ import Testing
 struct MenuBarStatusPresentationTests {
     @Test("maps health states to distinct symbols and labels")
     func mapsHealthStatesToDistinctSymbolsAndLabels() {
+        #expect(MenuBarStatusPresentation(state: .ok).icon == .custom("KubebarLogo"))
+        #expect(MenuBarStatusPresentation(state: .watch).icon == .system("exclamationmark.triangle"))
+        #expect(MenuBarStatusPresentation(state: .bad).icon == .system("xmark.octagon"))
+        #expect(MenuBarStatusPresentation(state: .stale).icon == .system("clock.badge.exclamationmark"))
+
         #expect(MenuBarStatusPresentation(state: .ok).symbolName == "checkmark.circle")
         #expect(MenuBarStatusPresentation(state: .watch).symbolName == "exclamationmark.triangle")
         #expect(MenuBarStatusPresentation(state: .bad).symbolName == "xmark.octagon")

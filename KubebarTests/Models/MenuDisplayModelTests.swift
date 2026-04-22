@@ -25,6 +25,7 @@ struct MenuDisplayModelTests {
         #expect(display.counters.pods == "12/12")
         #expect(display.counters.warningEvents == "0")
         #expect(display.healthSentence == "Cluster looks healthy")
+        #expect(display.primaryStatusReason == "Cluster looks healthy")
         #expect(display.lastUpdated == "20s ago")
     }
 
@@ -48,6 +49,79 @@ struct MenuDisplayModelTests {
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
         #expect(display.visibleWatchItems.first?.reason == "1 pod pending")
         #expect(display.healthSentence == "api/checkout needs attention")
+        #expect(display.primaryStatusReason == "1 pod pending")
+    }
+
+    @Test("warning events provide primary status reason")
+    func warningEventsProvidePrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 2)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "2 warning events")
+    }
+
+    @Test("single not ready node uses singular primary status reason")
+    func singleNotReadyNodeUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .bad)
+        #expect(display.primaryStatusReason == "1 node not ready")
+    }
+
+    @Test("single not running pod uses singular primary status reason")
+    func singleNotRunningPodUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 11, total: 12)),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "1 pod not running")
+    }
+
+    @Test("single warning event uses singular primary status reason")
+    func singleWarningEventUsesSingularPrimaryStatusReason() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 1)
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "1 warning event")
     }
 
     @Test("first screen caps watchlist and reports overflow")
@@ -70,8 +144,8 @@ struct MenuDisplayModelTests {
         #expect(display.hiddenWatchItemCount == 2)
     }
 
-    @Test("long watch item titles truncate consistently")
-    func longWatchItemTitlesTruncateConsistently() {
+    @Test("long watch item titles stay full for middle truncation")
+    func longWatchItemTitlesStayFullForMiddleTruncation() {
         let snapshot = ClusterSnapshot(
             contextName: "prod",
             nodeSummary: NodeSummary(ready: 3, total: 3),
@@ -89,7 +163,38 @@ struct MenuDisplayModelTests {
 
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
-        #expect(display.visibleWatchItems.first?.title == "production-namespace/checkout-api-with-a-…")
+        #expect(display.visibleWatchItems.first?.title == "production-namespace/checkout-api-with-a-very-long-name")
+    }
+
+    @Test("similar long watch item titles keep suffix differences")
+    func similarLongWatchItemTitlesKeepSuffixDifferences() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 2, total: 2),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .workload(namespace: "production-namespace", name: "checkout-api-with-shared-long-prefix-api"),
+                    state: .ok,
+                    reason: "ready"
+                ),
+                TrackedItemStatus(
+                    target: .workload(namespace: "production-namespace", name: "checkout-worker-with-shared-long-prefix-worker"),
+                    state: .ok,
+                    reason: "ready"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let titles = display.visibleWatchItems.map(\.title)
+
+        #expect(titles == [
+            "production-namespace/checkout-api-with-shared-long-prefix-api",
+            "production-namespace/checkout-worker-with-shared-long-prefix-worker"
+        ])
     }
 
     @Test("failed refresh keeps previous data but marks it stale")
@@ -117,6 +222,7 @@ struct MenuDisplayModelTests {
         #expect(display.lastUpdated == "2m ago")
         #expect(display.staleBanner?.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "kubectl timed out")
+        #expect(display.primaryStatusReason == "kubectl timed out")
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
     }
 
@@ -145,6 +251,7 @@ struct MenuDisplayModelTests {
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
         #expect(display.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "Last refresh is too old")
+        #expect(display.primaryStatusReason == "Last refresh is too old")
     }
 
     @Test("watch item detail defaults to row reason")
@@ -310,6 +417,7 @@ struct MenuDisplayModelTests {
 
         #expect(display.counters.warningEvents == "-")
         #expect(display.state == .watch)
+        #expect(display.primaryStatusReason == "invalid event JSON")
         #expect(display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
     }
 

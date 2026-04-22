@@ -77,9 +77,13 @@ struct MenuBarRootView: View {
     private var actions: some View {
         HStack {
             Button("Retry now", action: onRefresh)
+                .keyboardShortcut("r", modifiers: .command)
+                .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
                 .disabled(isRefreshing)
             Spacer()
             Button("Edit watchlist", action: onEditWatchlist)
+                .keyboardShortcut("e", modifiers: .command)
+                .help(Text("Edit watchlist"))
         }
     }
 
