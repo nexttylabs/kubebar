@@ -73,6 +73,28 @@ This phase does not deliver:
   stay behind a secondary row or a later detail affordance.
 - **D-13:** Overview may show only the most important event or section notice
   summary when space is tight; fuller warning detail belongs in `Events`.
+- **D-42:** Refine `Overview` into a "stability first, attention next" home tab.
+  It should answer whether the cluster is stable, then immediately show the
+  watched object or condition that deserves attention.
+- **D-43:** The preferred Overview order is: status summary, stale banner when
+  present, prioritized watchlist/attention objects, compact counters, and one
+  notice. This refines the earlier generic list when implementing the Overview
+  redesign.
+- **D-44:** Watchlist rows in Overview are ranked by urgency: `Bad`, `Watch`,
+  and `Stale` items before healthy items. When everything is healthy, Overview
+  may show 3-5 compact healthy tracked rows so the operator still sees what is
+  being watched.
+- **D-45:** Empty watchlist is a configuration problem, not a healthy state.
+  Overview must point to Settings instead of showing an all-good surface.
+- **D-46:** Counters stay in Overview, but they are supporting context rather
+  than the main visual focus. If there are attention items, counters appear
+  after those items; if everything is healthy, counters may sit before the
+  watchlist as a fast scan summary.
+- **D-47:** Overview shows at most one notice. Notice priority is: unavailable
+  or partial section data first, then a `Bad` or `Watch` related warning, then
+  any other warning.
+- **D-48:** Full warning detail remains owned by `Events`; Overview must not
+  duplicate the event list or become a dashboard-style event feed.
 
 ### Nodes Tab
 
@@ -293,6 +315,13 @@ Downstream agents MUST read these before planning or implementing.
   reading surface.
 - `Overview` answers "Is the cluster okay, what matters first, and what am I
   watching?"
+- `Overview` should not look like a miniature dashboard. Its main job is to
+  make the next operational glance obvious: stable or not, what needs
+  attention, and which watched namespaces are involved.
+- Watchlist rows should carry the primary reading load in Overview. Counters
+  explain the state, but they should not push the watched objects down.
+- If Overview has a notice, it should feel like the single most important
+  heads-up, not a repeated Events preview.
 - `Nodes`, `Pods`, and `Events` are drill-in reading surfaces, not command
   centers.
 - Settings should feel like an app-level configuration surface, not another

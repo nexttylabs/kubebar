@@ -6,7 +6,8 @@
 **Date:** 2026-04-22
 **Phase:** 09-codexbar-inspired-tabbed-menu-redesign
 **Areas discussed:** CodexBar adaptation, tab structure, settings dialog, quit
-action, architecture and verification
+action, architecture and verification, Overview first-glance answer, Overview
+watchlist presentation, Overview counters, Overview notice summary
 
 ---
 
@@ -69,6 +70,29 @@ details move into dedicated tabs.
 
 **Captured decision:** Overview remains watchlist-first while becoming cleaner
 because Nodes, Pods, and Events move out to tabs.
+
+---
+
+## Overview Redesign Addendum
+
+The user asked to redesign the Overview menu tab after the initial Phase 09
+implementation. Four areas were selected for discussion: first-glance answer,
+watchlist presentation, counters, and notice/event summary. The recommended
+direction was confirmed.
+
+| Area | Recommended Direction | Selected |
+| --- | --- | --- |
+| First-glance answer | Show whether the cluster is stable first, then immediately show what needs attention and what is being watched. | yes |
+| Watchlist presentation | Prioritize abnormal watched items, keep healthy items compact, and cap visible rows at 3-5. | yes |
+| Counters | Keep Nodes, Pods, and Events as supporting context, not the main visual focus. | yes |
+| Notice/Event summary | Show only one highest-priority notice in Overview; keep the full warning list in Events. | yes |
+
+**User's choice:** Confirmed all four recommended Overview decisions.
+
+**Captured decision:** Overview should become a "stability first, attention
+next" home tab. It should avoid dashboard sprawl, keep watchlist rows as the
+primary reading surface, keep counters secondary, and show only one most
+important notice.
 
 ---
 
