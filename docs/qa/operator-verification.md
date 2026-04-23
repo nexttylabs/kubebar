@@ -44,6 +44,10 @@ For all configured menu states, confirm the footer remains visible at the
 bottom of the menu and contains only refresh, settings, and quit actions. The
 refresh cadence picker belongs in Settings.
 
+For `first-use` and `empty-watchlist`, confirm the short setup-required content
+stays near the top, the menu is not forced to the normal long-content height,
+and the footer keeps clear spacing below the main content.
+
 For Watch, Bad, Stale, `kubectl failure`, `metrics-unavailable`, and
 `warning-heavy`, hover the Overview top status row. The visible status text
 should stay short, and the hover text should explain the concrete safe reason
@@ -59,8 +63,8 @@ for that state.
 | Bad | Menu shows Bad and prioritizes the broken tracked target; Nodes tab shows a Not Ready node row, and Pods tab shows failed Pods first with red dots and issue text. | `docs/assets/qa/phase-07-bad.png` |
 | Stale refresh failure | Menu shows Stale while preserving last known top row and cards with stale marking. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
 | Stale age-out | Menu shows Stale because the last successful refresh is too old and cards are visibly stale. | `docs/assets/qa/phase-07-stale-age-out.png` |
-| first-use | Menu shows setup before any saved context exists. | `docs/assets/qa/phase-07-first-use.png` |
-| empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces. | `docs/assets/qa/phase-07-empty-watchlist.png` |
+| first-use | Menu shows setup before any saved context exists; the short setup content stays near the top, and the footer keeps clear spacing below it without forcing a tall menu. | `docs/assets/qa/phase-07-first-use.png` |
+| empty-watchlist | Menu shows setup because the QA fixture context has no selected namespaces; the short setup content stays near the top, and the footer keeps clear spacing below it without forcing a tall menu. | `docs/assets/qa/phase-07-empty-watchlist.png` |
 | kubectl failure | Menu shows Stale with a safe failure message and retained prior status. | `docs/assets/qa/phase-07-kubectl-failure.png` |
 | metrics-unavailable | Menu keeps OK cluster status while CPU and Memory cards show unavailable metrics; Nodes tab keeps rows visible with `-` resource values, and Pods tab still shows watched Pods. | `docs/assets/qa/phase-07-metrics-unavailable.png` |
 | warning-heavy | Menu shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events; Events tab scrolls above the footer, the footer remains visible with refresh/settings/quit only, and Pods tab keeps attention rows before ready rows. | `docs/assets/qa/phase-07-warning-heavy.png` |
@@ -84,7 +88,9 @@ states must be distinct.
 For the footer, confirm refresh, settings, and quit remain reachable after
 switching between Overview, Nodes, Pods, and Events. The tab bar should have
 equal left and right spacing. After a fresh refresh, `Last checked 0s ago`
-should advance as time passes without pressing refresh again.
+should advance as time passes without pressing refresh again. In `first-use`
+and `empty-watchlist`, confirm the footer does not hug the short setup content
+and the menu does not use the full long-content height.
 
 ## Overview Status Hover Check
 

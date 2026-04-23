@@ -18,6 +18,9 @@ These are the rules Kubebar must keep true at runtime.
 - The menu footer stays visible at the bottom of the menu. Long Events, Pods,
   Nodes, or Overview content must scroll above the footer instead of moving
   refresh, settings, or quit actions out of reach.
+- The menu height follows content until it reaches the visible-screen cap.
+  Short setup or selected-tab content keeps a minimum main-content area so the
+  footer does not hug the short content.
 - The menu tab bar must read as horizontally balanced with equal visual spacing
   to the menu edges.
 - Deep troubleshooting stays out of version 1.

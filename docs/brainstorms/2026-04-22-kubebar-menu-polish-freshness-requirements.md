@@ -9,7 +9,8 @@ topic: kubebar-menu-polish-freshness
 
 Kubebar's menu should feel stable, compact, and trustworthy while operators move
 between tabs. The current experience has a few rough edges: long Events content
-can compete with the bottom action area, the tab bar needs more balanced
+can compete with the bottom action area, short content can leave the footer
+visually floating too close to the main content, the tab bar needs more balanced
 horizontal spacing, refresh cadence appears in the menu even though it belongs
 in Settings, and the `Last checked 0s ago` text can remain visually stale after
 time passes.
@@ -26,6 +27,9 @@ role as a glanceable menu bar status tool.
   of pushing the actions out of view.
 - R3. The footer must continue to show the latest checked time plus the primary
   actions for refresh, settings, and quit.
+- R13. When the selected tab or setup content is short, the menu should keep a
+  minimum main-content area so the footer has clear spacing below the short
+  content, while the overall menu height still follows the amount of content.
 
 **Tab Bar Alignment**
 - R4. The tab bar must have visually equal left and right spacing to the menu
@@ -52,6 +56,8 @@ role as a glanceable menu bar status tool.
 
 - The Events tab can contain enough warning rows to require scrolling, and the
   bottom action area remains visible at the bottom.
+- Tabs or setup states with little content keep clear spacing before the footer
+  without forcing the menu to the long-content height.
 - The segmented tab control appears horizontally balanced inside the menu.
 - The menu footer no longer contains a refresh-cadence/timer control.
 - Settings still exposes refresh cadence and saves it normally.
@@ -73,8 +79,10 @@ role as a glanceable menu bar status tool.
 - **Keep cadence in Settings only:** Refresh cadence is a configuration choice,
   not a frequent menu action. Keeping it in Settings reduces footer clutter
   without removing capability.
-- **Keep the footer fixed and scroll tab content:** Operators should not lose
-  refresh, settings, or quit actions because one tab has a long list.
+- **Keep the footer outside scrolling content:** Operators should not lose
+  refresh, settings, or quit actions because one tab has a long list. Short
+  content should get a minimum main-content area, while the menu still shrinks
+  and grows with content until it reaches the safe screen cap.
 - **Treat freshness updates as display updates:** Relative time text should
   update independently of data refresh so the UI does not look frozen or falsely
   current.
@@ -89,8 +97,8 @@ role as a glanceable menu bar status tool.
 
 - [Affects R9-R12][Technical] Choose the lightest refresh-timer behavior that
   keeps `Last checked` accurate without unnecessary UI work.
-- [Affects R1-R5][Technical] Confirm the exact height budget and spacing values
-  against the existing menu layout.
+- [Affects R1-R5, R13][Technical] Confirm the exact height budget and spacing
+  values against the existing menu layout.
 
 ## Next Steps
 

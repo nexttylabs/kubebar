@@ -118,8 +118,9 @@ public enum MenuStateFixtureCatalog {
                 display: setupRequiredDisplay(reason: "No saved context yet."),
                 setupState: firstUseSetupState(),
                 isShowingSetup: true,
-                expectedBehavior: "Menu opens the setup-required state before any saved context exists.",
-                limitations: "Requires visible menu inspection to confirm setup appears instead of a healthy menu."
+                expectedBehavior: "Menu opens the setup-required state before any saved context exists."
+                    + " Short setup content stays near the top while the footer keeps clear spacing below it without forcing a tall menu.",
+                limitations: "Requires visible menu inspection to confirm setup appears instead of a healthy menu, the footer does not hug short content, and the menu is not fixed to the long-content height."
             )
         case .emptyWatchlist:
             return makeFixture(
@@ -127,8 +128,9 @@ public enum MenuStateFixtureCatalog {
                 display: setupRequiredDisplay(reason: "No watched namespace selected."),
                 setupState: emptyWatchlistSetupState(),
                 isShowingSetup: true,
-                expectedBehavior: "Menu opens the setup-required state when the QA fixture context has no selected namespaces.",
-                limitations: "Requires visible menu inspection to confirm the empty watchlist action is visible."
+                expectedBehavior: "Menu opens the setup-required state when the QA fixture context has no selected namespaces."
+                    + " Short setup content stays near the top while the footer keeps clear spacing below it without forcing a tall menu.",
+                limitations: "Requires visible menu inspection to confirm the empty watchlist action is visible, the footer does not hug short content, and the menu is not fixed to the long-content height."
             )
         case .kubectlFailure:
             return makeFixture(
