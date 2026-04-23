@@ -36,12 +36,9 @@ struct StatusSummaryView: View {
             }
 
             if let handoff = display.overview.k9sHandoff {
+                let message = k9sHandoffState.feedbackMessage(for: handoff) ?? display.overview.statusHelpText
                 VStack(alignment: .leading, spacing: 6) {
-                    if let statusMessage = k9sHandoffState.feedbackMessage(for: handoff) {
-                        statusMessageRow(message: statusMessage, for: handoff)
-                    } else {
-                        statusHelpRow(for: handoff)
-                    }
+                    handoffStatusRow(text: message, for: handoff)
                 }
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Open watched target in k9s")
@@ -52,28 +49,14 @@ struct StatusSummaryView: View {
         .focusable()
     }
 
-    private func statusMessageRow(message: String, for handoff: OverviewK9sHandoff) -> some View {
+    private func handoffStatusRow(text: String, for handoff: OverviewK9sHandoff) -> some View {
         HStack(alignment: .center, spacing: 8) {
-            Text(message)
+            Text(text)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
                 .truncationMode(.middle)
-                .help(Text(message))
-
-            Spacer(minLength: 0)
-            openK9sButton(for: handoff)
-        }
-    }
-
-    private func statusHelpRow(for handoff: OverviewK9sHandoff) -> some View {
-        HStack(alignment: .center, spacing: 8) {
-            Text(display.overview.statusHelpText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .truncationMode(.middle)
-                .help(Text(display.overview.statusHelpText))
+                .help(Text(text))
 
             Spacer(minLength: 0)
             openK9sButton(for: handoff)

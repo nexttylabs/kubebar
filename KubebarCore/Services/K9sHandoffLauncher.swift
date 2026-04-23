@@ -31,12 +31,7 @@ public final class K9sHandoffLauncher: K9sHandoffLaunching {
             timeoutSeconds: 12
         )
 
-        do {
-            let result = try runner.run(request)
-            guard result.exitCode == 0 else {
-                throw K9sHandoffLauncherError.failed
-            }
-        } catch {
+        guard let result = try? runner.run(request), result.exitCode == 0 else {
             throw K9sHandoffLauncherError.failed
         }
     }
