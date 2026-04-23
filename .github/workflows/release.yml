@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Get Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Make Scripts Executable
+        run: chmod +x scripts/*.sh
+
+      - name: Build and Package
+        run: ./scripts/build-release.sh ${{ steps.get_version.outputs.VERSION }}
+
+      - name: Extract Release Notes
+        id: extract_notes
+        run: |
+          # Extract the section for the latest version from CHANGELOG.md
+          # It assumes the version is the first H2 header under # Changelog
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          NOTES=$(sed -n "/## \[$VERSION\]/,/## /p" CHANGELOG.md | sed '$d')
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Kubebar.zip
+          body: |
+            ${{ steps.extract_notes.outputs.NOTES }}
+            
+            ---
+            **Installation Note (Ad-hoc Signature)**:
+            Kubebar is currently distributed with an Ad-hoc signature. To run the app:
+            1. Download and extract `Kubebar.zip`.
+            2. **Right-click** `Kubebar.app` and select **Open**.
+            3. Click **Open** again in the security dialog.
+            4. Alternatively, run `xattr -cr /Applications/Kubebar.app` in your terminal to remove the quarantine flag.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
