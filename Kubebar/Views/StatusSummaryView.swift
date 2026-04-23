@@ -44,25 +44,18 @@ struct StatusSummaryView: View {
                         .truncationMode(.middle)
                         .help(Text(display.overview.statusHelpText))
 
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Button(action: onOpenK9sHandoff) {
-                            Label(handoff.buttonLabel(for: k9sHandoffState), systemImage: "arrow.up.right.square")
-                                .labelStyle(.titleAndIcon)
-                        }
-                        .buttonStyle(.borderless)
-                        .controlSize(.small)
-                        .keyboardShortcut("k", modifiers: .command)
-                        .help(Text(handoff.helpText))
-                        .accessibilityLabel(handoff.accessibilityLabel)
-                        .disabled(k9sHandoffState.isOpeningForSameTarget(handoff))
-
-                        if let statusMessage = k9sHandoffState.feedbackMessage(for: handoff) {
+                    if let statusMessage = k9sHandoffState.feedbackMessage(for: handoff) {
+                        HStack(alignment: .center, spacing: 8) {
                             Text(statusMessage)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                                 .help(Text(statusMessage))
+
+                            openK9sButton(for: handoff)
                         }
+                    } else {
+                        openK9sButton(for: handoff)
                     }
                 }
                 .accessibilityElement(children: .contain)
@@ -72,6 +65,20 @@ struct StatusSummaryView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(display.overview.statusAccessibilityLabel)
         .focusable()
+    }
+
+    private func openK9sButton(for handoff: OverviewK9sHandoff) -> some View {
+        Button(action: onOpenK9sHandoff) {
+            Image(systemName: "arrow.up.right.square")
+                .font(.caption)
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.small)
+        .keyboardShortcut("k", modifiers: .command)
+        .help(Text(handoff.helpText))
+        .accessibilityLabel(handoff.accessibilityLabel)
+        .accessibilityHint(Text(handoff.buttonLabel(for: k9sHandoffState)))
+        .disabled(k9sHandoffState.isOpeningForSameTarget(handoff))
     }
 }
 
@@ -95,6 +102,7 @@ private extension K9sHandoffLaunchState {
             target == handoff ? message : nil
         }
     }
+
 }
 
 private extension OverviewK9sHandoff {
