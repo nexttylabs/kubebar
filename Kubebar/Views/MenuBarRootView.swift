@@ -21,6 +21,7 @@ struct MenuBarRootView: View {
     private var menuContent: some View {
         VStack(alignment: .leading, spacing: 16) {
             mainContent
+                .frame(maxWidth: .infinity, alignment: .topLeading)
 
             Divider()
             MenuFooterView(
@@ -33,7 +34,6 @@ struct MenuBarRootView: View {
         }
         .frame(width: Layout.menuWidth)
         .padding(16)
-        .frame(maxHeight: menuMaxHeight, alignment: .topLeading)
         .background(VisibleScreenHeightReader(onChange: updateScreenVisibleHeight))
         .onAppear {
             selectedTab = .overview
@@ -45,7 +45,11 @@ struct MenuBarRootView: View {
         switch isShowingSetup {
         case true:
             ConfigurationRequiredView(onOpenSettings: openSettingsFromMenu)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: Layout.minimumMainContentHeight,
+                    alignment: .topLeading
+                )
         case false:
             configuredMenuContent
         }
@@ -55,6 +59,7 @@ struct MenuBarRootView: View {
         VStack(alignment: .leading, spacing: 16) {
             tabPicker
             selectedTabContentContainer
+            shortSelectedTabContentSpacer
         }
         .onChange(of: selectedTab) { _, _ in
             selectedTabContentHeight = 0
@@ -89,6 +94,17 @@ struct MenuBarRootView: View {
         }
     }
 
+    @ViewBuilder
+    private var shortSelectedTabContentSpacer: some View {
+        let height = selectedTabContentFillerHeight
+
+        if height > 0 {
+            Color.clear
+                .frame(height: height)
+                .accessibilityHidden(true)
+        }
+    }
+
     private var measuredSelectedTabContent: some View {
         selectedTabContent
             .id(selectedTab)
@@ -119,11 +135,19 @@ struct MenuBarRootView: View {
     }
 
     private var selectedTabMaxContentHeight: CGFloat {
-        Layout.selectedTabMaxContentHeight(forScreenVisibleHeight: screenVisibleHeight)
+        Layout.selectedTabMaxContentHeight(forMenuMaxHeight: menuMaxHeight)
     }
 
     private var podItemsMaxHeight: CGFloat {
         Layout.podItemsMaxHeight(forSelectedTabContentHeight: selectedTabMaxContentHeight)
+    }
+
+    private var selectedTabContentFillerHeight: CGFloat {
+        guard selectedTabContentHeight > 0 else { return 0 }
+
+        return Layout.shortContentFillerHeight(
+            forContentHeight: min(selectedTabContentHeight, selectedTabMaxContentHeight)
+        )
     }
 
     private func openSettingsFromMenu() {
@@ -148,8 +172,9 @@ struct MenuBarRootView: View {
 
     private enum Layout {
         static let menuWidth: CGFloat = 360
-        static let preferredContentHeight: CGFloat = 560
-        static let minimumContentHeight: CGFloat = 220
+        static let maximumSelectedTabContentHeight: CGFloat = 560
+        static let minimumMenuHeight: CGFloat = 220
+        static let minimumMainContentHeight: CGFloat = 280
         static let defaultScreenVisibleHeight: CGFloat = 900
         static let screenEdgeInset: CGFloat = 48
         static let nonTabContentHeightBudget: CGFloat = 170
@@ -158,17 +183,30 @@ struct MenuBarRootView: View {
         static let heightTolerance: CGFloat = 1
 
         static func menuMaxHeight(forScreenVisibleHeight visibleHeight: CGFloat) -> CGFloat {
-            let safeVisibleHeight = max(visibleHeight, minimumContentHeight)
-            return max(minimumContentHeight, safeVisibleHeight - screenEdgeInset)
+            MenuLayoutSizing.maximumMenuHeight(
+                forScreenVisibleHeight: visibleHeight,
+                minimumHeight: minimumMenuHeight,
+                screenEdgeInset: screenEdgeInset
+            )
         }
 
-        static func selectedTabMaxContentHeight(forScreenVisibleHeight visibleHeight: CGFloat) -> CGFloat {
-            let availableHeight = menuMaxHeight(forScreenVisibleHeight: visibleHeight) - nonTabContentHeightBudget
-            return min(preferredContentHeight, max(0, availableHeight))
+        static func selectedTabMaxContentHeight(forMenuMaxHeight menuMaxHeight: CGFloat) -> CGFloat {
+            MenuLayoutSizing.contentHeight(
+                forMenuHeight: menuMaxHeight,
+                reservedHeight: nonTabContentHeightBudget,
+                preferredHeight: maximumSelectedTabContentHeight
+            )
         }
 
         static func podItemsMaxHeight(forSelectedTabContentHeight contentHeight: CGFloat) -> CGFloat {
             max(minimumPodItemsHeight, contentHeight - podTabNonItemContentHeightBudget)
+        }
+
+        static func shortContentFillerHeight(forContentHeight contentHeight: CGFloat) -> CGFloat {
+            MenuLayoutSizing.fillerHeight(
+                forContentHeight: contentHeight,
+                minimumHeight: minimumMainContentHeight
+            )
         }
     }
 }

@@ -117,6 +117,19 @@ struct MenuStateFixtureCatalogTests {
         #expect(firstUse.setupState != emptyWatchlist.setupState)
     }
 
+    @Test("setup fixtures describe short content footer anchoring")
+    func setupFixturesDescribeShortContentFooterAnchoring() {
+        let firstUse = MenuStateFixtureCatalog.fixture(for: .firstUse)
+        let emptyWatchlist = MenuStateFixtureCatalog.fixture(for: .emptyWatchlist)
+
+        #expect(firstUse.expectedBehavior.contains("footer keeps clear spacing"))
+        #expect(firstUse.limitations.contains("footer does not hug short content"))
+        #expect(firstUse.limitations.contains("menu is not fixed to the long-content height"))
+        #expect(emptyWatchlist.expectedBehavior.contains("footer keeps clear spacing"))
+        #expect(emptyWatchlist.limitations.contains("footer does not hug short content"))
+        #expect(emptyWatchlist.limitations.contains("menu is not fixed to the long-content height"))
+    }
+
     @Test("fixture lookup uses raw value names")
     func fixtureLookupUsesRawValueNames() throws {
         let fixture = try #require(MenuStateFixtureCatalog.fixture(named: "stale-refresh-failure"))
