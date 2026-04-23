@@ -25,7 +25,6 @@ xcodebuild -project "$APP_NAME.xcodeproj" \
            -configuration Release \
            -derivedDataPath "$BUILD_DIR" \
            -destination "generic/platform=macOS" \
-           BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
            MARKETING_VERSION="$1" \
            CURRENT_PROJECT_VERSION="1" \
            clean build
