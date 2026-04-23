@@ -2,6 +2,7 @@ import Foundation
 
 public enum MenuQAState: String, CaseIterable, Sendable {
     case healthy
+    case completedJobs = "completed-jobs"
     case watch
     case bad
     case staleRefreshFailure = "stale-refresh-failure"
@@ -59,6 +60,15 @@ public enum MenuStateFixtureCatalog {
                 expectedBehavior: "Overview shows OK with a top status row, four cards, and neutral Recent Warnings."
                     + " Pods tab groups watched Pods by namespace with ready counts.",
                 limitations: "Requires visible menu inspection to confirm the top row, four-card grid, and capped warning area."
+            )
+        case .completedJobs:
+            return makeFixture(
+                id: state,
+                display: evaluator.evaluate(snapshot: completedJobsSnapshot(), now: now),
+                setupState: completedJobsSetupState(),
+                expectedBehavior: "Overview shows OK when the watched scope has only completed Job Pods."
+                    + " Pods tab has no active Pod rows and says completed jobs are OK.",
+                limitations: "Requires visible menu inspection to confirm completed Job Pods do not appear as unready active rows."
             )
         case .watch:
             return makeFixture(
@@ -208,6 +218,27 @@ public enum MenuStateFixtureCatalog {
                     reason: "3/3 watched pods running"
                 )
             ]),
+            capturedAt: capturedAt
+        )
+    }
+
+    private static func completedJobsSnapshot() -> ClusterSnapshot {
+        ClusterSnapshot(
+            contextName: "QA fixture",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(healthyNodeDetails()),
+            podsSection: .available(PodSummary(ready: 0, running: 0, total: 0)),
+            podDetailsSection: .available([]),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(
+                    target: .namespace("qa-jobs"),
+                    state: .ok,
+                    reason: "completed jobs are OK"
+                )
+            ]),
+            hasCompletedWatchedPods: true,
             capturedAt: capturedAt
         )
     }
@@ -567,6 +598,18 @@ public enum MenuStateFixtureCatalog {
             selectedContext: nil,
             availableContexts: ["QA fixture", "QA standby"],
             watchlist: WatchlistSelectionState(availableNamespaces: []),
+            refreshCadence: .oneMinute
+        )
+    }
+
+    private static func completedJobsSetupState() -> SetupFlowState {
+        SetupFlowState(
+            selectedContext: "QA fixture",
+            availableContexts: ["QA fixture", "QA standby"],
+            watchlist: WatchlistSelectionState(
+                availableNamespaces: ["qa-api", "qa-jobs", "qa-monitoring"],
+                selectedTargets: [.namespace("qa-jobs")]
+            ),
             refreshCadence: .oneMinute
         )
     }

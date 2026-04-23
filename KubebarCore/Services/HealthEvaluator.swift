@@ -546,6 +546,10 @@ public struct HealthEvaluator: Sendable {
 
     private func podTabEmptyMessage(from snapshot: ClusterSnapshot, podDetails: [PodDetail]?) -> String {
         if let podDetails, podDetails.isEmpty, !snapshot.trackedItems.isEmpty {
+            if snapshot.hasCompletedWatchedPods {
+                return "No active pods; completed jobs are OK"
+            }
+
             return "No watched pods found"
         }
 

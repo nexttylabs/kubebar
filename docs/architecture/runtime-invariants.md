@@ -57,6 +57,13 @@ These are the rules Kubebar must keep true at runtime.
   values must not be rendered as `0`.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
+- Successfully completed Job Pods are not active readiness failures. They do
+  not reduce active Pod ready/all counts, do not appear as active Pod rows by
+  default, and do not move the menu to `Watch` or `Bad` by themselves.
+- A watched target with only successfully completed Job Pods stays `OK` and
+  uses `No active pods; completed jobs are OK` in the Pods tab empty state.
+- Failed Job Pods remain failures; only successful completion gets the
+  completed treatment.
 - A watched target with no matching Pods is a normal OK condition with a clear
   row reason, not a Watch or Bad Pod failure.
 - Kubebar does not query Kubernetes Secrets.

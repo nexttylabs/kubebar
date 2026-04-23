@@ -19,6 +19,7 @@ struct MenuStateFixtureCatalogTests {
     @Test("required fixtures map to locked display states")
     func requiredFixturesMapToLockedDisplayStates() {
         let healthy = MenuStateFixtureCatalog.fixture(for: .healthy)
+        let completedJobs = MenuStateFixtureCatalog.fixture(for: .completedJobs)
         let watch = MenuStateFixtureCatalog.fixture(for: .watch)
         let bad = MenuStateFixtureCatalog.fixture(for: .bad)
         let staleRefreshFailure = MenuStateFixtureCatalog.fixture(for: .staleRefreshFailure)
@@ -30,6 +31,13 @@ struct MenuStateFixtureCatalogTests {
         #expect(healthy.display.state == .ok)
         #expect(healthy.display.podTab.summary == "3/3 watched pods ready")
         #expect(healthy.display.podTab.sections.map(\.namespace) == ["qa-api", "qa-monitoring"])
+        #expect(completedJobs.display.state == .ok)
+        #expect(completedJobs.display.primaryStatusReason == "All tracked items OK")
+        #expect(completedJobs.display.visibleWatchItems.first?.reason == "completed jobs are OK")
+        #expect(completedJobs.display.overview.cards.first(where: { $0.id == "pods" })?.value == "0/0")
+        #expect(completedJobs.display.podTab.summary == "0/0 watched pods ready")
+        #expect(completedJobs.display.podTab.sections.isEmpty)
+        #expect(completedJobs.display.podTab.emptyMessage == "No active pods; completed jobs are OK")
         #expect(watch.display.state == .watch)
         #expect(watch.display.podTab.sections.first?.namespace == "qa-api")
         #expect(watch.display.podTab.sections.first?.rows.first?.state == .watch)
@@ -112,8 +120,10 @@ struct MenuStateFixtureCatalogTests {
     @Test("fixture lookup uses raw value names")
     func fixtureLookupUsesRawValueNames() throws {
         let fixture = try #require(MenuStateFixtureCatalog.fixture(named: "stale-refresh-failure"))
+        let completedJobs = try #require(MenuStateFixtureCatalog.fixture(named: "completed-jobs"))
 
         #expect(fixture.id == .staleRefreshFailure)
+        #expect(completedJobs.id == .completedJobs)
         #expect(MenuStateFixtureCatalog.fixture(named: "missing") == nil)
     }
 

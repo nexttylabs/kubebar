@@ -477,6 +477,30 @@ struct MenuDisplayModelTests {
         #expect(emptyDisplay.podTab.emptyMessage == "No watched pods found")
     }
 
+    @Test("completed only watched pods stay healthy with completed empty message")
+    func completedOnlyWatchedPodsStayHealthyWithCompletedEmptyMessage() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 0, running: 0, total: 0)),
+            podDetailsSection: .available([]),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("jobs"), state: .ok, reason: "completed jobs are OK")
+            ]),
+            hasCompletedWatchedPods: true,
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.state == .ok)
+        #expect(display.primaryStatusReason == "All tracked items OK")
+        #expect(display.podTab.sections.isEmpty)
+        #expect(display.podTab.emptyMessage == "No active pods; completed jobs are OK")
+    }
+
     @Test("single warning event uses singular primary status reason")
     func singleWarningEventUsesSingularPrimaryStatusReason() {
         let snapshot = ClusterSnapshot(

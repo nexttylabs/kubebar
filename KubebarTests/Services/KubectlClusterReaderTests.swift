@@ -389,6 +389,57 @@ struct KubectlClusterReaderTests {
         #expect(item?.examplePodNames == [])
     }
 
+    @Test("completed job pods are excluded from active summaries and rows")
+    func completedJobPodsAreExcludedFromActiveSummariesAndRows() throws {
+        let snapshot = try readSnapshot(
+            pods: activeAndCompletedJobPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let item = snapshot.trackedItems.first
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(snapshot.podsSection.value == PodSummary(ready: 1, running: 1, total: 1))
+        #expect(snapshot.hasCompletedWatchedPods == true)
+        #expect(details.map(\.name) == ["checkout-active"])
+        #expect(item?.state == .ok)
+        #expect(item?.reason == "1/1 pods running")
+    }
+
+    @Test("completed only watched scope stays healthy")
+    func completedOnlyWatchedScopeStaysHealthy() throws {
+        let snapshot = try readSnapshot(
+            pods: completedOnlyJobPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("jobs")]
+        )
+        let item = snapshot.trackedItems.first
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(snapshot.podsSection.value == PodSummary(ready: 0, running: 0, total: 0))
+        #expect(snapshot.hasCompletedWatchedPods == true)
+        #expect(details.isEmpty)
+        #expect(item?.state == .ok)
+        #expect(item?.reason == "completed jobs are OK")
+    }
+
+    @Test("failed job pods remain bad")
+    func failedJobPodsRemainBad() throws {
+        let snapshot = try readSnapshot(
+            pods: failedJobPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("jobs")]
+        )
+        let item = snapshot.trackedItems.first
+        let details = try #require(snapshot.podDetailsSection.value)
+
+        #expect(snapshot.podsSection.value == PodSummary(ready: 0, running: 0, total: 1))
+        #expect(snapshot.hasCompletedWatchedPods == false)
+        #expect(details.map(\.name) == ["report-failed"])
+        #expect(item?.state == .bad)
+        #expect(item?.reason == "1 pod failed")
+    }
+
     @Test("failed pods outrank restarting and not ready pods")
     func failedPodsOutrankRestartingAndNotReadyPods() throws {
         let snapshot = try readSnapshot(
@@ -954,6 +1005,75 @@ private let healthyCheckoutPodsJSON = """
         "conditions": [{"type": "Ready", "status": "True"}],
         "containerStatuses": [
           {"ready": true, "restartCount": 0}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let activeAndCompletedJobPodsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-active"},
+      "status": {
+        "phase": "Running",
+        "conditions": [{"type": "Ready", "status": "True"}],
+        "containerStatuses": [
+          {"ready": true, "restartCount": 0}
+        ]
+      }
+    },
+    {
+      "metadata": {"namespace": "api", "name": "report-complete"},
+      "status": {
+        "phase": "Succeeded",
+        "conditions": [{"type": "Ready", "status": "False"}],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Completed"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let completedOnlyJobPodsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "jobs", "name": "report-succeeded"},
+      "status": {
+        "phase": "Succeeded",
+        "conditions": [{"type": "Ready", "status": "False"}],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Completed"}}}
+        ]
+      }
+    },
+    {
+      "metadata": {"namespace": "jobs", "name": "cleanup-completed"},
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Completed"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let failedJobPodsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "jobs", "name": "report-failed"},
+      "status": {
+        "phase": "Failed",
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Error"}}}
         ]
       }
     }
