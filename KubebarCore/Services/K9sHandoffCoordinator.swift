@@ -36,6 +36,28 @@ public enum K9sHandoffLaunchState: Equatable, Sendable {
     }
 }
 
+public extension K9sHandoffLaunchState {
+    func isOpeningForSameTarget(_ handoff: OverviewK9sHandoff) -> Bool {
+        switch self {
+        case let .opening(target):
+            target == handoff
+        default:
+            false
+        }
+    }
+
+    func feedbackMessage(for handoff: OverviewK9sHandoff) -> String? {
+        switch self {
+        case .idle:
+            nil
+        case .opening(let target):
+            target == handoff ? "Opening k9s..." : nil
+        case .failed(let target, let message):
+            target == handoff ? message : nil
+        }
+    }
+}
+
 @MainActor
 public final class K9sHandoffCoordinator {
     public private(set) var state: K9sHandoffLaunchState = .idle

@@ -80,6 +80,59 @@ struct K9sHandoffCoordinatorTests {
         coordinator.resetIfTargetUnavailable(nil)
         #expect(coordinator.state == .idle)
     }
+
+    @Test("handoff state exposes feedback message for matching target only")
+    func feedbackMessageTargetsOnlyTheMatchingLaunchTarget() {
+        let matchingTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "prod", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+        let otherTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "stage", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+
+        #expect(K9sHandoffLaunchState.idle.feedbackMessage(for: matchingTarget) == nil)
+        #expect(K9sHandoffLaunchState.opening(target: matchingTarget).feedbackMessage(for: matchingTarget) == "Opening k9s...")
+        #expect(K9sHandoffLaunchState.opening(target: matchingTarget).feedbackMessage(for: otherTarget) == nil)
+        #expect(
+            K9sHandoffLaunchState.failed(
+                target: matchingTarget,
+                message: "Could not open k9s for prod/api"
+            ).feedbackMessage(for: matchingTarget) == "Could not open k9s for prod/api"
+        )
+        #expect(
+            K9sHandoffLaunchState.failed(
+                target: matchingTarget,
+                message: "Could not open k9s for prod/api"
+            ).feedbackMessage(for: otherTarget) == nil
+        )
+    }
+
+    @Test("opening feedback flag is target-specific")
+    func openingStateIsOpeningOnlyForTheMatchingTarget() {
+        let matchingTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "prod", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+        let otherTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "stage", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+        let openingState = K9sHandoffLaunchState.opening(target: matchingTarget)
+
+        #expect(openingState.isOpeningForSameTarget(matchingTarget))
+        #expect(!openingState.isOpeningForSameTarget(otherTarget))
+        #expect(!K9sHandoffLaunchState.idle.isOpeningForSameTarget(matchingTarget))
+    }
 }
 
 private final class ControlledLauncher: K9sHandoffLaunching, @unchecked Sendable {

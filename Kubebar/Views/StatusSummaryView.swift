@@ -37,25 +37,10 @@ struct StatusSummaryView: View {
 
             if let handoff = display.overview.k9sHandoff {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(display.overview.statusHelpText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .truncationMode(.middle)
-                        .help(Text(display.overview.statusHelpText))
-
                     if let statusMessage = k9sHandoffState.feedbackMessage(for: handoff) {
-                        HStack(alignment: .center, spacing: 8) {
-                            Text(statusMessage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .help(Text(statusMessage))
-
-                            openK9sButton(for: handoff)
-                        }
+                        statusMessageRow(message: statusMessage, for: handoff)
                     } else {
-                        openK9sButton(for: handoff)
+                        statusHelpRow(for: handoff)
                     }
                 }
                 .accessibilityElement(children: .contain)
@@ -67,9 +52,37 @@ struct StatusSummaryView: View {
         .focusable()
     }
 
+    private func statusMessageRow(message: String, for handoff: OverviewK9sHandoff) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .help(Text(message))
+
+            Spacer(minLength: 0)
+            openK9sButton(for: handoff)
+        }
+    }
+
+    private func statusHelpRow(for handoff: OverviewK9sHandoff) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(display.overview.statusHelpText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .help(Text(display.overview.statusHelpText))
+
+            Spacer(minLength: 0)
+            openK9sButton(for: handoff)
+        }
+    }
+
     private func openK9sButton(for handoff: OverviewK9sHandoff) -> some View {
         Button(action: onOpenK9sHandoff) {
-            Image(systemName: "arrow.up.right.square")
+            Image(systemName: "arrow.right")
                 .font(.caption)
         }
         .buttonStyle(.borderless)
@@ -80,29 +93,6 @@ struct StatusSummaryView: View {
         .accessibilityHint(Text(handoff.buttonLabel(for: k9sHandoffState)))
         .disabled(k9sHandoffState.isOpeningForSameTarget(handoff))
     }
-}
-
-private extension K9sHandoffLaunchState {
-    func isOpeningForSameTarget(_ handoff: OverviewK9sHandoff) -> Bool {
-        switch self {
-        case let .opening(target):
-            target == handoff
-        default:
-            false
-        }
-    }
-
-    func feedbackMessage(for handoff: OverviewK9sHandoff) -> String? {
-        switch self {
-        case .idle:
-            nil
-        case .opening(let target):
-            target == handoff ? "Opening k9s..." : nil
-        case .failed(let target, let message):
-            target == handoff ? message : nil
-        }
-    }
-
 }
 
 private extension OverviewK9sHandoff {
