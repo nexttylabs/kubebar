@@ -374,8 +374,8 @@ struct KubectlClusterReaderTests {
         #expect(!runner.requests.contains { $0.arguments.contains(forbiddenResource) })
     }
 
-    @Test("missing workload produces no matching pods")
-    func missingWorkloadProducesNoMatchingPods() throws {
+    @Test("missing workload produces healthy no matching pods")
+    func missingWorkloadProducesHealthyNoMatchingPods() throws {
         let snapshot = try readSnapshot(
             pods: emptyListJSON,
             warningEvents: emptyListJSON,
@@ -383,7 +383,7 @@ struct KubectlClusterReaderTests {
         )
         let item = snapshot.trackedItems.first
 
-        #expect(item?.state == .watch)
+        #expect(item?.state == .ok)
         #expect(item?.reason == "no matching pods")
         #expect(item?.affectedPodCount == nil)
         #expect(item?.examplePodNames == [])

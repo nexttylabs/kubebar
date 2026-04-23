@@ -1,41 +1,39 @@
 ---
-title: fix: Reclassify no matching Pods health
+title: fix: Treat no matching Pods as normal
 type: fix
 status: completed
 date: 2026-04-22
 ---
 
-# fix: Reclassify no matching Pods health
+# fix: Treat no matching Pods as normal
 
 ## Overview
 
-Change Kubebar so a watched namespace or workload with no matching Pods is not
-classified as `Bad`. The app should still make the condition visible, but it
-should not treat "no matching pods" as the same class of failure as failed,
-restarting, or crash-looping Pods.
+Change Kubebar so a watched namespace or workload with no matching Pods is
+classified as `OK`. The row can still explain "no matching pods", but the app
+should not treat that condition as a cluster warning or failure.
 
 ## Problem Frame
 
-`KubectlClusterReader` currently returns a watched item with state `Bad` when a
-watch target has no matching Pods. `HealthEvaluator` then promotes any bad
-tracked item to a `Bad` cluster status. That makes an empty watched scope look
-like a failing cluster even though no failed Pod exists. This conflicts with
-the product rule that `Bad` should represent actual attention-worthy failure,
-while empty or unavailable data should be visibly distinct.
+`KubectlClusterReader` previously returned a watched item with a non-OK state
+when a watch target had no matching Pods. `HealthEvaluator` then surfaced the
+condition as cluster attention. That made an empty watched scope look
+actionable even though no failed Pod exists. The current product rule treats
+that empty scope as normal.
 
 ## Requirements Trace
 
-- R1. A watch target with no matching Pods must not make the cluster state
-  `Bad`.
-- R2. The watch target should still remain visible with a clear
+- R1. A watch target with no matching Pods must keep the cluster state `OK`
+  when no other warning or failure exists.
+- R2. The watch target may still remain visible with a clear
   "no matching pods" reason.
 - R3. Actual failed, restarting, or crash-looping Pods must still produce
   `Bad`.
 - R4. Pending, unknown, not-ready, and warning-like Pod states must continue to
   produce `Watch`.
 - R5. The Pods tab empty state must remain distinct from unavailable Pod data.
-- R6. Runtime documentation must state that no matching Pods is a visible
-  watch condition, not a bad Pod failure.
+- R6. Runtime documentation must state that no matching Pods is a normal OK
+  condition, not a Watch or Bad Pod failure.
 
 ## Scope Boundaries
 
@@ -53,8 +51,8 @@ while empty or unavailable data should be visibly distinct.
 - `AGENTS.md` requires `HealthEvaluator` to be the single source of truth for
   severity and stale or unavailable data to never look falsely healthy.
 - `KubebarCore/Services/KubectlClusterReader.swift` creates
-  `TrackedItemStatus` values for watch targets and currently assigns `Bad` to
-  no matching Pods.
+  `TrackedItemStatus` values for watch targets and assigns the state for no
+  matching Pods.
 - `KubebarCore/Services/HealthEvaluator.swift` promotes any tracked item with
   state `Bad` to a bad cluster state.
 - `KubebarTests/Services/KubectlClusterReaderTests.swift` has coverage for no
@@ -78,8 +76,8 @@ while empty or unavailable data should be visibly distinct.
 
 ## Key Technical Decisions
 
-- **Classify no matching Pods as `Watch`:** This keeps the condition visible
-  without using the failure severity reserved for actual bad Pods or bad nodes.
+- **Classify no matching Pods as `OK`:** This keeps an empty watched scope from
+  becoming cluster attention while preserving the row reason.
 - **Keep the reason string stable:** Preserve "no matching pods" so existing UI
   copy and operator meaning remain clear.
 - **Avoid fake affected Pod counts:** No matching Pods should not report `0`
@@ -87,15 +85,14 @@ while empty or unavailable data should be visibly distinct.
   if a related warning exists.
 - **Add regression coverage at both source and display layers:** The reader
   test proves the tracked item state, while the display test proves the cluster
-  state is not promoted to `Bad`.
+  state stays `OK`.
 
 ## Open Questions
 
 ### Resolved During Planning
 
-- **Should no matching Pods be `OK` or `Watch`?** Use `Watch`. The target is in
-  the user's watchlist and the missing match is still useful to notice, but it
-  is not a hard failure.
+- **Should no matching Pods be `OK` or `Watch`?** Use `OK`. The user clarified
+  that no matching Pods is normal, not an attention state.
 
 ### Deferred to Implementation
 
@@ -106,7 +103,7 @@ while empty or unavailable data should be visibly distinct.
 
 - [x] **Unit 1: Reclassify no matching Pods at the tracked-item source**
 
-**Goal:** Make no matching Pods produce a visible non-bad tracked item.
+**Goal:** Make no matching Pods produce a normal tracked item.
 
 **Requirements:** R1, R2, R3, R4
 
@@ -117,7 +114,7 @@ while empty or unavailable data should be visibly distinct.
 - Test: `KubebarTests/Services/KubectlClusterReaderTests.swift`
 
 **Approach:**
-- Change the no matching Pods branch so it returns `Watch` instead of `Bad`.
+- Change the no matching Pods branch so it returns `OK`.
 - Preserve the "no matching pods" reason.
 - Remove the fake `affectedPodCount: 0` value unless a test reveals existing UI
   needs it for a specific reason.
@@ -131,18 +128,18 @@ while empty or unavailable data should be visibly distinct.
 
 **Test scenarios:**
 - Happy path: workload target with zero matching Pods -> tracked item state is
-  `Watch`, reason is "no matching pods", and example Pod names are empty.
+  `OK`, reason is "no matching pods", and example Pod names are empty.
 - Regression: failed Pods still return `Bad`.
 - Regression: restarting Pods still return `Bad`.
 - Regression: pending or unknown Pods still return `Watch`.
 
 **Verification:**
-- No matching Pods no longer originate as a bad tracked item.
+- No matching Pods no longer originate as an attention tracked item.
 - Existing failure-state tests continue to pass.
 
 - [x] **Unit 2: Lock display-level health behavior**
 
-**Goal:** Ensure the full display model does not report a bad cluster solely
+**Goal:** Ensure the full display model does not report a non-OK cluster solely
 because a watched target has no matching Pods.
 
 **Requirements:** R1, R2, R5
@@ -156,8 +153,8 @@ because a watched target has no matching Pods.
 - Extend the existing Pods tab empty-state coverage or add a nearby focused test
   using a snapshot with no Pod details and a tracked item reason of
   "no matching pods".
-- Assert the display state is `Watch`, not `Bad`.
-- Assert the primary status reason stays useful and the Pods tab remains empty,
+- Assert the display state is `OK`, not `Watch` or `Bad`.
+- Assert the watched item reason stays useful and the Pods tab remains empty,
   not unavailable.
 
 **Patterns to follow:**
@@ -166,7 +163,7 @@ because a watched target has no matching Pods.
 
 **Test scenarios:**
 - Happy path: empty Pod details plus no matching Pods tracked item -> display
-  state is `Watch`, primary reason is "no matching pods", and Pods tab empty
+  state is `OK`, row reason is "no matching pods", and Pods tab empty
   message is "No watched pods found".
 - Regression: unavailable Pod data still shows a Pod unavailable message rather
   than the empty watched Pods message.
@@ -177,7 +174,7 @@ because a watched target has no matching Pods.
 - [x] **Unit 3: Update runtime invariant documentation**
 
 **Goal:** Record the new severity rule so future changes do not reclassify no
-matching Pods as a hard failure.
+matching Pods as an attention state.
 
 **Requirements:** R6
 
@@ -188,7 +185,7 @@ matching Pods as a hard failure.
 
 **Approach:**
 - Add a concise invariant near the Pod data rules: no matching Pods is a visible
-  watch condition, not a Bad Pod failure.
+  normal OK condition, not a Watch or Bad Pod failure.
 - Keep wording aligned with existing rules about unavailable data and current
   failed or crash-looping Pods.
 
@@ -205,7 +202,7 @@ matching Pods as a hard failure.
 
 - **Interaction graph:** `KubectlClusterReader` shapes tracked-item state;
   `HealthEvaluator` consumes that state when choosing menu status and reason.
-- **Error propagation:** No matching Pods remains visible as a watch reason;
+- **Error propagation:** No matching Pods remains visible as a normal row reason;
   real Pod read failures still surface through unavailable section messages.
 - **State lifecycle risks:** Empty watched scope must not be confused with
   stale data or unavailable data.
@@ -219,7 +216,7 @@ matching Pods as a hard failure.
 
 | Risk | Mitigation |
 |------|------------|
-| Empty watched scope becomes too quiet | Use `Watch`, not `OK`, and preserve the visible reason text. |
+| Empty watched scope becomes too quiet | Preserve the visible row reason while keeping the status `OK`. |
 | Real bad Pod states are weakened by accident | Keep failed and restarting regression tests passing. |
 | Empty and unavailable Pod states become blurred | Keep model coverage for both empty watched Pods and unavailable Pod data. |
 

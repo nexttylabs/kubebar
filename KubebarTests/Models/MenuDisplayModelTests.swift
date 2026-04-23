@@ -441,8 +441,8 @@ struct MenuDisplayModelTests {
         #expect(row.issueText == nil)
     }
 
-    @Test("pod tab distinguishes unavailable and empty watched pods")
-    func podTabDistinguishesUnavailableAndEmptyWatchedPods() {
+    @Test("pod tab treats empty watched pods as healthy and distinct from unavailable")
+    func podTabTreatsEmptyWatchedPodsAsHealthyAndDistinctFromUnavailable() {
         let unavailable = ClusterSnapshot(
             contextName: "prod",
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
@@ -456,9 +456,10 @@ struct MenuDisplayModelTests {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             podsSection: .available(PodSummary(ready: 0, running: 0, total: 0)),
             podDetailsSection: .available([]),
+            metricsSection: .available(metricsSummary()),
             warningEventsSection: .available([]),
             workloadsSection: .available([
-                TrackedItemStatus(target: .namespace("api"), state: .watch, reason: "no matching pods")
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "no matching pods")
             ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
@@ -467,8 +468,10 @@ struct MenuDisplayModelTests {
         let emptyDisplay = HealthEvaluator().evaluate(snapshot: empty, now: Date(timeIntervalSince1970: 120))
 
         #expect(unavailableDisplay.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
-        #expect(emptyDisplay.state == .watch)
-        #expect(emptyDisplay.primaryStatusReason == "no matching pods")
+        #expect(emptyDisplay.state == .ok)
+        #expect(emptyDisplay.primaryStatusReason == "All tracked items OK")
+        #expect(emptyDisplay.visibleWatchItems.first?.state == .ok)
+        #expect(emptyDisplay.visibleWatchItems.first?.reason == "no matching pods")
         #expect(emptyDisplay.podTab.unavailableMessage == nil)
         #expect(emptyDisplay.podTab.sections.isEmpty)
         #expect(emptyDisplay.podTab.emptyMessage == "No watched pods found")
