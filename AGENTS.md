@@ -6,6 +6,7 @@
 - Kubebar is a native macOS menu bar app for quickly checking Kubernetes health.
 - It is not a replacement for `k9s`; it is the glanceable status tool used before opening deeper debugging tools.
 - If a deeper guide exists under `docs/architecture/`, treat that guide as authoritative for that area.
+- For any feature work, read [docs/architecture/runtime-invariants.md](docs/architecture/runtime-invariants.md) first—it contains 50+ immutable rules about stale data, warning limits, node conditions, and pod completion handling.
 - Keep this file current when project structure, quality gates, or ownership boundaries change.
 
 ## Product Rules
@@ -61,6 +62,13 @@ KubebarTests/  Unit tests for trusted product behavior
 docs/          Requirements, plans, and architecture notes
 scripts/       Local quality checks
 ```
+
+## Key Exemplar Files
+
+- [KubebarCore/Services/HealthEvaluator.swift](KubebarCore/Services/HealthEvaluator.swift) — Pure evaluation logic, no side effects
+- [KubebarCore/Services/KubectlClusterReader.swift](KubebarCore/Services/KubectlClusterReader.swift) — Concurrent JSON parsing, Sendable types
+- [Kubebar/KubebarApp.swift](Kubebar/KubebarApp.swift) — App entry, DEBUG fixtures, thin view setup
+- [KubebarCore/Models/MenuDisplayModel.swift](KubebarCore/Models/MenuDisplayModel.swift) — Display-ready data (no logic)
 
 ## Change Discipline
 
