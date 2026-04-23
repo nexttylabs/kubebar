@@ -43,6 +43,38 @@ struct MenuDisplayModelTests {
         #expect(display.eventsTab.emptyMessage == "No current warning events")
     }
 
+    @Test("display only freshness tick updates last checked")
+    func displayOnlyFreshnessTickUpdatesLastChecked() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .workload(namespace: "api", name: "checkout"), state: .ok, reason: "6/6 pods running")
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let initial = HealthEvaluator().evaluate(
+            snapshot: snapshot,
+            now: Date(timeIntervalSince1970: 100),
+            staleAfterSeconds: 120
+        )
+        let tick = HealthEvaluator().evaluate(
+            snapshot: snapshot,
+            now: Date(timeIntervalSince1970: 101),
+            staleAfterSeconds: 120
+        )
+
+        #expect(initial.state == .ok)
+        #expect(initial.lastUpdated == "0s ago")
+        #expect(tick.state == .ok)
+        #expect(tick.lastUpdated == "1s ago")
+        #expect(tick.counters == initial.counters)
+        #expect(tick.visibleWatchItems == initial.visibleWatchItems)
+    }
+
     @Test("bad tracked items become first-screen attention")
     func badTrackedItemsBecomeFirstScreenAttention() {
         let snapshot = ClusterSnapshot(
@@ -324,7 +356,7 @@ struct MenuDisplayModelTests {
             podDetailsSection: .available([]),
             warningEventsSection: .available([]),
             workloadsSection: .available([
-                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "no matching pods")
+                TrackedItemStatus(target: .namespace("api"), state: .watch, reason: "no matching pods")
             ]),
             capturedAt: Date(timeIntervalSince1970: 100)
         )
@@ -333,6 +365,8 @@ struct MenuDisplayModelTests {
         let emptyDisplay = HealthEvaluator().evaluate(snapshot: empty, now: Date(timeIntervalSince1970: 120))
 
         #expect(unavailableDisplay.podTab.unavailableMessage == "Pod data unavailable: invalid pod JSON")
+        #expect(emptyDisplay.state == .watch)
+        #expect(emptyDisplay.primaryStatusReason == "no matching pods")
         #expect(emptyDisplay.podTab.unavailableMessage == nil)
         #expect(emptyDisplay.podTab.sections.isEmpty)
         #expect(emptyDisplay.podTab.emptyMessage == "No watched pods found")

@@ -13,6 +13,11 @@ These are the rules Kubebar must keep true at runtime.
   Memory card, and capped `Recent Warnings`; warning overflow belongs in Events.
 - The menu must stay within the visible screen height. Long tab content scrolls
   inside the menu instead of pushing the menu off screen.
+- The menu footer stays visible at the bottom of the menu. Long Events, Pods,
+  Nodes, or Overview content must scroll above the footer instead of moving
+  refresh, settings, or quit actions out of reach.
+- The menu tab bar must read as horizontally balanced with equal visual spacing
+  to the menu edges.
 - Deep troubleshooting stays out of version 1.
 
 ## Data Rules
@@ -50,6 +55,8 @@ These are the rules Kubebar must keep true at runtime.
   values must not be rendered as `0`.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
+- A watched target with no matching Pods is a visible Watch condition, not a
+  Bad Pod failure.
 - Kubebar does not query Kubernetes Secrets.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
@@ -81,6 +88,10 @@ These are the rules Kubebar must keep true at runtime.
   and update the safe stale reason without clearing counters or watchlist rows.
 - Stale state must show the last successful update and the failure reason when
   one is available.
+- `Last checked` is display-only freshness text. It updates from the existing
+  snapshot as time passes and must not trigger a Kubernetes read by itself.
+- Refresh cadence is configured in Settings. The menu footer keeps refresh,
+  settings, and quit actions but does not expose a separate cadence picker.
 - If refresh fails before any successful snapshot exists, the stale reason is
   `No previous cluster data`.
 - If no valid configuration exists, the app shows setup or recovery state

@@ -142,8 +142,8 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: warningHeavySnapshot(), now: now),
                 expectedBehavior: "Overview shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events."
-                    + " Pods tab keeps attention rows before ready rows.",
-                limitations: "Requires visible menu inspection to confirm warning rows stay clear and overflow does not hide the top row or four cards."
+                    + " Events tab scrolls above the footer, the footer remains visible with refresh/settings/quit only, and Pods tab keeps attention rows before ready rows.",
+                limitations: "Requires visible menu inspection to confirm warning rows stay clear, overflow keeps the footer reachable, and the tab bar has balanced spacing."
             )
         }
     }

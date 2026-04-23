@@ -58,3 +58,17 @@ struct RefreshGateTests {
         #expect(gate.shouldApply(ticket, currentConfig: updated) == false)
     }
 }
+
+@Suite("Menu bar root view")
+struct MenuBarRootViewTests {
+    @Test("screen visible height update ignores non-positive values and small deltas")
+    func screenVisibleHeightUpdateIgnoresNonPositiveValuesAndSmallDeltas() {
+        #expect(ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 0) == nil)
+        #expect(ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 900.5) == nil)
+    }
+
+    @Test("screen visible height update accepts meaningful delta")
+    func screenVisibleHeightUpdateAcceptsMeaningfulDelta() {
+        #expect(ScreenVisibleHeightUpdate.nextHeight(current: 900, proposed: 902) == 902)
+    }
+}

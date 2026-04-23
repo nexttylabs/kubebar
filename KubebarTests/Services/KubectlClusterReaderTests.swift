@@ -383,9 +383,9 @@ struct KubectlClusterReaderTests {
         )
         let item = snapshot.trackedItems.first
 
-        #expect(item?.state == .bad)
+        #expect(item?.state == .watch)
         #expect(item?.reason == "no matching pods")
-        #expect(item?.affectedPodCount == 0)
+        #expect(item?.affectedPodCount == nil)
         #expect(item?.examplePodNames == [])
     }
 
