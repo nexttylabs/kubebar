@@ -30,6 +30,7 @@ struct MenuDisplayModelTests {
         #expect(display.counters.warningEvents == "0")
         #expect(display.healthSentence == "All tracked items OK")
         #expect(display.primaryStatusReason == "All tracked items OK")
+        #expect(display.overview.statusHelpText == "All tracked items OK")
         #expect(display.lastUpdated == "20s ago")
         #expect(display.overview.cards.map(\.id) == ["nodes", "pods", "cpu", "memory"])
         #expect(display.overview.cards.map(\.value) == ["3/3", "12/12", "21%", "17%"])
@@ -98,6 +99,42 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 pod pending")
     }
 
+    @Test("tracked item status help includes expanded detail")
+    func trackedItemStatusHelpIncludesExpandedDetail() {
+        let latestWarning = warningEvent(
+            reason: "BackOff",
+            observedAt: Date(timeIntervalSince1970: 100),
+            count: 2,
+            message: "newest warning"
+        )
+        let item = TrackedItemStatus(
+            target: .workload(namespace: "api", name: "checkout"),
+            state: .bad,
+            reason: "2 pods restarting",
+            affectedPodCount: 2,
+            examplePodNames: ["checkout-a", "checkout-b"],
+            latestWarning: latestWarning
+        )
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 10, total: 12)),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([item]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.overview.statusText == "2 pods restarting")
+        #expect(display.overview.statusHelpText.contains("api/checkout: 2 pods restarting"))
+        #expect(display.overview.statusHelpText.contains("2 affected pods"))
+        #expect(display.overview.statusHelpText.contains("examples checkout-a, checkout-b"))
+        #expect(display.overview.statusHelpText.contains("latest warning BackOff api/pod/checkout 2m ago x2, newest warning"))
+        #expect(display.overview.statusAccessibilityLabel.contains(display.overview.statusHelpText))
+    }
+
     @Test("warning events provide primary status reason")
     func warningEventsProvidePrimaryStatusReason() {
         let snapshot = ClusterSnapshot(
@@ -105,7 +142,12 @@ struct MenuDisplayModelTests {
             nodesSection: .available(NodeSummary(ready: 3, total: 3)),
             podsSection: .available(PodSummary(running: 12, total: 12)),
             warningEventsSection: .available([
-                warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 2)
+                warningEvent(
+                    reason: "BackOff",
+                    observedAt: Date(timeIntervalSince1970: 100),
+                    count: 2,
+                    message: "newest warning"
+                )
             ]),
             workloadsSection: .available([]),
             capturedAt: Date(timeIntervalSince1970: 100)
@@ -115,6 +157,7 @@ struct MenuDisplayModelTests {
 
         #expect(display.state == .watch)
         #expect(display.primaryStatusReason == "2 warning events")
+        #expect(display.overview.statusHelpText == "BackOff api/pod/checkout 20s ago x2, newest warning")
     }
 
     @Test("single not ready node uses singular primary status reason")
@@ -134,6 +177,33 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 node not ready")
     }
 
+    @Test("node status help includes node condition detail")
+    func nodeStatusHelpIncludesNodeConditionDetail() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            nodeDetailsSection: .available([
+                nodeDetail(
+                    name: "worker-a",
+                    isReady: false,
+                    issueReason: "KubeletNotReady",
+                    issueMessage: "container runtime is down"
+                )
+            ]),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.primaryStatusReason == "1 node not ready")
+        #expect(display.overview.statusHelpText == "worker-a, Not Ready, CPU 25%, Memory 25%, KubeletNotReady: container runtime is down")
+        #expect(display.overview.statusAccessibilityLabel.contains("KubeletNotReady: container runtime is down"))
+    }
+
     @Test("single not ready pod uses singular primary status reason")
     func singleNotReadyPodUsesSingularPrimaryStatusReason() {
         let snapshot = ClusterSnapshot(
@@ -149,6 +219,36 @@ struct MenuDisplayModelTests {
 
         #expect(display.state == .watch)
         #expect(display.primaryStatusReason == "1 pod not ready")
+    }
+
+    @Test("pod status help includes pod condition detail")
+    func podStatusHelpIncludesPodConditionDetail() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 11, running: 12, total: 12)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    notReadyConditionReason: "ContainersNotReady",
+                    notReadyConditionMessage: "containers with unready status",
+                    isNotReady: true
+                )
+            ]),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(display.primaryStatusReason == "1 pod not ready")
+        #expect(display.overview.statusHelpText == "api/checkout, Watch, 0/1 containers ready, ContainersNotReady: containers with unready status")
+        #expect(display.overview.statusAccessibilityLabel.contains("ContainersNotReady: containers with unready status"))
     }
 
     @Test("metrics unavailable does not change otherwise OK state")
@@ -167,6 +267,8 @@ struct MenuDisplayModelTests {
 
         #expect(display.state == .ok)
         #expect(display.primaryStatusReason == "Metrics unavailable")
+        #expect(display.overview.statusHelpText == "Metrics unavailable: metrics API unavailable")
+        #expect(display.overview.statusAccessibilityLabel.contains("metrics API unavailable"))
         #expect(display.overview.cards.first(where: { $0.id == "cpu" })?.state == .unavailable)
         #expect(display.overview.cards.first(where: { $0.id == "memory" })?.detail == "metrics API unavailable")
     }
@@ -523,6 +625,8 @@ struct MenuDisplayModelTests {
         #expect(display.staleBanner?.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "kubectl timed out")
         #expect(display.primaryStatusReason == "kubectl timed out")
+        #expect(display.overview.statusHelpText == "kubectl timed out, last updated 2m ago")
+        #expect(display.overview.statusAccessibilityLabel.contains("kubectl timed out, last updated 2m ago"))
         #expect(display.visibleWatchItems.first?.title == "api/checkout")
     }
 
@@ -555,6 +659,7 @@ struct MenuDisplayModelTests {
         #expect(display.lastUpdated == "2m ago")
         #expect(display.staleBanner?.reason == "Last refresh is too old")
         #expect(display.primaryStatusReason == "Last refresh is too old")
+        #expect(display.overview.statusHelpText == "Last refresh is too old, last updated 2m ago")
     }
 
     @Test("watch item detail defaults to row reason")
@@ -850,6 +955,7 @@ struct MenuDisplayModelTests {
         #expect(display.counters.warningEvents == "-")
         #expect(display.state == .watch)
         #expect(display.primaryStatusReason == "invalid event JSON")
+        #expect(display.overview.statusHelpText == "Warning events unavailable: invalid event JSON")
         #expect(display.sectionNotices.contains { $0.title == "Warning events" && $0.reason == "invalid event JSON" })
         #expect(display.overview.recentWarningsUnavailableMessage == "Warning events unavailable: invalid event JSON")
         #expect(display.overview.recentWarningsEmptyMessage == "Warning event count unavailable")

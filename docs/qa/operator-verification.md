@@ -42,6 +42,11 @@ For all configured menu states, confirm the footer remains visible at the
 bottom of the menu and contains only refresh, settings, and quit actions. The
 refresh cadence picker belongs in Settings.
 
+For Watch, Bad, Stale, `kubectl failure`, `metrics-unavailable`, and
+`warning-heavy`, hover the Overview top status row. The visible status text
+should stay short, and the hover text should explain the concrete safe reason
+for that state.
+
 ## State Checklist
 
 | State | Expected visible behavior | Evidence path |
@@ -77,6 +82,13 @@ For the footer, confirm refresh, settings, and quit remain reachable after
 switching between Overview, Nodes, Pods, and Events. The tab bar should have
 equal left and right spacing. After a fresh refresh, `Last checked 0s ago`
 should advance as time passes without pressing refresh again.
+
+## Overview Status Hover Check
+
+For the Overview top status row, confirm hover/help text is more specific than
+the visible one-line status when the state needs attention. It should name the
+affected object or explain the stale/unavailable reason, and it must not expose
+raw command output, kubeconfig paths, full JSON, or tokens.
 
 ## Nodes Tab Check
 

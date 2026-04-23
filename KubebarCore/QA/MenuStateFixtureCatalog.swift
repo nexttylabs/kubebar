@@ -65,6 +65,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: watchSnapshot(), now: now),
                 expectedBehavior: "Overview shows Watch with a pinned BackOff warning row."
+                    + " Hovering the top status explains the restarting qa-api Pod."
                     + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text.",
                 limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, and card readability."
             )
@@ -73,6 +74,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: badSnapshot(), now: now),
                 expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row."
+                    + " Hovering the top status names the affected qa-payments Pods."
                     + " Pods tab shows failed Pods first with red dots and issue text.",
                 limitations: "Requires visible menu inspection to confirm top-row priority and card state."
             )
@@ -85,7 +87,8 @@ public enum MenuStateFixtureCatalog {
                     failure: RefreshFailure(reason: "Refresh failed; showing last known status."),
                     now: now
                 ),
-                expectedBehavior: "Overview shows Stale while preserving the last known top row and four cards with stale marking.",
+                expectedBehavior: "Overview shows Stale while preserving the last known top row and four cards with stale marking."
+                    + " Hovering the top status explains the failed refresh reason.",
                 limitations: "Requires visible menu inspection to confirm stale data is not presented as current."
             )
         case .staleAgeOut:
@@ -134,6 +137,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: metricsUnavailableSnapshot(), now: now),
                 expectedBehavior: "Overview keeps OK cluster status while CPU and Memory cards show unavailable metrics."
+                    + " Hovering the top status explains that metrics are unavailable."
                     + " Pods tab still shows watched Pods.",
                 limitations: "Requires visible menu inspection to confirm unavailable metrics are distinct from normal current values."
             )
@@ -142,8 +146,9 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: warningHeavySnapshot(), now: now),
                 expectedBehavior: "Overview shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events."
+                    + " Hovering the top status exposes the pinned tracked warning detail."
                     + " Events tab scrolls above the footer, the footer remains visible with refresh/settings/quit only, and Pods tab keeps attention rows before ready rows.",
-                limitations: "Requires visible menu inspection to confirm warning rows stay clear, overflow keeps the footer reachable, and the tab bar has balanced spacing."
+                limitations: "Requires visible menu inspection to confirm warning rows stay clear, overflow keeps the footer reachable, the top row and four cards remain visible, and the tab bar has balanced spacing."
             )
         }
     }

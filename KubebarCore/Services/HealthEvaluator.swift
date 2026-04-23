@@ -124,6 +124,8 @@ public struct HealthEvaluator: Sendable {
                 from: snapshot,
                 state: resolvedState,
                 primaryStatusReason: primaryStatusReason,
+                lastUpdated: lastUpdated,
+                visibleItems: Array(visibleItems),
                 sectionNotices: sectionNotices,
                 warningRows: overviewWarnings,
                 totalWarningRows: overviewWarningRows.count
@@ -202,13 +204,32 @@ public struct HealthEvaluator: Sendable {
         from snapshot: ClusterSnapshot,
         state: ClusterHealthState,
         primaryStatusReason: String,
+        lastUpdated: String,
+        visibleItems: [WatchItemDisplay],
         sectionNotices: [SectionAvailabilityDisplay],
         warningRows: [WarningEventDisplay],
         totalWarningRows: Int
     ) -> OverviewDisplay {
-        OverviewDisplay(
+        let statusHelpText = primaryStatusHelpText(
+            for: state,
+            snapshot: snapshot,
+            visibleItems: visibleItems,
+            sectionNotices: sectionNotices,
+            staleReason: state == .stale ? primaryStatusReason : nil,
+            lastUpdated: lastUpdated,
+            warningRows: warningRows,
+            fallback: primaryStatusReason
+        )
+
+        return OverviewDisplay(
             statusText: primaryStatusReason,
-            statusAccessibilityLabel: "\(state.label), \(primaryStatusReason), context \(snapshot.contextName)",
+            statusHelpText: statusHelpText,
+            statusAccessibilityLabel: statusAccessibilityLabel(
+                state: state,
+                statusText: primaryStatusReason,
+                statusHelpText: statusHelpText,
+                contextName: snapshot.contextName
+            ),
             cards: [
                 nodeOverviewCard(from: snapshot, state: state),
                 podOverviewCard(from: snapshot, state: state),
@@ -231,7 +252,13 @@ public struct HealthEvaluator: Sendable {
     private func unavailableOverview(contextName: String, reason: String) -> OverviewDisplay {
         OverviewDisplay(
             statusText: reason,
-            statusAccessibilityLabel: "Stale, \(reason), context \(contextName)",
+            statusHelpText: reason,
+            statusAccessibilityLabel: statusAccessibilityLabel(
+                state: .stale,
+                statusText: reason,
+                statusHelpText: reason,
+                contextName: contextName
+            ),
             cards: [
                 unavailableOverviewCard(id: "nodes", title: "Nodes", systemImageName: "server.rack", reason: reason),
                 unavailableOverviewCard(id: "pods", title: "Pods", systemImageName: "shippingbox", reason: reason),
@@ -958,6 +985,118 @@ public struct HealthEvaluator: Sendable {
         case .stale:
             return staleReason ?? "Status is stale"
         }
+    }
+
+    private func primaryStatusHelpText(
+        for state: ClusterHealthState,
+        snapshot: ClusterSnapshot,
+        visibleItems: [WatchItemDisplay],
+        sectionNotices: [SectionAvailabilityDisplay],
+        staleReason: String?,
+        lastUpdated: String,
+        warningRows: [WarningEventDisplay],
+        fallback: String
+    ) -> String {
+        switch state {
+        case .ok:
+            if snapshot.metricsSection.value == nil {
+                let reason = sanitizedSectionReason(snapshot.metricsSection.unavailableReason ?? "Metrics unavailable")
+                return "Metrics unavailable: \(reason)"
+            }
+
+            return fallback
+        case .bad:
+            if let item = visibleItems.first(where: { $0.state == .bad }) {
+                return watchItemStatusHelpText(item)
+            }
+
+            if let nodeDeficit = nodeDeficit(from: snapshot), nodeDeficit > 0 {
+                return firstNotReadyNodeHelpText(from: snapshot) ?? fallback
+            }
+
+            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
+                return firstAttentionPodHelpText(from: snapshot) ?? fallback
+            }
+
+            return fallback
+        case .watch:
+            if let item = visibleItems.first(where: { $0.state == .watch }) {
+                return watchItemStatusHelpText(item)
+            }
+
+            if let podDeficit = podDeficit(from: snapshot), podDeficit > 0 {
+                return firstAttentionPodHelpText(from: snapshot) ?? fallback
+            }
+
+            if let warning = warningRows.first {
+                return warning.helpText
+            }
+
+            if let notice = sectionNotices.first {
+                return "\(notice.title) unavailable: \(notice.reason)"
+            }
+
+            return fallback
+        case .stale:
+            let reason = staleReason ?? "Status is stale"
+            return "\(reason), last updated \(lastUpdated)"
+        }
+    }
+
+    private func statusAccessibilityLabel(
+        state: ClusterHealthState,
+        statusText: String,
+        statusHelpText: String,
+        contextName: String
+    ) -> String {
+        var parts = [state.label]
+
+        if statusHelpText == statusText || statusHelpText.hasPrefix("\(statusText),") || statusHelpText.hasPrefix("\(statusText):") {
+            parts.append(statusHelpText)
+        } else {
+            parts.append(statusText)
+            parts.append(statusHelpText)
+        }
+
+        parts.append("context \(contextName)")
+        return parts.joined(separator: ", ")
+    }
+
+    private func watchItemStatusHelpText(_ item: WatchItemDisplay) -> String {
+        var parts = ["\(item.title): \(item.detail.reason)"]
+
+        if let affectedPodCount = item.detail.affectedPodCount {
+            parts.append(countLabel(affectedPodCount, singular: "affected pod", plural: "affected pods"))
+        }
+
+        if !item.detail.examplePodNames.isEmpty {
+            parts.append("examples \(item.detail.examplePodNames.joined(separator: ", "))")
+        }
+
+        if let latestWarning = item.detail.latestWarning {
+            parts.append("latest warning \(latestWarning.helpText)")
+        }
+
+        return parts.joined(separator: ", ")
+    }
+
+    private func firstNotReadyNodeHelpText(from snapshot: ClusterSnapshot) -> String? {
+        makeNodeRows(from: snapshot)
+            .first { $0.readiness == .notReady }?
+            .helpText
+    }
+
+    private func firstAttentionPodHelpText(from snapshot: ClusterSnapshot) -> String? {
+        guard let podDetails = snapshot.podDetailsSection.value else {
+            return nil
+        }
+
+        return makePodSections(from: podDetails)
+            .lazy
+            .compactMap { section in
+                section.rows.first { $0.state != .ready }?.helpText
+            }
+            .first
     }
 
     private func countLabel(_ count: Int, singular: String, plural: String, suffix: String? = nil) -> String {

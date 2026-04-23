@@ -369,6 +369,7 @@ public struct OverviewCardDisplay: Equatable, Sendable, Identifiable {
 
 public struct OverviewDisplay: Equatable, Sendable {
     public let statusText: String
+    public let statusHelpText: String
     public let statusAccessibilityLabel: String
     public let cards: [OverviewCardDisplay]
     public let recentWarnings: [WarningEventDisplay]
@@ -378,6 +379,7 @@ public struct OverviewDisplay: Equatable, Sendable {
 
     public init(
         statusText: String,
+        statusHelpText: String? = nil,
         statusAccessibilityLabel: String,
         cards: [OverviewCardDisplay],
         recentWarnings: [WarningEventDisplay],
@@ -386,6 +388,7 @@ public struct OverviewDisplay: Equatable, Sendable {
         recentWarningsUnavailableMessage: String? = nil
     ) {
         self.statusText = statusText
+        self.statusHelpText = statusHelpText ?? statusText
         self.statusAccessibilityLabel = statusAccessibilityLabel
         self.cards = cards
         self.recentWarnings = recentWarnings
@@ -468,6 +471,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
     ) -> OverviewDisplay {
         OverviewDisplay(
             statusText: primaryStatusReason,
+            statusHelpText: primaryStatusReason,
             statusAccessibilityLabel: "\(state.label), \(primaryStatusReason), context \(contextName)",
             cards: [
                 OverviewCardDisplay(

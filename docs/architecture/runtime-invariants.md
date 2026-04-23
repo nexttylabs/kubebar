@@ -11,6 +11,8 @@ These are the rules Kubebar must keep true at runtime.
   ordering.
 - The first screen shows the top status row, Nodes card, Pods card, CPU card,
   Memory card, and capped `Recent Warnings`; warning overflow belongs in Events.
+- The Overview top status row keeps visible text short. Hover/help and
+  accessibility text must carry the concrete status reason when one is known.
 - The menu must stay within the visible screen height. Long tab content scrolls
   inside the menu instead of pushing the menu off screen.
 - The menu footer stays visible at the bottom of the menu. Long Events, Pods,
@@ -145,4 +147,7 @@ These are the rules Kubebar must keep true at runtime.
 - Warning and failure states must not rely on color alone.
 - Watch, Bad, and Stale must be expressed with symbol, state text, and one
   short reason; color alone is not enough.
+- Overview status help must explain the same condition as the short status
+  reason, using safe display text for tracked-object, node, Pod, warning,
+  unavailable-data, or stale-refresh detail.
 - Stale or failed reads must use distinct icon semantics from `OK`.
