@@ -73,6 +73,7 @@ run_qa_artifact_check() {
   local generated_file
   local labels=(
     "Healthy"
+    "completed-jobs"
     "Watch"
     "Bad"
     "Stale refresh failure"

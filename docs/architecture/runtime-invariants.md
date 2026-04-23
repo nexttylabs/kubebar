@@ -11,6 +11,8 @@ These are the rules Kubebar must keep true at runtime.
   ordering.
 - The first screen shows the top status row, Nodes card, Pods card, CPU card,
   Memory card, and capped `Recent Warnings`; warning overflow belongs in Events.
+- The Overview top status row keeps visible text short. Hover/help and
+  accessibility text must carry the concrete status reason when one is known.
 - The menu must stay within the visible screen height. Long tab content scrolls
   inside the menu instead of pushing the menu off screen.
 - The menu footer stays visible at the bottom of the menu. Long Events, Pods,
@@ -55,8 +57,15 @@ These are the rules Kubebar must keep true at runtime.
   values must not be rendered as `0`.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
-- A watched target with no matching Pods is a visible Watch condition, not a
-  Bad Pod failure.
+- Successfully completed Job Pods are not active readiness failures. They do
+  not reduce active Pod ready/all counts, do not appear as active Pod rows by
+  default, and do not move the menu to `Watch` or `Bad` by themselves.
+- A watched target with only successfully completed Job Pods stays `OK` and
+  uses `No active pods; completed jobs are OK` in the Pods tab empty state.
+- Failed Job Pods remain failures; only successful completion gets the
+  completed treatment.
+- A watched target with no matching Pods is a normal OK condition with a clear
+  row reason, not a Watch or Bad Pod failure.
 - Kubebar does not query Kubernetes Secrets.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
@@ -145,4 +154,7 @@ These are the rules Kubebar must keep true at runtime.
 - Warning and failure states must not rely on color alone.
 - Watch, Bad, and Stale must be expressed with symbol, state text, and one
   short reason; color alone is not enough.
+- Overview status help must explain the same condition as the short status
+  reason, using safe display text for tracked-object, node, Pod, warning,
+  unavailable-data, or stale-refresh detail.
 - Stale or failed reads must use distinct icon semantics from `OK`.

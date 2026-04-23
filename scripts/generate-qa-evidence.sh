@@ -17,6 +17,7 @@ cat > "$OUTPUT_FILE" <<'EOF'
 | State | Status | Reproduction steps | Expected behavior | Observed behavior | Evidence path | Limitations | Follow-up risk |
 |-------|--------|--------------------|-------------------|-------------------|---------------|-------------|----------------|
 | Healthy | pending-human-verification | `./scripts/compile-and-run.sh --qa-state healthy` | Menu shows OK with top status row, four Overview cards, neutral Recent Warnings, and Pods tab rows grouped by namespace with ready counts. | pending-human-verification | `docs/assets/qa/phase-07-healthy.png` | Screenshot or visible menu check may require human action. | Do not mark complete without visible evidence. |
+| completed-jobs | pending-human-verification | `./scripts/compile-and-run.sh --qa-state completed-jobs` | Menu shows OK when the watched scope has only completed Job Pods; Pods tab has no active Pod rows and shows `No active pods; completed jobs are OK`. | pending-human-verification | `docs/assets/qa/phase-07-completed-jobs.png` | Screenshot or visible menu check may require human action. | Do not mark complete without visible evidence. |
 | Watch | pending-human-verification | `./scripts/compile-and-run.sh --qa-state watch` | Menu shows Watch with a pinned BackOff warning row; Pods tab shows the watched Pod first with yellow dot, `0/1`, and gray issue text. | pending-human-verification | `docs/assets/qa/phase-07-watch.png` | Screenshot or visible menu check may require human action. | Do not mark complete without visible evidence. |
 | Bad | pending-human-verification | `./scripts/compile-and-run.sh --qa-state bad` | Menu shows Bad and prioritizes the broken tracked target; Nodes tab shows a Not Ready node row, and Pods tab shows failed Pods first with red dots and issue text. | pending-human-verification | `docs/assets/qa/phase-07-bad.png` | Screenshot or visible menu check may require human action. | Do not mark complete without visible evidence. |
 | Stale refresh failure | pending-human-verification | `./scripts/compile-and-run.sh --qa-state stale-refresh-failure` | Menu shows Stale while preserving last known top row and cards with stale marking. | pending-human-verification | `docs/assets/qa/phase-07-stale-refresh-failure.png` | Screenshot or visible menu check may require human action. | Do not mark complete without visible evidence. |
@@ -32,6 +33,7 @@ test -s "$OUTPUT_FILE"
 
 for label in \
   "Healthy" \
+  "completed-jobs" \
   "Watch" \
   "Bad" \
   "Stale refresh failure" \

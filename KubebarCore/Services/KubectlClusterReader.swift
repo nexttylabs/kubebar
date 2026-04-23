@@ -33,6 +33,11 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             workloadSelectorsSection: workloadSelectorsSection,
             watchTargets: watchTargets
         )
+        let hasCompletedWatchedPods = containsCompletedWatchedPods(
+            podRecordsSection: podRecordsSection,
+            workloadSelectorsSection: workloadSelectorsSection,
+            watchTargets: watchTargets
+        )
         let workloadsSection = trackedItemsSection(
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
@@ -59,6 +64,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             metricsSection: metricsSection,
             warningEventsSection: warningEventsSection,
             workloadsSection: workloadsSection,
+            hasCompletedWatchedPods: hasCompletedWatchedPods,
             capturedAt: now
         )
     }
@@ -155,10 +161,12 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     }
 
     private func makePodSummary(from pods: [PodRecord]) -> PodSummary {
-        PodSummary(
-            ready: pods.filter { !$0.isNotReady }.count,
-            running: pods.filter(\.isRunning).count,
-            total: pods.count
+        let activePods = pods.filter(\.isActive)
+
+        return PodSummary(
+            ready: activePods.filter { !$0.isNotReady }.count,
+            running: activePods.filter(\.isRunning).count,
+            total: activePods.count
         )
     }
 
@@ -269,7 +277,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         var details: [PodDetail] = []
 
         for target in watchTargets {
-            for pod in pods where pod.matches(target: target, workloadSelectors: workloadSelectors) {
+            for pod in pods where pod.isActive && pod.matches(target: target, workloadSelectors: workloadSelectors) {
                 let id = "\(pod.metadata.namespace)/\(pod.metadata.name)"
                 guard seenPodIDs.insert(id).inserted else {
                     continue
@@ -280,6 +288,25 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
 
         return .available(details)
+    }
+
+    private func containsCompletedWatchedPods(
+        podRecordsSection: SnapshotSection<[PodRecord]>,
+        workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
+        watchTargets: [WatchTarget]
+    ) -> Bool {
+        guard
+            let pods = podRecordsSection.value,
+            let workloadSelectors = workloadSelectorsSection.value
+        else {
+            return false
+        }
+
+        return watchTargets.contains { target in
+            pods.contains { pod in
+                pod.isSuccessfullyCompleted && pod.matches(target: target, workloadSelectors: workloadSelectors)
+            }
+        }
     }
 
     private func sumNodeQuantity(_ nodes: [NodeRecord], resource: String, scale: ResourceQuantityScale) -> Int64? {
@@ -464,17 +491,18 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             pod.matches(target: target, workloadSelectors: workloadSelectors)
         }
         let latestWarning = latestRelatedWarning(for: target, matchingPods: matchingPods, warningEvents: warningEvents)
+        let activePods = matchingPods.filter(\.isActive)
 
-        guard !matchingPods.isEmpty else {
+        guard !activePods.isEmpty else {
             return TrackedItemStatus(
                 target: target,
-                state: .watch,
-                reason: "no matching pods",
+                state: .ok,
+                reason: matchingPods.contains(where: \.isSuccessfullyCompleted) ? "completed jobs are OK" : "no matching pods",
                 latestWarning: latestWarning
             )
         }
 
-        let failedPods = matchingPods.filter(\.isFailed)
+        let failedPods = activePods.filter(\.isFailed)
         if !failedPods.isEmpty {
             return TrackedItemStatus(
                 target: target,
@@ -486,7 +514,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             )
         }
 
-        let restartingPods = matchingPods.filter(\.isRestarting)
+        let restartingPods = activePods.filter(\.isRestarting)
         if !restartingPods.isEmpty {
             return TrackedItemStatus(
                 target: target,
@@ -498,7 +526,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             )
         }
 
-        let notReadyPods = matchingPods.filter(\.isNotReady)
+        let notReadyPods = activePods.filter(\.isNotReady)
         if !notReadyPods.isEmpty {
             return TrackedItemStatus(
                 target: target,
@@ -519,11 +547,11 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             )
         }
 
-        let running = matchingPods.filter(\.isRunning).count
-        let reason = "\(running)/\(matchingPods.count) pods running"
+        let running = activePods.filter(\.isRunning).count
+        let reason = "\(running)/\(activePods.count) pods running"
         return TrackedItemStatus(
             target: target,
-            state: running == matchingPods.count ? .ok : .bad,
+            state: running == activePods.count ? .ok : .bad,
             reason: reason
         )
     }
@@ -956,6 +984,18 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         status.phase == "Unknown"
     }
 
+    var isActive: Bool {
+        !isSuccessfullyCompleted
+    }
+
+    var isSuccessfullyCompleted: Bool {
+        if isFailed || isPending || isUnknown || currentWaitingState != nil || hasFailedTerminatedContainer {
+            return false
+        }
+
+        return status.phase == "Succeeded" || allContainersTerminatedCompleted
+    }
+
     var readyContainerCount: Int? {
         guard let containerStatuses = status.containerStatuses, !containerStatuses.isEmpty else {
             return nil
@@ -982,6 +1022,35 @@ private struct PodRecord: Decodable, Equatable, Sendable {
 
     var currentTerminatedState: ContainerStateTerminated? {
         status.containerStatuses?.compactMap { $0.state?.terminated }.first
+    }
+
+    var allContainersTerminatedCompleted: Bool {
+        guard let containerStatuses = status.containerStatuses, !containerStatuses.isEmpty else {
+            return false
+        }
+
+        return containerStatuses.allSatisfy { containerStatus in
+            normalizedReason(containerStatus.state?.terminated?.reason) == "completed"
+        }
+    }
+
+    var hasFailedTerminatedContainer: Bool {
+        status.containerStatuses?.contains { containerStatus in
+            guard let reason = normalizedReason(containerStatus.state?.terminated?.reason) else {
+                return false
+            }
+
+            return reason != "completed"
+        } ?? false
+    }
+
+    private func normalizedReason(_ value: String?) -> String? {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard let text, !text.isEmpty else {
+            return nil
+        }
+
+        return text
     }
 
     var notReadyCondition: PodCondition? {

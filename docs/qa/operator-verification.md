@@ -7,6 +7,7 @@ This guide covers operator-facing checks for the menu states required by Phase 0
 ## QA State Commands
 
 - `./scripts/compile-and-run.sh --qa-state healthy`
+- `./scripts/compile-and-run.sh --qa-state completed-jobs`
 - `./scripts/compile-and-run.sh --qa-state watch`
 - `./scripts/compile-and-run.sh --qa-state bad`
 - `./scripts/compile-and-run.sh --qa-state stale-refresh-failure`
@@ -22,6 +23,7 @@ This guide covers operator-facing checks for the menu states required by Phase 0
 Screenshots belong under `docs/assets/qa/` with these names:
 
 - `phase-07-healthy.png`
+- `phase-07-completed-jobs.png`
 - `phase-07-watch.png`
 - `phase-07-bad.png`
 - `phase-07-stale-refresh-failure.png`
@@ -42,11 +44,17 @@ For all configured menu states, confirm the footer remains visible at the
 bottom of the menu and contains only refresh, settings, and quit actions. The
 refresh cadence picker belongs in Settings.
 
+For Watch, Bad, Stale, `kubectl failure`, `metrics-unavailable`, and
+`warning-heavy`, hover the Overview top status row. The visible status text
+should stay short, and the hover text should explain the concrete safe reason
+for that state.
+
 ## State Checklist
 
 | State | Expected visible behavior | Evidence path |
 |-------|---------------------------|---------------|
 | Healthy | Menu shows OK with top status row, four Overview cards, neutral Recent Warnings, and Pods tab rows grouped by namespace with ready counts. | `docs/assets/qa/phase-07-healthy.png` |
+| completed-jobs | Menu shows OK when the watched scope has only completed Job Pods; Pods tab has no active Pod rows and shows `No active pods; completed jobs are OK`. | `docs/assets/qa/phase-07-completed-jobs.png` |
 | Watch | Menu shows Watch with a pinned BackOff warning row; Pods tab shows the watched Pod first with yellow dot, `0/1`, and gray issue text. | `docs/assets/qa/phase-07-watch.png` |
 | Bad | Menu shows Bad and prioritizes the broken tracked target; Nodes tab shows a Not Ready node row, and Pods tab shows failed Pods first with red dots and issue text. | `docs/assets/qa/phase-07-bad.png` |
 | Stale refresh failure | Menu shows Stale while preserving last known top row and cards with stale marking. | `docs/assets/qa/phase-07-stale-refresh-failure.png` |
@@ -78,6 +86,13 @@ switching between Overview, Nodes, Pods, and Events. The tab bar should have
 equal left and right spacing. After a fresh refresh, `Last checked 0s ago`
 should advance as time passes without pressing refresh again.
 
+## Overview Status Hover Check
+
+For the Overview top status row, confirm hover/help text is more specific than
+the visible one-line status when the state needs attention. It should name the
+affected object or explain the stale/unavailable reason, and it must not expose
+raw command output, kubeconfig paths, full JSON, or tokens.
+
 ## Nodes Tab Check
 
 For the Nodes tab, confirm rows show node name, readiness, CPU, and Memory.
@@ -93,7 +108,10 @@ status dot, Pod name, ready/all count, and a one-line gray issue description
 when the Pod needs attention. Attention rows must appear before ready rows in a
 namespace. If there are more Pod rows than fit, only the Pod item list should
 scroll vertically while the Pod readiness summary stays visible. In the
-metrics-unavailable state, Pod rows should remain visible.
+metrics-unavailable state, Pod rows should remain visible. In the
+completed-jobs state, completed Job Pods should not appear as unready active
+rows or reduce ready/all counts; the Pods tab should show
+`No active pods; completed jobs are OK`.
 
 ## When To Mark pending-human-verification
 

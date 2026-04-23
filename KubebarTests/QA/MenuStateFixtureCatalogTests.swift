@@ -19,6 +19,7 @@ struct MenuStateFixtureCatalogTests {
     @Test("required fixtures map to locked display states")
     func requiredFixturesMapToLockedDisplayStates() {
         let healthy = MenuStateFixtureCatalog.fixture(for: .healthy)
+        let completedJobs = MenuStateFixtureCatalog.fixture(for: .completedJobs)
         let watch = MenuStateFixtureCatalog.fixture(for: .watch)
         let bad = MenuStateFixtureCatalog.fixture(for: .bad)
         let staleRefreshFailure = MenuStateFixtureCatalog.fixture(for: .staleRefreshFailure)
@@ -30,6 +31,13 @@ struct MenuStateFixtureCatalogTests {
         #expect(healthy.display.state == .ok)
         #expect(healthy.display.podTab.summary == "3/3 watched pods ready")
         #expect(healthy.display.podTab.sections.map(\.namespace) == ["qa-api", "qa-monitoring"])
+        #expect(completedJobs.display.state == .ok)
+        #expect(completedJobs.display.primaryStatusReason == "All tracked items OK")
+        #expect(completedJobs.display.visibleWatchItems.first?.reason == "completed jobs are OK")
+        #expect(completedJobs.display.overview.cards.first(where: { $0.id == "pods" })?.value == "0/0")
+        #expect(completedJobs.display.podTab.summary == "0/0 watched pods ready")
+        #expect(completedJobs.display.podTab.sections.isEmpty)
+        #expect(completedJobs.display.podTab.emptyMessage == "No active pods; completed jobs are OK")
         #expect(watch.display.state == .watch)
         #expect(watch.display.podTab.sections.first?.namespace == "qa-api")
         #expect(watch.display.podTab.sections.first?.rows.first?.state == .watch)
@@ -63,6 +71,26 @@ struct MenuStateFixtureCatalogTests {
         #expect(warningHeavy.expectedBehavior.contains("refresh/settings/quit only"))
     }
 
+    @Test("overview status help exposes detailed safe context")
+    func overviewStatusHelpExposesDetailedSafeContext() {
+        let watch = MenuStateFixtureCatalog.fixture(for: .watch)
+        let bad = MenuStateFixtureCatalog.fixture(for: .bad)
+        let staleRefreshFailure = MenuStateFixtureCatalog.fixture(for: .staleRefreshFailure)
+        let metricsUnavailable = MenuStateFixtureCatalog.fixture(for: .metricsUnavailable)
+        let warningHeavy = MenuStateFixtureCatalog.fixture(for: .warningHeavy)
+
+        #expect(watch.display.overview.statusText == "1 pod restarting")
+        #expect(watch.display.overview.statusHelpText.contains("qa-api: 1 pod restarting"))
+        #expect(watch.display.overview.statusHelpText.contains("latest warning BackOff qa-api/pod/qa-checkout-7f9"))
+        #expect(watch.display.overview.statusAccessibilityLabel.contains(watch.display.overview.statusHelpText))
+        #expect(bad.display.overview.statusHelpText.contains("qa-payments: 2 pods unavailable"))
+        #expect(bad.display.overview.statusHelpText.contains("examples qa-payments-api-0, qa-payments-worker-1"))
+        #expect(staleRefreshFailure.display.overview.statusHelpText.contains("Refresh failed; showing last known status."))
+        #expect(staleRefreshFailure.display.overview.statusHelpText.contains("last updated 2m ago"))
+        #expect(metricsUnavailable.display.overview.statusHelpText == "Metrics unavailable: metrics API unavailable")
+        #expect(warningHeavy.display.overview.statusHelpText.contains("latest warning BackOff qa-api/pod/qa-checkout-7f9"))
+    }
+
     @Test("watch fixture exposes reason first warning details")
     func watchFixtureExposesReasonFirstWarningDetails() {
         let fixture = MenuStateFixtureCatalog.fixture(for: .watch)
@@ -92,8 +120,10 @@ struct MenuStateFixtureCatalogTests {
     @Test("fixture lookup uses raw value names")
     func fixtureLookupUsesRawValueNames() throws {
         let fixture = try #require(MenuStateFixtureCatalog.fixture(named: "stale-refresh-failure"))
+        let completedJobs = try #require(MenuStateFixtureCatalog.fixture(named: "completed-jobs"))
 
         #expect(fixture.id == .staleRefreshFailure)
+        #expect(completedJobs.id == .completedJobs)
         #expect(MenuStateFixtureCatalog.fixture(named: "missing") == nil)
     }
 
@@ -120,6 +150,8 @@ struct MenuStateFixtureCatalogTests {
                     fixture.followUpRisk,
                     fixture.display.healthSentence,
                     fixture.display.primaryStatusReason,
+                    fixture.display.overview.statusHelpText,
+                    fixture.display.overview.statusAccessibilityLabel,
                     fixture.display.staleBanner?.reason ?? ""
                 ].joined(separator: "\n")
             }

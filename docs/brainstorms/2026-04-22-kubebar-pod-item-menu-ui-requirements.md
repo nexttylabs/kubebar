@@ -14,6 +14,11 @@ scannable Pod item list rather than only a watchlist-style summary. The design
 must stay compact enough for a menu bar app and must not become a full
 Kubernetes dashboard.
 
+Completed Job Pods create a special case for readiness. They are no longer
+expected to become Ready because their work already finished successfully, so
+Kubebar should not count them as unready active Pods or use them to push the
+cluster into Watch or Bad.
+
 ## Visual Aid
 
 ```text
@@ -73,6 +78,22 @@ Color intent:
 - R14. Dot color must not be the only status signal; hover/help and
   accessibility text must include the status in words.
 
+**Completed Job Pods**
+- R14a. A successfully completed Job Pod must be treated as a normal completed
+  outcome, not as an unready active Pod.
+- R14b. Completed Job Pods must not reduce active Pod ready/all counts in the
+  Pods tab summary or Overview Pods card.
+- R14c. Completed Job Pods must not move the menu state to Watch or Bad by
+  themselves.
+- R14d. If the watched scope contains only completed Job Pods and no active
+  Pods, Kubebar should remain OK and show `No active pods; completed jobs are
+  OK` rather than a readiness warning.
+- R14e. Failed Job Pods remain Bad. Only successful completion gets the normal
+  completed treatment.
+- R14f. The default Pods tab should not list completed Job Pods as active Pod
+  rows. If a later design surfaces completed Pods, they need a separate neutral
+  completed presentation rather than reusing Ready, Watch, or Bad.
+
 **Error and secondary text**
 - R15. A Pod with an error, warning, or not-ready reason must show a short
   secondary line below the Pod name.
@@ -111,6 +132,8 @@ Color intent:
 - A user can spot failed or partially ready Pods before reading every row.
 - Ready count / all count is visible on every Pod row and cannot be confused
   with the overall tab summary.
+- Completed Job Pods do not appear as unready active Pods and do not create a
+  false Watch or Bad state.
 - Error information is present without making the menu feel like a log viewer.
 - Namespace grouping improves scanning without hiding Pods.
 - Stale or unavailable Pod data is visibly not current.
@@ -121,6 +144,7 @@ Color intent:
 - This change does not add Pod logs, events drilldown, shell commands, or links
   into external tools.
 - This change does not change menu bar health categories.
+- This change does not add a historical Job dashboard or completed-run history.
 - This change does not replace the Overview, Nodes, or Events tabs.
 - This change does not require Prometheus, Grafana, or any external monitoring
   dependency.
@@ -132,6 +156,8 @@ Color intent:
   mental map.
 - **Show ready/all on each Pod row:** The row should expose readiness locally,
   not only in the tab summary.
+- **Exclude completed Job Pods from active readiness:** Successful completion is
+  a terminal normal outcome, not an active readiness failure.
 - **Use dots plus text support:** Dots make the list scannable, while
   accessibility and hover text prevent color-only meaning.
 - **Keep error text shallow:** The row should explain the visible problem, but
@@ -144,9 +170,13 @@ Color intent:
 | Keep current watchlist-style rows and add ready/all | Smallest visual change | Does not satisfy direct Pod item browsing or namespace grouping |
 | Group all visible Pods by namespace | Best match for the requested UI and easiest to scan | Needs careful ordering and scroll behavior for large clusters |
 | Collapse each namespace by default | Reduces height for large clusters | Hides problems unless attention groups auto-expand, adding behavior complexity |
+| Count completed Job Pods as ready | Keeps totals simple | Misleads because completed Pods are not actively ready |
+| Show completed Job Pods as a separate neutral state | Preserves more history | Adds UI complexity and historical Job semantics to a glanceable menu |
 
 Recommended option: group all visible Pods by namespace. It best matches the
-requested design while keeping the interaction simple.
+requested design while keeping the interaction simple. For completed Job Pods,
+exclude them from active readiness by default so successful completion does not
+look like a health problem.
 
 ## Dependencies / Assumptions
 
@@ -156,6 +186,9 @@ requested design while keeping the interaction simple.
   after decoding, or whether the display model needs a Pod item shape.
 - The watched namespace scope should remain the default display scope unless
   the product later adds an explicit "all namespaces" mode.
+- Planning should treat Kubernetes `Succeeded` phase and successful
+  `Completed` container termination as signals for completed Job Pods, while
+  preserving failed Job Pods as Bad.
 
 ## Outstanding Questions
 

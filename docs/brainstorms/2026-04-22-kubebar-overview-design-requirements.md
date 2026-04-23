@@ -50,6 +50,10 @@ Overview
 **Language and warnings**
 - R14. Overview must remove the `Watching` label and long health-description sentences such as "Cluster looks healthy" or "needs watching".
 - R15. Overview must still provide a readable one-line top-row health description for scanability and accessibility, paired with the health-state icon.
+- R15a. When the user hovers over the top-row cluster status description, the help text must include the most specific known reason for the current status, not only repeat the shortened visible status text.
+- R15b. The hover detail should include relevant concrete failure context when available, such as affected tracked object, node readiness reason and message, pod condition or container reason and message, warning event detail, section-unavailable reason, or stale refresh reason.
+- R15c. Hover detail must stay safe for a menu-bar surface: do not expose raw command output, tokens, file paths, or noisy kubectl transcripts; use the same sanitized operator-facing reasons used elsewhere in the display.
+- R15d. The same detailed status information exposed on hover must also be available through accessibility text so the detail is not mouse-only.
 - R16. Overview must show warning events under the section title `Recent Warnings`.
 - R17. Recent warning rows must show the warning reason, affected object, and age in a compact format.
 - R18. When there are no warning events, the empty state must stay neutral and must not become a health claim.
@@ -75,6 +79,9 @@ Overview
 - Pods show `<ready count>/<all count>` on Overview without opening the Pods tab.
 - CPU and memory values are traceable to `kubectl` data or clearly marked unavailable.
 - Overview no longer contains `Watching` or long health prose such as "Cluster looks healthy" or "needs watching".
+- Hovering the top cluster/status description shows detailed concrete status context, for example the exact failing object or underlying node/pod/warning/stale reason when that data exists.
+- The hover detail is more informative than the visible one-line status text, but it remains sanitized and safe to display.
+- The detailed hover status is also available to accessibility users.
 - Warning events appear as `Recent Warnings`.
 - Each recent warning row answers, in order: what happened, where it happened, how recent it is, whether it repeated, and the latest useful message.
 - Tracked-object warnings are recognizable without using `Watching` language.
@@ -98,6 +105,7 @@ Overview
 - **Recent warnings replaces the single notice pattern:** A list of recent warning rows is more useful than one generic Overview notice for the visual direction.
 - **Warning rows lead with cause, then scope:** Operators scan warnings to find the failure mode first, then confirm which object is affected. Reason-first rows should still show object and namespace clearly enough to avoid ambiguity.
 - **Message text is secondary context:** Kubernetes event messages can be noisy or long. They should help when useful, but they should not bury reason, object, age, or repeat count.
+- **Visible status stays short; hover carries detail:** The top-row status should remain a scan-friendly one-liner, while hover/help and accessibility text carry the concrete diagnostic context needed to understand why the cluster is not OK.
 - **Kubectl remains the data boundary:** CPU, memory, nodes, pods, and warnings should all be derived from `kubectl`-backed reads so Kubebar continues to use the operator's existing cluster access.
 
 ## Alternatives Considered

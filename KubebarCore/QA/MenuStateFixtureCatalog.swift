@@ -2,6 +2,7 @@ import Foundation
 
 public enum MenuQAState: String, CaseIterable, Sendable {
     case healthy
+    case completedJobs = "completed-jobs"
     case watch
     case bad
     case staleRefreshFailure = "stale-refresh-failure"
@@ -60,11 +61,21 @@ public enum MenuStateFixtureCatalog {
                     + " Pods tab groups watched Pods by namespace with ready counts.",
                 limitations: "Requires visible menu inspection to confirm the top row, four-card grid, and capped warning area."
             )
+        case .completedJobs:
+            return makeFixture(
+                id: state,
+                display: evaluator.evaluate(snapshot: completedJobsSnapshot(), now: now),
+                setupState: completedJobsSetupState(),
+                expectedBehavior: "Overview shows OK when the watched scope has only completed Job Pods."
+                    + " Pods tab has no active Pod rows and says completed jobs are OK.",
+                limitations: "Requires visible menu inspection to confirm completed Job Pods do not appear as unready active rows."
+            )
         case .watch:
             return makeFixture(
                 id: state,
                 display: evaluator.evaluate(snapshot: watchSnapshot(), now: now),
                 expectedBehavior: "Overview shows Watch with a pinned BackOff warning row."
+                    + " Hovering the top status explains the restarting qa-api Pod."
                     + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text.",
                 limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, and card readability."
             )
@@ -73,6 +84,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: badSnapshot(), now: now),
                 expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row."
+                    + " Hovering the top status names the affected qa-payments Pods."
                     + " Pods tab shows failed Pods first with red dots and issue text.",
                 limitations: "Requires visible menu inspection to confirm top-row priority and card state."
             )
@@ -85,7 +97,8 @@ public enum MenuStateFixtureCatalog {
                     failure: RefreshFailure(reason: "Refresh failed; showing last known status."),
                     now: now
                 ),
-                expectedBehavior: "Overview shows Stale while preserving the last known top row and four cards with stale marking.",
+                expectedBehavior: "Overview shows Stale while preserving the last known top row and four cards with stale marking."
+                    + " Hovering the top status explains the failed refresh reason.",
                 limitations: "Requires visible menu inspection to confirm stale data is not presented as current."
             )
         case .staleAgeOut:
@@ -134,6 +147,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: metricsUnavailableSnapshot(), now: now),
                 expectedBehavior: "Overview keeps OK cluster status while CPU and Memory cards show unavailable metrics."
+                    + " Hovering the top status explains that metrics are unavailable."
                     + " Pods tab still shows watched Pods.",
                 limitations: "Requires visible menu inspection to confirm unavailable metrics are distinct from normal current values."
             )
@@ -142,8 +156,9 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: warningHeavySnapshot(), now: now),
                 expectedBehavior: "Overview shows capped Recent Warnings with the pinned tracked warning first, repeat count visible, message secondary, and overflow left for Events."
+                    + " Hovering the top status exposes the pinned tracked warning detail."
                     + " Events tab scrolls above the footer, the footer remains visible with refresh/settings/quit only, and Pods tab keeps attention rows before ready rows.",
-                limitations: "Requires visible menu inspection to confirm warning rows stay clear, overflow keeps the footer reachable, and the tab bar has balanced spacing."
+                limitations: "Requires visible menu inspection to confirm warning rows stay clear, overflow keeps the footer reachable, the top row and four cards remain visible, and the tab bar has balanced spacing."
             )
         }
     }
@@ -203,6 +218,27 @@ public enum MenuStateFixtureCatalog {
                     reason: "3/3 watched pods running"
                 )
             ]),
+            capturedAt: capturedAt
+        )
+    }
+
+    private static func completedJobsSnapshot() -> ClusterSnapshot {
+        ClusterSnapshot(
+            contextName: "QA fixture",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            nodeDetailsSection: .available(healthyNodeDetails()),
+            podsSection: .available(PodSummary(ready: 0, running: 0, total: 0)),
+            podDetailsSection: .available([]),
+            metricsSection: .available(metricsSummary()),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(
+                    target: .namespace("qa-jobs"),
+                    state: .ok,
+                    reason: "completed jobs are OK"
+                )
+            ]),
+            hasCompletedWatchedPods: true,
             capturedAt: capturedAt
         )
     }
@@ -562,6 +598,18 @@ public enum MenuStateFixtureCatalog {
             selectedContext: nil,
             availableContexts: ["QA fixture", "QA standby"],
             watchlist: WatchlistSelectionState(availableNamespaces: []),
+            refreshCadence: .oneMinute
+        )
+    }
+
+    private static func completedJobsSetupState() -> SetupFlowState {
+        SetupFlowState(
+            selectedContext: "QA fixture",
+            availableContexts: ["QA fixture", "QA standby"],
+            watchlist: WatchlistSelectionState(
+                availableNamespaces: ["qa-api", "qa-jobs", "qa-monitoring"],
+                selectedTargets: [.namespace("qa-jobs")]
+            ),
             refreshCadence: .oneMinute
         )
     }

@@ -233,6 +233,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
     public let warningEventsSection: SnapshotSection<[WarningEventRecord]>
     public let workloadsSection: SnapshotSection<[TrackedItemStatus]>
     public let sectionFailures: [SnapshotSectionFailure]
+    public let hasCompletedWatchedPods: Bool
 
     public init(
         contextName: String,
@@ -243,6 +244,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         nodeDetailsSection: SnapshotSection<[NodeDetail]> = .available([]),
         podDetailsSection: SnapshotSection<[PodDetail]> = .available([]),
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
+        hasCompletedWatchedPods: Bool = false,
         capturedAt: Date
     ) {
         self.contextName = contextName
@@ -259,6 +261,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         self.warningEventsSection = .available([])
         self.workloadsSection = .available(trackedItems)
         self.sectionFailures = []
+        self.hasCompletedWatchedPods = hasCompletedWatchedPods
     }
 
     public init(
@@ -270,6 +273,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
         metricsSection: SnapshotSection<ClusterMetricsSummary> = .unavailable(reason: "Metrics unavailable"),
         warningEventsSection: SnapshotSection<[WarningEventRecord]>,
         workloadsSection: SnapshotSection<[TrackedItemStatus]>,
+        hasCompletedWatchedPods: Bool = false,
         capturedAt: Date
     ) {
         let nodeSummary = nodesSection.value ?? NodeSummary(ready: 0, total: 0)
@@ -298,6 +302,7 @@ public struct ClusterSnapshot: Equatable, Sendable {
             warningEventsSection: warningEventsSection,
             workloadsSection: workloadsSection
         )
+        self.hasCompletedWatchedPods = hasCompletedWatchedPods
     }
 
     private static func makeNodeDetailsSection(from nodesSection: SnapshotSection<NodeSummary>) -> SnapshotSection<[NodeDetail]> {

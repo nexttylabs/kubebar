@@ -29,7 +29,7 @@ struct StatusSummaryView: View {
                     .truncationMode(.middle)
             }
             .font(.subheadline)
-            .help(Text(display.overview.statusText))
+            .help(Text(display.overview.statusHelpText))
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(display.overview.statusAccessibilityLabel)
