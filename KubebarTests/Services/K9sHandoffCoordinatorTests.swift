@@ -21,7 +21,7 @@ struct K9sHandoffCoordinatorTests {
 
         launcher.release()
 
-        try? await Task.sleep(for: .milliseconds(150))
+        #expect(await waitForState(coordinator, expected: .idle, timeout: .seconds(1)))
         #expect(coordinator.state == .idle)
         #expect(launcher.callCount == 1)
     }
@@ -42,7 +42,7 @@ struct K9sHandoffCoordinatorTests {
 
         #expect(coordinator.state == .opening(target: target))
         launcher.release()
-        try? await Task.sleep(for: .milliseconds(150))
+        #expect(await waitForState(coordinator, expected: .idle, timeout: .seconds(1)))
         #expect(launcher.callCount == 1)
     }
 
@@ -60,8 +60,7 @@ struct K9sHandoffCoordinatorTests {
         coordinator.open(for: target)
         #expect(coordinator.state == .opening(target: target))
         launcher.release()
-        try? await Task.sleep(for: .milliseconds(150))
-
+        #expect(await waitForState(coordinator, expected: .failed(target: target, message: "Could not open k9s for prod/api"), timeout: .seconds(1)))
         #expect(coordinator.state == .failed(target: target, message: "Could not open k9s for prod/api"))
     }
 
@@ -170,4 +169,20 @@ private final class ControlledLauncher: K9sHandoffLaunching, @unchecked Sendable
     func release() {
         releaseGate.signal()
     }
+}
+
+@MainActor
+private func waitForState(
+    _ coordinator: K9sHandoffCoordinator,
+    expected: K9sHandoffLaunchState,
+    timeout: Duration
+) async -> Bool {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+
+    while coordinator.state != expected && clock.now < deadline {
+        try? await Task.sleep(for: .milliseconds(20))
+    }
+
+    return coordinator.state == expected
 }
