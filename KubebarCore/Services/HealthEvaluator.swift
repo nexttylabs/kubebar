@@ -128,7 +128,8 @@ public struct HealthEvaluator: Sendable {
                 visibleItems: Array(visibleItems),
                 sectionNotices: sectionNotices,
                 warningRows: overviewWarnings,
-                totalWarningRows: overviewWarningRows.count
+                totalWarningRows: overviewWarningRows.count,
+                k9sHandoff: k9sHandoffTarget(from: snapshot, state: resolvedState)
             ),
             nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
             podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
@@ -208,7 +209,8 @@ public struct HealthEvaluator: Sendable {
         visibleItems: [WatchItemDisplay],
         sectionNotices: [SectionAvailabilityDisplay],
         warningRows: [WarningEventDisplay],
-        totalWarningRows: Int
+        totalWarningRows: Int,
+        k9sHandoff: OverviewK9sHandoff?
     ) -> OverviewDisplay {
         let statusHelpText = primaryStatusHelpText(
             for: state,
@@ -230,6 +232,7 @@ public struct HealthEvaluator: Sendable {
                 statusHelpText: statusHelpText,
                 contextName: snapshot.contextName
             ),
+            k9sHandoff: k9sHandoff,
             cards: [
                 nodeOverviewCard(from: snapshot, state: state),
                 podOverviewCard(from: snapshot, state: state),
@@ -269,6 +272,49 @@ public struct HealthEvaluator: Sendable {
             recentWarningsOverflowCount: 0,
             recentWarningsEmptyMessage: "Warning event count unavailable"
         )
+    }
+
+    private func k9sHandoffTarget(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewK9sHandoff? {
+        guard state == .watch || state == .bad else {
+            return nil
+        }
+
+        let sortedTrackedItems = sortByAttention(snapshot.trackedItems)
+        guard let item = sortedTrackedItems.first(where: { $0.state == .bad || $0.state == .watch }),
+              let target = handoffTarget(for: item.target, contextName: snapshot.contextName)
+        else {
+            return nil
+        }
+
+        return OverviewK9sHandoff(
+            target: target,
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+    }
+
+    private func handoffTarget(for target: WatchTarget, contextName: String) -> K9sHandoffTarget? {
+        guard let normalizedContextName = normalizedText(contextName), !normalizedContextName.isEmpty,
+              normalizedContextName != "Not configured"
+        else {
+            return nil
+        }
+
+        switch target {
+        case let .namespace(namespace):
+            guard let normalizedNamespace = normalizedText(namespace), !normalizedNamespace.isEmpty else {
+                return nil
+            }
+
+            return K9sHandoffTarget(contextName: normalizedContextName, namespace: normalizedNamespace)
+        case let .workload(namespace: namespace, _, _):
+            guard let normalizedNamespace = normalizedText(namespace), !normalizedNamespace.isEmpty else {
+                return nil
+            }
+
+            return K9sHandoffTarget(contextName: normalizedContextName, namespace: normalizedNamespace)
+        }
     }
 
     private func nodeOverviewCard(from snapshot: ClusterSnapshot, state: ClusterHealthState) -> OverviewCardDisplay {

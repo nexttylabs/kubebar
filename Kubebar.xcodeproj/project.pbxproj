@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -44,6 +44,7 @@
 		606AFC7528260D78D8BC9E45 /* RefreshGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC142C4F1E07378E74546FE /* RefreshGateTests.swift */; };
 		6AD24ACE1B08D85139E55137 /* WatchlistPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */; };
 		6AF6A15E2D4F765E4C98EE30 /* StatusSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */; };
+		708412980F38132D54845E97 /* K9sHandoffCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C4A509C804C4DE5A72BCD3 /* K9sHandoffCoordinator.swift */; };
 		78DE1F0D561B11983D48D60F /* MenuLayoutSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 689EC8218395797C0788B282 /* MenuLayoutSizing.swift */; };
 		7E10219D9134064745C7587E /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6AD42A08C3FCF7AFC66B5 /* MenuBarViewModel.swift */; };
 		807978CC3ED867BFDD568099 /* ConfigurationRequiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A54CD93E75766F134F4B27 /* ConfigurationRequiredView.swift */; };
@@ -54,15 +55,15 @@
 		9C927DBFB7ECCCB5139CEF39 /* SettingsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 044436EFC75907A7253A3A7A /* SettingsRootView.swift */; };
 		9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4602F3AD3687ABB356E1C266 /* NodesTabView.swift */; };
 		9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */; };
-		A95C911BD85C45D4A69B92BE /* FreshnessDisplaySchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F62A4507F64D0BA2210C31 /* FreshnessDisplaySchedule.swift */; };
 		A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */; };
 		AB13FDF1DD2848688F89CE90 /* MenuStateFixtureCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */; };
 		AC13EC97905550E7D830828B /* MenuTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8BD7D4374CA280EB08BF3E /* MenuTab.swift */; };
+		B39AFD013269B9D4B273BD65 /* FreshnessDisplaySchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F145C7042CEB53D7185BD7FA /* FreshnessDisplaySchedule.swift */; };
+		B4E172ECAE5DEBA5BB621EB9 /* K9sHandoffLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99FCB8D13880C4DF3090C38 /* K9sHandoffLauncher.swift */; };
 		C37388D088AFEA095E3E172E /* RefreshGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */; };
 		C7D835EE9941E87F99EAF0DE /* WatchlistSelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */; };
 		CB35CF597BAFC816918A11BA /* KubectlClusterReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */; };
 		D343AF9AAD2DB31A718A3396 /* PodsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE870F98B15D0AD4D10E4031 /* PodsTabView.swift */; };
-		D17E3036C8364D84B33A912C /* FreshnessDisplayScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F0A2B4F9A64D5A8C36E701 /* FreshnessDisplayScheduleTests.swift */; };
 		DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */; };
 		E557AF4691C5FFE49437ADB4 /* EventsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A022D6D54A801257E7493047 /* EventsTabView.swift */; };
 		E5ACFCA3A8AF5731A614DD75 /* ContextCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */; };
@@ -71,7 +72,10 @@
 		EA3A58433537560B8EFFE763 /* WatchTargetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEA42B12E1A80F663E483332 /* WatchTargetTests.swift */; };
 		ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */; };
 		F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */; };
+		F2C47E9B336DAEBB62C4A38B /* K9sHandoffCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36898C56A6EB1B155A97A6E /* K9sHandoffCoordinatorTests.swift */; };
 		F3BA3AEB1BF36707FCBA26E7 /* KubebarCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F67279655B65A5C795235011 /* K9sHandoffLauncherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F1BAE30BE489A363995688 /* K9sHandoffLauncherTests.swift */; };
+		F8166FF0EF8CCCAF14F15DDF /* FreshnessDisplayScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC71932B945E1D6592AA77E /* FreshnessDisplayScheduleTests.swift */; };
 		F9B5425A8538F60891B080EA /* QALaunchMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44ED769495D3CCF49456FB7B /* QALaunchMode.swift */; };
 /* End PBXBuildFile section */
 
@@ -149,6 +153,7 @@
 		8240373DA431592CA2BE0AAD /* WatchlistSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSectionView.swift; sourceTree = "<group>"; };
 		85A54CD93E75766F134F4B27 /* ConfigurationRequiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationRequiredView.swift; sourceTree = "<group>"; };
 		8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCatalogTests.swift; sourceTree = "<group>"; };
+		89C4A509C804C4DE5A72BCD3 /* K9sHandoffCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = K9sHandoffCoordinator.swift; sourceTree = "<group>"; };
 		9764447501D53DE91281068A /* HealthEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthEvaluator.swift; sourceTree = "<group>"; };
 		A022D6D54A801257E7493047 /* EventsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsTabView.swift; sourceTree = "<group>"; };
 		A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshGate.swift; sourceTree = "<group>"; };
@@ -161,25 +166,28 @@
 		B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunnerTests.swift; sourceTree = "<group>"; };
 		B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackedItemDetailView.swift; sourceTree = "<group>"; };
 		B5F44DC0EB6DFB754A4E074B /* WatchlistPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistPickerView.swift; sourceTree = "<group>"; };
-		B8F62A4507F64D0BA2210C31 /* FreshnessDisplaySchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreshnessDisplaySchedule.swift; sourceTree = "<group>"; };
 		BE870F98B15D0AD4D10E4031 /* PodsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodsTabView.swift; sourceTree = "<group>"; };
+		BEC71932B945E1D6592AA77E /* FreshnessDisplayScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreshnessDisplayScheduleTests.swift; sourceTree = "<group>"; };
 		C0DD632B3A3FF43568D48AF9 /* SetupFlowStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowStateTests.swift; sourceTree = "<group>"; };
-		C5F0A2B4F9A64D5A8C36E701 /* FreshnessDisplayScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreshnessDisplayScheduleTests.swift; sourceTree = "<group>"; };
 		C15B64B428E2F7F739C4E81A /* MenuLayoutSizingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuLayoutSizingTests.swift; sourceTree = "<group>"; };
 		C15FA43125DF9BF219851EB9 /* CompactCountersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactCountersView.swift; sourceTree = "<group>"; };
 		C221382EB43B27DF73F677E5 /* SetupFlowState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupFlowState.swift; sourceTree = "<group>"; };
 		C83920A23FBBEB8633C45D15 /* MenuDisplayModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuDisplayModel.swift; sourceTree = "<group>"; };
+		C9F1BAE30BE489A363995688 /* K9sHandoffLauncherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = K9sHandoffLauncherTests.swift; sourceTree = "<group>"; };
 		CE162CB8A5320D87A9EBF55A /* StaleBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaleBannerView.swift; sourceTree = "<group>"; };
 		DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuStateFixtureCatalogTests.swift; sourceTree = "<group>"; };
 		DB85B2A6F35FE8060AA9C798 /* ClusterHealthStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusterHealthStateTests.swift; sourceTree = "<group>"; };
 		DE730D4112D2CD5963295F5C /* Kubebar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kubebar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E309AEA967A6E63FE865DCFA /* MenuRuntimeStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuRuntimeStateTests.swift; sourceTree = "<group>"; };
+		E36898C56A6EB1B155A97A6E /* K9sHandoffCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = K9sHandoffCoordinatorTests.swift; sourceTree = "<group>"; };
 		E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
 		E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentation.swift; sourceTree = "<group>"; };
 		E8A05316EDD516D6E9253DB4 /* WatchlistSelectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSelectionState.swift; sourceTree = "<group>"; };
 		ED8BD7D4374CA280EB08BF3E /* MenuTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuTab.swift; sourceTree = "<group>"; };
 		F0A043426B709BACA5F1E0AD /* NodeDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeDetailsView.swift; sourceTree = "<group>"; };
+		F145C7042CEB53D7185BD7FA /* FreshnessDisplaySchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreshnessDisplaySchedule.swift; sourceTree = "<group>"; };
 		F32B1B6F7E78CC246131309D /* WatchlistSelectionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistSelectionStateTests.swift; sourceTree = "<group>"; };
+		F99FCB8D13880C4DF3090C38 /* K9sHandoffLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = K9sHandoffLauncher.swift; sourceTree = "<group>"; };
 		F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCoordinatorTests.swift; sourceTree = "<group>"; };
 		FD651CCDAAD62B4E7C090D6F /* WatchTargetCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTargetCatalog.swift; sourceTree = "<group>"; };
 		FD883B4C9F8DBC5EF2A2A75A /* WorkloadKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkloadKind.swift; sourceTree = "<group>"; };
@@ -277,7 +285,9 @@
 				684455D1430321334848EB7F /* AppConfigStoreTests.swift */,
 				B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */,
 				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
-				C5F0A2B4F9A64D5A8C36E701 /* FreshnessDisplayScheduleTests.swift */,
+				BEC71932B945E1D6592AA77E /* FreshnessDisplayScheduleTests.swift */,
+				E36898C56A6EB1B155A97A6E /* K9sHandoffCoordinatorTests.swift */,
+				C9F1BAE30BE489A363995688 /* K9sHandoffLauncherTests.swift */,
 				3E2864022B6B2FF3AADF1E4F /* KubectlClusterReaderTests.swift */,
 				C15B64B428E2F7F739C4E81A /* MenuLayoutSizingTests.swift */,
 				F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */,
@@ -311,8 +321,10 @@
 				E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */,
 				A59D91E3E139CA91BC232D40 /* CommandRunner.swift */,
 				16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */,
-				B8F62A4507F64D0BA2210C31 /* FreshnessDisplaySchedule.swift */,
+				F145C7042CEB53D7185BD7FA /* FreshnessDisplaySchedule.swift */,
 				9764447501D53DE91281068A /* HealthEvaluator.swift */,
+				89C4A509C804C4DE5A72BCD3 /* K9sHandoffCoordinator.swift */,
+				F99FCB8D13880C4DF3090C38 /* K9sHandoffLauncher.swift */,
 				09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */,
 				689EC8218395797C0788B282 /* MenuLayoutSizing.swift */,
 				B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */,
@@ -440,7 +452,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					6E81D6B0A5F45689E0C56333 = {
 						DevelopmentTeam = "";
@@ -463,6 +475,7 @@
 			);
 			mainGroup = 1E7C0A7778CEC6F2A9F3DC6F;
 			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -493,7 +506,9 @@
 				495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */,
 				2673AA6352855DBB0B87599A /* CommandRunnerTests.swift in Sources */,
 				1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */,
-				D17E3036C8364D84B33A912C /* FreshnessDisplayScheduleTests.swift in Sources */,
+				F8166FF0EF8CCCAF14F15DDF /* FreshnessDisplayScheduleTests.swift in Sources */,
+				F2C47E9B336DAEBB62C4A38B /* K9sHandoffCoordinatorTests.swift in Sources */,
+				F67279655B65A5C795235011 /* K9sHandoffLauncherTests.swift in Sources */,
 				9D925B117B0D234CA736517E /* KubectlClusterReaderTests.swift in Sources */,
 				52BA949618FBE1B3F59CFFA0 /* MenuBarStatusPresentationTests.swift in Sources */,
 				0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */,
@@ -519,8 +534,10 @@
 				DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */,
 				3C89297B5C863C683E8D33CA /* CommandRunner.swift in Sources */,
 				E5ACFCA3A8AF5731A614DD75 /* ContextCatalog.swift in Sources */,
-				A95C911BD85C45D4A69B92BE /* FreshnessDisplaySchedule.swift in Sources */,
+				B39AFD013269B9D4B273BD65 /* FreshnessDisplaySchedule.swift in Sources */,
 				19EAD915DF6C79C690F35AA1 /* HealthEvaluator.swift in Sources */,
+				708412980F38132D54845E97 /* K9sHandoffCoordinator.swift in Sources */,
+				B4E172ECAE5DEBA5BB621EB9 /* K9sHandoffLauncher.swift in Sources */,
 				CB35CF597BAFC816918A11BA /* KubectlClusterReader.swift in Sources */,
 				ED00D64BF197F5083B128EF7 /* MenuBarStatusPresentation.swift in Sources */,
 				90A3769DF7A535DE88BBA88B /* MenuDisplayModel.swift in Sources */,
@@ -617,12 +634,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -636,7 +651,6 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -677,12 +691,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -703,7 +715,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
@@ -716,19 +727,16 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.core;
 				PRODUCT_NAME = KubebarCore;
 				SDKROOT = macosx;
@@ -742,7 +750,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kubebar;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -762,7 +769,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kubebar;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -783,19 +789,16 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nextty.kubebar.core;
 				PRODUCT_NAME = KubebarCore;
 				SDKROOT = macosx;
@@ -809,7 +812,6 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -826,7 +828,6 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

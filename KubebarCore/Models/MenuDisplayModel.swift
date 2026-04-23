@@ -176,6 +176,35 @@ public struct OverviewNoticeDisplay: Equatable, Sendable, Identifiable {
     }
 }
 
+public struct K9sHandoffTarget: Equatable, Sendable {
+    public let contextName: String
+    public let namespace: String
+
+    public init(contextName: String, namespace: String) {
+        self.contextName = contextName
+        self.namespace = namespace
+    }
+}
+
+public struct OverviewK9sHandoff: Equatable, Sendable {
+    public let target: K9sHandoffTarget
+    public let actionLabel: String
+    public let helpText: String
+    public let accessibilityLabel: String
+
+    public init(
+        target: K9sHandoffTarget,
+        actionLabel: String,
+        helpText: String,
+        accessibilityLabel: String
+    ) {
+        self.target = target
+        self.actionLabel = actionLabel
+        self.helpText = helpText
+        self.accessibilityLabel = accessibilityLabel
+    }
+}
+
 public enum NodeItemReadiness: Equatable, Sendable {
     case ready
     case notReady
@@ -371,6 +400,7 @@ public struct OverviewDisplay: Equatable, Sendable {
     public let statusText: String
     public let statusHelpText: String
     public let statusAccessibilityLabel: String
+    public let k9sHandoff: OverviewK9sHandoff?
     public let cards: [OverviewCardDisplay]
     public let recentWarnings: [WarningEventDisplay]
     public let recentWarningsOverflowCount: Int
@@ -381,6 +411,7 @@ public struct OverviewDisplay: Equatable, Sendable {
         statusText: String,
         statusHelpText: String? = nil,
         statusAccessibilityLabel: String,
+        k9sHandoff: OverviewK9sHandoff? = nil,
         cards: [OverviewCardDisplay],
         recentWarnings: [WarningEventDisplay],
         recentWarningsOverflowCount: Int,
@@ -390,6 +421,7 @@ public struct OverviewDisplay: Equatable, Sendable {
         self.statusText = statusText
         self.statusHelpText = statusHelpText ?? statusText
         self.statusAccessibilityLabel = statusAccessibilityLabel
+        self.k9sHandoff = k9sHandoff
         self.cards = cards
         self.recentWarnings = recentWarnings
         self.recentWarningsOverflowCount = recentWarningsOverflowCount

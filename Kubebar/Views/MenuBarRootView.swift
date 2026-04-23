@@ -8,6 +8,8 @@ struct MenuBarRootView: View {
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onPrepareSettings: () -> Void
+    let k9sHandoffState: K9sHandoffLaunchState
+    let onOpenK9sHandoff: () -> Void
     let onQuit: () -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
@@ -120,7 +122,11 @@ struct MenuBarRootView: View {
     private var selectedTabContent: some View {
         switch selectedTab {
         case .overview:
-            OverviewTabView(display: display)
+            OverviewTabView(
+                display: display,
+                k9sHandoffState: k9sHandoffState,
+                onOpenK9sHandoff: onOpenK9sHandoff
+            )
         case .nodes:
             NodesTabView(display: display)
         case .pods:

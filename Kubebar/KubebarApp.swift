@@ -70,6 +70,8 @@ struct KubebarApp: App {
             isRefreshing: viewModel.isRefreshing,
             onRefresh: viewModel.refreshNow,
             onPrepareSettings: viewModel.prepareSettings,
+            k9sHandoffState: viewModel.k9sHandoffState,
+            onOpenK9sHandoff: viewModel.openK9sHandoff,
             onQuit: { NSApplication.shared.terminate(nil) }
         )
     }
@@ -90,6 +92,8 @@ private struct QAFixtureMenuRootView: View {
             isRefreshing: false,
             onRefresh: {},
             onPrepareSettings: {},
+            k9sHandoffState: .idle,
+            onOpenK9sHandoff: {},
             onQuit: { NSApplication.shared.terminate(nil) }
         )
     }
