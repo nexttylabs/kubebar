@@ -49,8 +49,12 @@ public final class K9sHandoffLauncher: K9sHandoffLaunching {
             set pathEnvironment to item 3 of argv
 
             tell application "Terminal"
-                activate
-                do script "export PATH=" & quoted form of pathEnvironment & "; exec k9s --context " & quoted form of contextName & " -n " & quoted form of namespaceName
+                set k9sCommand to "export PATH=" & quoted form of pathEnvironment & "; exec k9s --context " & quoted form of contextName & " -n " & quoted form of namespaceName
+                if (count of windows) is greater than 0 then
+                    do script k9sCommand in front window
+                else
+                    do script k9sCommand
+                end if
             end tell
         end run
         """

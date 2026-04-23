@@ -20,6 +20,20 @@ struct K9sHandoffLauncherTests {
         #expect(request.arguments[4].contains("/usr/bin"))
     }
 
+    @Test("launch avoids opening a separate blank terminal window")
+    func launchUsesExistingTerminalWindowIfAvailable() throws {
+        let runner = FakeCommandRunner()
+        let launcher = K9sHandoffLauncher(runner: runner)
+
+        try launcher.launch(contextName: "prod", namespace: "api")
+
+        let request = try #require(runner.request)
+        let script = request.arguments[1]
+        #expect(!script.contains("activate"))
+        #expect(script.contains("if (count of windows) is greater than 0"))
+        #expect(script.contains("do script k9sCommand in front window"))
+    }
+
     @Test("launch supports special characters in context and namespace")
     func launchSupportsSpecialCharacters() throws {
         let runner = FakeCommandRunner()
