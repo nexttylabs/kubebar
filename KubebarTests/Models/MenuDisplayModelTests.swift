@@ -99,6 +99,104 @@ struct MenuDisplayModelTests {
         #expect(display.primaryStatusReason == "1 pod pending")
     }
 
+    @Test("watch and bad tracked targets expose k9s handoff target")
+    func watchAndBadTrackedTargetsExposeK9sHandoff() {
+        let watchSnapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .namespace("api"),
+                    state: .watch,
+                    reason: "1 pod restarting"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let badSnapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 5, total: 6),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .workload(namespace: "api", name: "checkout"),
+                    state: .bad,
+                    reason: "1 pod unavailable"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let watchDisplay = HealthEvaluator().evaluate(snapshot: watchSnapshot, now: Date(timeIntervalSince1970: 120))
+        let badDisplay = HealthEvaluator().evaluate(snapshot: badSnapshot, now: Date(timeIntervalSince1970: 120))
+
+        #expect(watchDisplay.overview.k9sHandoff?.target.contextName == "prod")
+        #expect(watchDisplay.overview.k9sHandoff?.target.namespace == "api")
+        #expect(badDisplay.overview.k9sHandoff?.target.namespace == "api")
+        #expect(watchDisplay.state == .watch)
+        #expect(badDisplay.state == .bad)
+    }
+
+    @Test("healthy, stale, and warning-only states do not expose k9s handoff")
+    func nonAbnormalTrackedStatesDoNotExposeK9sHandoff() {
+        let healthySnapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .namespace("api"),
+                    state: .ok,
+                    reason: "6/6 watched pods running"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let warningOnlySnapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([warningEvent(reason: "BackOff", observedAt: Date(timeIntervalSince1970: 100), count: 1)]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let staleSnapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 3, total: 3),
+            podSummary: PodSummary(running: 12, total: 12),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(
+                    target: .namespace("api"),
+                    state: .bad,
+                    reason: "1 pod unavailable"
+                )
+            ],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let healthyDisplay = HealthEvaluator().evaluate(snapshot: healthySnapshot, now: Date(timeIntervalSince1970: 120))
+        let warningDisplay = HealthEvaluator().evaluate(
+            snapshot: warningOnlySnapshot,
+            now: Date(timeIntervalSince1970: 120)
+        )
+        let staleDisplay = HealthEvaluator().evaluate(
+            snapshot: nil,
+            previousSnapshot: staleSnapshot,
+            failure: nil,
+            now: Date(timeIntervalSince1970: 130),
+            staleAfterSeconds: 10,
+        )
+
+        #expect(healthyDisplay.overview.k9sHandoff == nil)
+        #expect(warningDisplay.overview.k9sHandoff == nil)
+        #expect(staleDisplay.overview.k9sHandoff == nil)
+    }
+
     @Test("tracked item status help includes expanded detail")
     func trackedItemStatusHelpIncludesExpandedDetail() {
         let latestWarning = warningEvent(

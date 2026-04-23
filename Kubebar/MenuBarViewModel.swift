@@ -16,6 +16,7 @@ final class MenuBarViewModel: ObservableObject {
     }
     @Published private(set) var isShowingSetup: Bool
     @Published private(set) var isRefreshing: Bool
+    @Published private(set) var k9sHandoffState: K9sHandoffLaunchState
 
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
@@ -30,18 +31,21 @@ final class MenuBarViewModel: ObservableObject {
     private var watchTargetLoadTask: Task<Void, Never>?
     private var refreshGate: RefreshGate
     private var staleReason: String?
+    private let k9sHandoffCoordinator: K9sHandoffCoordinator
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
         refreshCoordinator: RefreshCoordinator = RefreshCoordinator(),
         contextCatalog: ContextCatalog = ContextCatalog(),
         watchTargetCatalog: any WatchTargetCataloging = WatchTargetCatalog(),
+        k9sHandoffCoordinator: K9sHandoffCoordinator = K9sHandoffCoordinator(),
         now: Date = Date()
     ) {
         self.configStore = configStore
         self.refreshCoordinator = refreshCoordinator
         self.contextCatalog = contextCatalog
         self.watchTargetCatalog = watchTargetCatalog
+        self.k9sHandoffCoordinator = k9sHandoffCoordinator
 
         do {
             self.config = try configStore.load()
@@ -59,6 +63,12 @@ final class MenuBarViewModel: ObservableObject {
         self.refreshGate = RefreshGate()
         self.staleReason = nil
         self.display = Self.initialDisplay(for: config, now: now)
+        self.k9sHandoffState = .idle
+
+        self.k9sHandoffCoordinator.onStateChange = { [weak self] state in
+            self?.k9sHandoffState = state
+        }
+        self.k9sHandoffCoordinator.resetIfTargetUnavailable(display.overview.k9sHandoff)
 
         if runtimeState.isShowingSetup {
             loadContextsIfNeeded()
@@ -124,6 +134,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func openSetup() {
+        k9sHandoffCoordinator.clear()
         runtimeState.openSetup()
         publishRuntimeState()
         loadContextsIfNeeded()
@@ -134,6 +145,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func prepareSettings() {
+        k9sHandoffCoordinator.clear()
         runtimeState.prepareSettings(config: config)
         publishRuntimeState()
         loadContextsForSettings()
@@ -145,6 +157,7 @@ final class MenuBarViewModel: ObservableObject {
 
     @discardableResult
     func completeSetup() -> Bool {
+        k9sHandoffCoordinator.clear()
         guard let completedConfig = runtimeState.completedConfig() else {
             return false
         }
@@ -168,6 +181,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func selectSetupContext(_ context: String?) {
+        k9sHandoffCoordinator.clear()
         watchTargetLoadTask?.cancel()
         watchTargetLoadTask = nil
 
@@ -178,6 +192,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func retryWatchTargetLoad() {
+        k9sHandoffCoordinator.clear()
         guard let selectedContext = runtimeState.targetContextToLoad else {
             runtimeState.setupState.targetLoadingState = .idle
             publishRuntimeState()
@@ -300,6 +315,7 @@ final class MenuBarViewModel: ObservableObject {
         freshnessTimerTask?.cancel()
         freshnessTimerTask = nil
         staleReason = nil
+        k9sHandoffCoordinator.clear()
 
         if clearSnapshot {
             snapshot = nil
@@ -310,6 +326,8 @@ final class MenuBarViewModel: ObservableObject {
         snapshot = result.snapshot
         display = result.display
         staleReason = result.display.staleBanner?.reason
+        k9sHandoffCoordinator.resetIfTargetUnavailable(display.overview.k9sHandoff)
+        k9sHandoffState = k9sHandoffCoordinator.state
         scheduleFreshnessTimer()
     }
 
@@ -337,6 +355,12 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         staleReason = display.staleBanner?.reason
+        k9sHandoffCoordinator.resetIfTargetUnavailable(display.overview.k9sHandoff)
+        k9sHandoffState = k9sHandoffCoordinator.state
+    }
+
+    func openK9sHandoff() {
+        k9sHandoffCoordinator.open(for: display.overview.k9sHandoff)
     }
 
     private func scheduleFreshnessTimer(now: Date = Date()) {

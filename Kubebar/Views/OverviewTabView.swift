@@ -3,6 +3,8 @@ import KubebarCore
 
 struct OverviewTabView: View {
     let display: MenuDisplayModel
+    let k9sHandoffState: K9sHandoffLaunchState
+    let onOpenK9sHandoff: () -> Void
 
     private let columns = [
         GridItem(.flexible(), spacing: 8),
@@ -11,7 +13,11 @@ struct OverviewTabView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            StatusSummaryView(display: display)
+            StatusSummaryView(
+                display: display,
+                k9sHandoffState: k9sHandoffState,
+                onOpenK9sHandoff: onOpenK9sHandoff
+            )
             StaleBannerView(banner: display.staleBanner)
 
             LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {

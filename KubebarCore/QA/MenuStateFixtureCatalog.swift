@@ -75,6 +75,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: watchSnapshot(), now: now),
                 expectedBehavior: "Overview shows Watch with a pinned BackOff warning row."
+                    + " The top detail includes a direct `Open in k9s` action for qa-api."
                     + " Hovering the top status explains the restarting qa-api Pod."
                     + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text.",
                 limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, and card readability."
@@ -84,6 +85,7 @@ public enum MenuStateFixtureCatalog {
                 id: state,
                 display: evaluator.evaluate(snapshot: badSnapshot(), now: now),
                 expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row."
+                    + " The top detail includes a direct `Open in k9s` action for qa-payments."
                     + " Hovering the top status names the affected qa-payments Pods."
                     + " Pods tab shows failed Pods first with red dots and issue text.",
                 limitations: "Requires visible menu inspection to confirm top-row priority and card state."
