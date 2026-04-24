@@ -447,47 +447,6 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         return total
     }
 
-    private func parseResourceQuantity(_ value: String, scale: ResourceQuantityScale) -> Int64? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return nil
-        }
-
-        if let number = Double(trimmed), number >= 0, number.isFinite {
-            return scaledQuantity(number: number, multiplier: scale.multiplier(for: ""))
-        }
-
-        let splitIndex = trimmed.firstIndex { character in
-            !(character.isNumber || character == "." || character == "+" || character == "-")
-        } ?? trimmed.endIndex
-        let numberText = String(trimmed[..<splitIndex])
-        let suffix = String(trimmed[splitIndex...])
-
-        guard
-            let number = Double(numberText),
-            number >= 0,
-            number.isFinite,
-            let multiplier = scale.multiplier(for: suffix)
-        else {
-            return nil
-        }
-
-        return scaledQuantity(number: number, multiplier: multiplier)
-    }
-
-    private func scaledQuantity(number: Double, multiplier: Double?) -> Int64? {
-        guard let multiplier else {
-            return nil
-        }
-
-        let scaled = number * multiplier
-        guard scaled.isFinite, scaled <= Double(Int64.max) else {
-            return nil
-        }
-
-        return Int64(scaled.rounded(.toNearestOrAwayFromZero))
-    }
-
     private func decodeWarningEvents(_ json: String) throws -> [WarningEventRecord] {
         do {
             return try JSONDecoder()
@@ -1044,6 +1003,47 @@ private enum ResourceQuantityScale {
     }
 }
 
+private func parseResourceQuantity(_ value: String, scale: ResourceQuantityScale) -> Int64? {
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+        return nil
+    }
+
+    if let number = Double(trimmed), number >= 0, number.isFinite {
+        return scaledResourceQuantity(number: number, multiplier: scale.multiplier(for: ""))
+    }
+
+    let splitIndex = trimmed.firstIndex { character in
+        !(character.isNumber || character == "." || character == "+" || character == "-")
+    } ?? trimmed.endIndex
+    let numberText = String(trimmed[..<splitIndex])
+    let suffix = String(trimmed[splitIndex...])
+
+    guard
+        let number = Double(numberText),
+        number >= 0,
+        number.isFinite,
+        let multiplier = scale.multiplier(for: suffix)
+    else {
+        return nil
+    }
+
+    return scaledResourceQuantity(number: number, multiplier: multiplier)
+}
+
+private func scaledResourceQuantity(number: Double, multiplier: Double?) -> Int64? {
+    guard let multiplier else {
+        return nil
+    }
+
+    let scaled = number * multiplier
+    guard scaled.isFinite, scaled <= Double(Int64.max) else {
+        return nil
+    }
+
+    return Int64(scaled.rounded(.toNearestOrAwayFromZero))
+}
+
 private struct PodList: Decodable {
     let items: [PodRecord]
 }
@@ -1257,7 +1257,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         for container in containers {
             guard
                 let resourceValue = container.resources?[keyPath: selector]?[resource],
-                let parsed = parsePodResourceQuantity(resourceValue, scale: scale)
+                let parsed = parseResourceQuantity(resourceValue, scale: scale)
             else {
                 return nil
             }
@@ -1271,47 +1271,6 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         }
 
         return total
-    }
-
-    private func parsePodResourceQuantity(_ value: String, scale: ResourceQuantityScale) -> Int64? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return nil
-        }
-
-        if let number = Double(trimmed), number >= 0, number.isFinite {
-            return scaledPodResourceQuantity(number: number, multiplier: scale.multiplier(for: ""))
-        }
-
-        let splitIndex = trimmed.firstIndex {
-            !($0.isNumber || $0 == "." || $0 == "+" || $0 == "-")
-        } ?? trimmed.endIndex
-        let numberText = String(trimmed[..<splitIndex])
-        let suffix = String(trimmed[splitIndex...])
-
-        guard
-            let number = Double(numberText),
-            number >= 0,
-            number.isFinite,
-            let multiplier = scale.multiplier(for: suffix)
-        else {
-            return nil
-        }
-
-        return scaledPodResourceQuantity(number: number, multiplier: multiplier)
-    }
-
-    private func scaledPodResourceQuantity(number: Double, multiplier: Double?) -> Int64? {
-        guard let multiplier else {
-            return nil
-        }
-
-        let scaled = number * multiplier
-        guard scaled.isFinite, scaled <= Double(Int64.max) else {
-            return nil
-        }
-
-        return Int64(scaled.rounded(.toNearestOrAwayFromZero))
     }
 
     func matches(target: WatchTarget, workloadSelectors: [WorkloadIdentity: [String: String]]) -> Bool {

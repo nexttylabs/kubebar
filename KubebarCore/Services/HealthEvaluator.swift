@@ -746,53 +746,33 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func podResourceLabel(from summary: PodResourceSummary) -> String {
-        let resourceAvailability = summary.resourceAvailabilityMessage.flatMap { sanitizedSectionReason($0) }
-
         let cpuText = podResourceLine(
             name: "CPU",
             usage: summary.cpuUsageNanocores,
-            request: summary.cpuRequestNanocores,
-            limit: summary.cpuLimitNanocores,
-            format: formatCores,
-            suffix: "",
-            includeEmpty: false
+            primaryBasisLabel: "req",
+            primaryBasis: summary.cpuRequestNanocores,
+            secondaryBasisLabel: "limit",
+            secondaryBasis: summary.cpuLimitNanocores,
+            rawFormatter: formatMillicores
         )
 
         let memoryText = podResourceLine(
             name: "Mem",
             usage: summary.memoryUsageBytes,
-            request: summary.memoryRequestBytes,
-            limit: summary.memoryLimitBytes,
-            format: formatGiB,
-            suffix: "GiB",
-            includeEmpty: false
+            primaryBasisLabel: "limit",
+            primaryBasis: summary.memoryLimitBytes,
+            secondaryBasisLabel: "req",
+            secondaryBasis: summary.memoryRequestBytes,
+            rawFormatter: formatMiB
         )
 
-        let resourceParts = [cpuText, memoryText].compactMap { part in
-            let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed.isEmpty ? nil : trimmed
-        }
-
-        if resourceParts.isEmpty {
-            guard let resourceAvailability else {
-                return "-"
-            }
-
-            return "Resource data unavailable: \(resourceAvailability)"
-        }
-
-        let label = resourceParts.joined(separator: " · ")
-        guard let resourceAvailability else {
-            return label
-        }
-
-        return "\(label) · \(resourceAvailability)"
+        return "\(cpuText) · \(memoryText)"
     }
 
     private func podResourceHelpLabel(from summary: PodResourceSummary) -> String {
         let resourceAvailability = summary.resourceAvailabilityMessage.flatMap { sanitizedSectionReason($0) }
         let label = [
-            podResourceLine(
+            podResourceFullLine(
                 name: "CPU",
                 usage: summary.cpuUsageNanocores,
                 request: summary.cpuRequestNanocores,
@@ -801,7 +781,7 @@ public struct HealthEvaluator: Sendable {
                 suffix: "",
                 includeEmpty: true
             ),
-            podResourceLine(
+            podResourceFullLine(
                 name: "Mem",
                 usage: summary.memoryUsageBytes,
                 request: summary.memoryRequestBytes,
@@ -820,6 +800,43 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func podResourceLine(
+        name: String,
+        usage: Int64?,
+        primaryBasisLabel: String,
+        primaryBasis: Int64?,
+        secondaryBasisLabel: String,
+        secondaryBasis: Int64?,
+        rawFormatter: (Int64) -> String
+    ) -> String {
+        guard let usage else {
+            return "\(name) -"
+        }
+
+        if let primaryBasis, primaryBasis > 0 {
+            return "\(name) \(resourcePercentage(usage: usage, basis: primaryBasis)) \(primaryBasisLabel)"
+        }
+
+        if let secondaryBasis, secondaryBasis > 0 {
+            return "\(name) \(resourcePercentage(usage: usage, basis: secondaryBasis)) \(secondaryBasisLabel)"
+        }
+
+        return "\(name) \(rawFormatter(usage))"
+    }
+
+    private func resourcePercentage(usage: Int64, basis: Int64) -> String {
+        let percent = (Double(usage) / Double(basis) * 100).rounded()
+        return "\(Int(percent))%"
+    }
+
+    private func formatMillicores(_ nanocores: Int64) -> String {
+        "\(formatDecimal(Double(nanocores) / 1_000_000))m"
+    }
+
+    private func formatMiB(_ bytes: Int64) -> String {
+        "\(formatDecimal(Double(bytes) / 1_048_576))Mi"
+    }
+
+    private func podResourceFullLine(
         name: String,
         usage: Int64?,
         request: Int64?,

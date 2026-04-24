@@ -548,7 +548,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU 0.5/1/2 · Mem 1/2/4GiB")
+        #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
     }
 
     @Test("pod rows show resource summary when usage is missing")
@@ -583,9 +583,57 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU -/1/2 · Mem -/2/-GiB")
+        #expect(row.resourceLabel == "CPU - · Mem -")
         #expect(row.helpText.contains("CPU -/1/2 · Mem -/2/-GiB"))
         #expect(row.accessibilityLabel == row.helpText)
+    }
+
+    @Test("pod rows use fallback basis and raw resource labels")
+    func podRowsUseFallbackBasisAndRawResourceLabels() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 2, total: 2)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "fallback-basis",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: 250_000_000,
+                        cpuRequestNanocores: nil,
+                        cpuLimitNanocores: 1_000_000_000,
+                        memoryUsageBytes: 268_435_456,
+                        memoryRequestBytes: 536_870_912,
+                        memoryLimitBytes: nil
+                    )
+                ),
+                podDetail(
+                    namespace: "api",
+                    name: "raw-only",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: 120_000_000,
+                        memoryUsageBytes: 268_435_456
+                    )
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "2/2 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let rows = try #require(display.podTab.sections.first?.rows)
+        let fallback = try #require(rows.first { $0.name == "fallback-basis" })
+        let rawOnly = try #require(rows.first { $0.name == "raw-only" })
+
+        #expect(fallback.resourceLabel == "CPU 25% limit · Mem 50% req")
+        #expect(rawOnly.resourceLabel == "CPU 120m · Mem 256Mi")
     }
 
     @Test("pod row help keeps resource markers when all values are unavailable")
@@ -612,7 +660,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "-")
+        #expect(row.resourceLabel == "CPU - · Mem -")
         #expect(row.helpText == "api/checkout-7f9d, Ready, 1/1 containers ready, CPU -/-/- · Mem -/-/-GiB")
         #expect(row.accessibilityLabel == row.helpText)
     }
@@ -653,7 +701,7 @@ struct MenuDisplayModelTests {
 
         #expect(row.state == .bad)
         #expect(row.issueText == "CrashLoopBackOff: back-off restarting container")
-        #expect(row.resourceLabel == "CPU 0.3/0.5/1 · Mem 0.3/0.5/1GiB")
+        #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
     }
 
     @Test("pod tab does not mark historical restarts as bad")
