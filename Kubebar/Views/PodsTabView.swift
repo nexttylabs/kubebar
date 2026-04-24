@@ -157,6 +157,15 @@ private struct PodRowView: View {
                         .lineLimit(1)
                 }
 
+                if !row.resourceLabel.isEmpty {
+                    Text(row.resourceLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(Text(row.resourceLabel))
+                }
+
                 if let issueText = row.issueText {
                     Text(issueText)
                         .font(.caption)

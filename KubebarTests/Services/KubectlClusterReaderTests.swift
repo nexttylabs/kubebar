@@ -10,6 +10,7 @@ struct KubectlClusterReaderTests {
             nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
             podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
             nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
+            podMetricsCommand: CommandResult(output: podMetricsWithResourceDataJSON, error: "", exitCode: 0),
             warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0),
             deploymentsCommand: CommandResult(output: deploymentMetadataJSON, error: "", exitCode: 0)
         ])
@@ -33,6 +34,133 @@ struct KubectlClusterReaderTests {
         #expect(snapshot.trackedItems.first?.reason == "1 pod not ready")
         #expect(snapshot.trackedItems.first?.affectedPodCount == 1)
         #expect(snapshot.trackedItems.first?.examplePodNames == ["checkout-8a1b"])
+    }
+
+    @Test("decodes pod resource requests, limits and usage")
+    func decodesPodResourceRequestsLimitsAndUsage() throws {
+        let snapshot = try readSnapshot(
+            pods: podsWithResourceSpecsJSON,
+            warningEvents: emptyListJSON,
+            podMetrics: podResourceMetricsJSON,
+            workloadMetadata: deploymentMetadataJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "checkout-7f9d" }))
+
+        #expect(detail.resourceSummary.cpuRequestNanocores == 250_000_000)
+        #expect(detail.resourceSummary.cpuLimitNanocores == 500_000_000)
+        #expect(detail.resourceSummary.memoryRequestBytes == 268_435_456)
+        #expect(detail.resourceSummary.memoryLimitBytes == 536_870_912)
+        #expect(detail.resourceSummary.cpuUsageNanocores == 100_000_000)
+        #expect(detail.resourceSummary.memoryUsageBytes == 134_217_728)
+    }
+
+    @Test("keeps request and limit when pod usage is unavailable")
+    func keepsRequestLimitWhenUsageUnavailable() throws {
+        let snapshot = try readSnapshot(
+            pods: podsWithResourceSpecsJSON,
+            warningEvents: emptyListJSON,
+            podMetrics: podResourceNoUsageJSON,
+            workloadMetadata: deploymentMetadataJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "checkout-7f9d" }))
+
+        #expect(detail.resourceSummary.cpuRequestNanocores == 250_000_000)
+        #expect(detail.resourceSummary.cpuLimitNanocores == 500_000_000)
+        #expect(detail.resourceSummary.memoryRequestBytes == 268_435_456)
+        #expect(detail.resourceSummary.memoryLimitBytes == 536_870_912)
+        #expect(detail.resourceSummary.cpuUsageNanocores == nil)
+        #expect(detail.resourceSummary.memoryUsageBytes == nil)
+    }
+
+    @Test("pod metrics failure preserves pod rows and resource spec")
+    func podMetricsFailurePreservesPodRowsAndResourceSpec() throws {
+        let runner = FakeMultiCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsWithResourceSpecsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
+            podMetricsCommand: CommandResult(output: "", error: "metrics API unavailable", exitCode: 1),
+            warningEventsCommand: CommandResult(output: emptyListJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(runner: runner)
+
+        let snapshot = try reader.readSnapshot(
+            contextName: "prod",
+            watchTargets: [.namespace("api")],
+            now: Date(timeIntervalSince1970: 100)
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "checkout-7f9d" }))
+
+        #expect(detail.resourceSummary.cpuRequestNanocores == 250_000_000)
+        #expect(detail.resourceSummary.cpuLimitNanocores == 500_000_000)
+        #expect(detail.resourceSummary.memoryRequestBytes == 268_435_456)
+        #expect(detail.resourceSummary.memoryLimitBytes == 536_870_912)
+        #expect(detail.resourceSummary.cpuUsageNanocores == nil)
+        #expect(detail.resourceSummary.memoryUsageBytes == nil)
+        #expect(detail.resourceSummary.resourceAvailabilityMessage == "metrics API unavailable")
+        #expect(snapshot.sectionFailures == [])
+        #expect(snapshot.trackedItems.first?.state == .watch)
+        #expect(snapshot.trackedItems.first?.reason == "1 pod not ready")
+    }
+
+    @Test("does not fail pod snapshot on malformed pod resource values")
+    func doesNotFailSnapshotOnMalformedPodResourceValues() throws {
+        let snapshot = try readSnapshot(
+            pods: podsWithMalformedResourcesJSON,
+            warningEvents: emptyListJSON,
+            podMetrics: malformedPodMetricsJSON,
+            workloadMetadata: deploymentMetadataJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "badpod" }))
+
+        #expect(detail.resourceSummary.cpuRequestNanocores == nil)
+        #expect(detail.resourceSummary.cpuLimitNanocores == nil)
+        #expect(detail.resourceSummary.memoryRequestBytes == nil)
+        #expect(detail.resourceSummary.memoryLimitBytes == nil)
+        #expect(detail.resourceSummary.cpuUsageNanocores == nil)
+        #expect(detail.resourceSummary.memoryUsageBytes == nil)
+    }
+
+    @Test("missing pod resource declarations stay unavailable")
+    func missingPodResourceDeclarationsStayUnavailable() throws {
+        let snapshot = try readSnapshot(
+            pods: podsWithoutResourceDeclarationsJSON,
+            warningEvents: emptyListJSON,
+            podMetrics: emptyPodMetricsJSON,
+            workloadMetadata: deploymentMetadataJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "checkout-no-resources" }))
+
+        #expect(detail.resourceSummary.cpuRequestNanocores == nil)
+        #expect(detail.resourceSummary.cpuLimitNanocores == nil)
+        #expect(detail.resourceSummary.memoryRequestBytes == nil)
+        #expect(detail.resourceSummary.memoryLimitBytes == nil)
+        #expect(detail.resourceSummary.cpuUsageNanocores == nil)
+        #expect(detail.resourceSummary.memoryUsageBytes == nil)
+    }
+
+    @Test("duplicate pod metrics entries do not fail snapshot")
+    func duplicatePodMetricsEntriesDoNotFailSnapshot() throws {
+        let snapshot = try readSnapshot(
+            pods: podsWithResourceSpecsJSON,
+            warningEvents: emptyListJSON,
+            podMetrics: duplicatePodResourceMetricsJSON,
+            workloadMetadata: deploymentMetadataJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let details = try #require(snapshot.podDetailsSection.value)
+        let detail = try #require(details.first(where: { $0.name == "checkout-7f9d" }))
+
+        #expect(detail.resourceSummary.cpuUsageNanocores == 100_000_000)
+        #expect(detail.resourceSummary.memoryUsageBytes == 134_217_728)
     }
 
     @Test("builds per-node detail rows from node and metrics JSON")
@@ -707,12 +835,14 @@ private final class SlowRecordingCommandRunner: CommandRunning, @unchecked Senda
 private func readSnapshot(
     pods: String,
     warningEvents: String,
+    podMetrics: String = emptyPodMetricsJSON,
     workloadMetadata: String = deploymentMetadataJSON,
     watchTargets: [WatchTarget]
 ) throws -> ClusterSnapshot {
     let runner = FakeMultiCommandRunner(results: [
         nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
         podsCommand: CommandResult(output: pods, error: "", exitCode: 0),
+        podMetricsCommand: CommandResult(output: podMetrics, error: "", exitCode: 0),
         warningEventsCommand: CommandResult(output: warningEvents, error: "", exitCode: 0),
         deploymentsCommand: CommandResult(output: workloadMetadata, error: "", exitCode: 0)
     ])
@@ -727,6 +857,7 @@ private func readSnapshot(
 private let nodesCommand = ["--context", "prod", "get", "nodes", "-o", "json"]
 private let podsCommand = ["--context", "prod", "get", "pods", "--all-namespaces", "-o", "json"]
 private let nodeMetricsCommand = ["--context", "prod", "get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes"]
+private let podMetricsCommand = ["--context", "prod", "get", "--raw", "/apis/metrics.k8s.io/v1beta1/pods"]
 private let warningEventsCommand = ["--context", "prod", "get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
 private let deploymentsCommand = ["--context", "prod", "get", "deployments", "--all-namespaces", "-o", "json"]
 
@@ -848,12 +979,156 @@ private let pressureNodeMetricsJSON = """
 }
 """
 
+private let emptyPodMetricsJSON = """
+{
+  "items": []
+}
+"""
+
 private let podsJSON = """
 {
   "items": [
     {"metadata": {"namespace": "api", "name": "checkout-7f9d", "labels": {"app.kubernetes.io/name": "checkout"}}, "status": {"phase": "Running"}},
     {"metadata": {"namespace": "api", "name": "checkout-8a1b", "labels": {"app.kubernetes.io/name": "checkout"}}, "status": {"phase": "Pending"}},
     {"metadata": {"namespace": "api", "name": "checkout-worker-1", "labels": {"app.kubernetes.io/name": "checkout-worker"}}, "status": {"phase": "Pending"}}
+  ]
+}
+"""
+
+private let podsWithResourceSpecsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "spec": {
+        "containers": [
+          {
+            "resources": {
+              "requests": {"cpu": "250m", "memory": "256Mi"},
+              "limits": {"cpu": "500m", "memory": "512Mi"}
+            }
+          }
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {"namespace": "api", "name": "checkout-8a1b", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "status": {"phase": "Pending"}
+    }
+  ]
+}
+"""
+
+private let podMetricsWithResourceDataJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d"},
+      "containers": [
+        {"name": "app", "usage": {"cpu": "100m", "memory": "128Mi"}}
+      ]
+    },
+    {
+      "metadata": {"namespace": "api", "name": "checkout-8a1b"},
+      "containers": []
+    }
+  ]
+}
+"""
+
+private let podResourceMetricsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d"},
+      "containers": [
+        {"name": "app", "usage": {"cpu": "100m", "memory": "128Mi"}}
+      ]
+    }
+  ]
+}
+"""
+
+private let podResourceNoUsageJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d"},
+      "containers": [
+        {"name": "app", "usage": {}}
+      ]
+    }
+  ]
+}
+"""
+
+private let malformedPodMetricsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "badpod"},
+      "containers": [
+        {"name": "app", "usage": {"cpu": "oops", "memory": "??"}}
+      ]
+    }
+  ]
+}
+"""
+
+private let duplicatePodResourceMetricsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d"},
+      "containers": [
+        {"name": "app", "usage": {"cpu": "100m", "memory": "128Mi"}}
+      ]
+    },
+    {
+      "metadata": {"namespace": "api", "name": "checkout-7f9d"},
+      "containers": [
+        {"name": "app", "usage": {"cpu": "200m", "memory": "256Mi"}}
+      ]
+    }
+  ]
+}
+"""
+
+private let podsWithMalformedResourcesJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "badpod", "labels": {"app.kubernetes.io/name": "badpod"}},
+      "spec": {
+        "containers": [
+          {
+            "resources": {
+              "requests": {"cpu": "bad", "memory": "bad-unit"},
+              "limits": {"cpu": "also-bad", "memory": "???"}
+            }
+          }
+        ]
+      },
+      "status": {"phase": "Running"}
+    }
+  ]
+}
+"""
+
+private let podsWithoutResourceDeclarationsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-no-resources", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "spec": {
+        "containers": [
+          {"name": "app", "resources": {}},
+          {"name": "sidecar"}
+        ]
+      },
+      "status": {"phase": "Running"}
+    }
   ]
 }
 """

@@ -52,6 +52,9 @@ These are the rules Kubebar must keep true at runtime.
 - Pods tab rows come from `MenuDisplayModel` Pod display data. They group by
   namespace and show Pod name, status dot, ready/all count, and one short issue
   line when attention is needed.
+- Pod rows also show compact resource labels built from request/limit from Pod spec and
+  optional usage from `metrics.k8s.io/v1beta1/pods`; resource parsing failures do
+  not change pod health state.
 - When watched Pod rows exceed the available menu space, the Pod item list
   scrolls vertically while the Pods tab summary remains visible.
 - Pod row status must not rely on color alone. Help and accessibility text must
