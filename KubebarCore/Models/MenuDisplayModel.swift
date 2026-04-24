@@ -288,6 +288,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
     public let name: String
     public let state: PodItemState
     public let readyLabel: String
+    public let resourceLabel: String
     public let issueText: String?
     public let helpText: String
     public let accessibilityLabel: String
@@ -297,6 +298,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         name: String,
         state: PodItemState,
         readyLabel: String,
+        resourceLabel: String,
         issueText: String? = nil,
         helpText: String,
         accessibilityLabel: String
@@ -306,6 +308,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         self.name = name
         self.state = state
         self.readyLabel = readyLabel
+        self.resourceLabel = resourceLabel
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel

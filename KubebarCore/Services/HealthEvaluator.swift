@@ -636,12 +636,15 @@ public struct HealthEvaluator: Sendable {
     private func makePodRow(from detail: PodDetail) -> PodItemDisplay {
         let state = podItemState(from: detail)
         let readyLabel = podReadyLabel(from: detail)
+        let resourceLabel = podResourceLabel(from: detail.resourceSummary)
+        let resourceHelpLabel = podResourceHelpLabel(from: detail.resourceSummary)
         let fullIssueText = podIssueText(from: detail, state: state)
         let issueText = shortenedText(fullIssueText)
         let helpText = podHelpText(
             detail: detail,
             state: state,
             readyLabel: readyLabel,
+            resourceLabel: resourceHelpLabel,
             issueText: fullIssueText
         )
 
@@ -650,6 +653,7 @@ public struct HealthEvaluator: Sendable {
             name: detail.name,
             state: state,
             readyLabel: readyLabel,
+            resourceLabel: resourceLabel,
             issueText: issueText,
             helpText: helpText,
             accessibilityLabel: helpText
@@ -741,10 +745,109 @@ public struct HealthEvaluator: Sendable {
         return reason ?? message
     }
 
+    private func podResourceLabel(from summary: PodResourceSummary) -> String {
+        let resourceAvailability = summary.resourceAvailabilityMessage.flatMap { sanitizedSectionReason($0) }
+
+        let cpuText = podResourceLine(
+            name: "CPU",
+            usage: summary.cpuUsageNanocores,
+            request: summary.cpuRequestNanocores,
+            limit: summary.cpuLimitNanocores,
+            format: formatCores,
+            suffix: "",
+            includeEmpty: false
+        )
+
+        let memoryText = podResourceLine(
+            name: "Mem",
+            usage: summary.memoryUsageBytes,
+            request: summary.memoryRequestBytes,
+            limit: summary.memoryLimitBytes,
+            format: formatGiB,
+            suffix: "GiB",
+            includeEmpty: false
+        )
+
+        let resourceParts = [cpuText, memoryText].compactMap { part in
+            let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+
+        if resourceParts.isEmpty {
+            guard let resourceAvailability else {
+                return "-"
+            }
+
+            return "Resource data unavailable: \(resourceAvailability)"
+        }
+
+        let label = resourceParts.joined(separator: " · ")
+        guard let resourceAvailability else {
+            return label
+        }
+
+        return "\(label) · \(resourceAvailability)"
+    }
+
+    private func podResourceHelpLabel(from summary: PodResourceSummary) -> String {
+        let resourceAvailability = summary.resourceAvailabilityMessage.flatMap { sanitizedSectionReason($0) }
+        let label = [
+            podResourceLine(
+                name: "CPU",
+                usage: summary.cpuUsageNanocores,
+                request: summary.cpuRequestNanocores,
+                limit: summary.cpuLimitNanocores,
+                format: formatCores,
+                suffix: "",
+                includeEmpty: true
+            ),
+            podResourceLine(
+                name: "Mem",
+                usage: summary.memoryUsageBytes,
+                request: summary.memoryRequestBytes,
+                limit: summary.memoryLimitBytes,
+                format: formatGiB,
+                suffix: "GiB",
+                includeEmpty: true
+            )
+        ].joined(separator: " · ")
+
+        guard let resourceAvailability else {
+            return label
+        }
+
+        return "\(label) · \(resourceAvailability)"
+    }
+
+    private func podResourceLine(
+        name: String,
+        usage: Int64?,
+        request: Int64?,
+        limit: Int64?,
+        format: (Int64) -> String,
+        suffix: String,
+        includeEmpty: Bool
+    ) -> String {
+        if !includeEmpty && usage == nil && request == nil && limit == nil {
+            return ""
+        }
+
+        let usageText = formatOrDash(usage, formatter: format)
+        let requestText = formatOrDash(request, formatter: format)
+        let limitText = formatOrDash(limit, formatter: format)
+
+        return "\(name) \(usageText)/\(requestText)/\(limitText)\(suffix)"
+    }
+
+    private func formatOrDash(_ value: Int64?, formatter: (Int64) -> String) -> String {
+        value.map(formatter) ?? "-"
+    }
+
     private func podHelpText(
         detail: PodDetail,
         state: PodItemState,
         readyLabel: String,
+        resourceLabel: String,
         issueText: String?
     ) -> String {
         var parts = [
@@ -752,6 +855,10 @@ public struct HealthEvaluator: Sendable {
             state.label,
             readyLabel == "-" ? "container readiness unavailable" : "\(readyLabel) containers ready"
         ]
+
+        if resourceLabel != "-" {
+            parts.append(resourceLabel)
+        }
 
         if let issueText {
             parts.append(issueText)

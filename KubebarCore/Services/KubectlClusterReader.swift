@@ -16,6 +16,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         let nodeRecordsSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodeRecords)
         let nodesSection = mappedSection(nodeRecordsSection, transform: makeNodeSummary)
         let metricsRecordsSection = decodedSection(rawSnapshot.result(for: .nodeMetrics), decode: decodeNodeMetrics)
+        let podMetricsSection = decodePodMetricsSection(rawSnapshot.result(for: .podMetrics))
         let nodeDetailsSection = makeNodeDetailsSection(
             nodeRecordsSection: nodeRecordsSection,
             metricsRecordsSection: metricsRecordsSection
@@ -31,6 +32,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         let podDetailsSection = makePodDetailsSection(
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
+            podMetricsSection: podMetricsSection,
             watchTargets: watchTargets
         )
         let hasCompletedWatchedPods = containsCompletedWatchedPods(
@@ -186,6 +188,22 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
     }
 
+    private func decodePodMetrics(_ json: String) throws -> [PodMetricsRecord] {
+        do {
+            return try JSONDecoder().decode(PodMetricsList.self, from: Data(json.utf8)).items
+        } catch {
+            throw KubectlCommandError.failed("invalid pod metrics JSON")
+        }
+    }
+
+    private func decodePodMetricsSection(_ result: Result<String, KubectlCommandError>?) -> SnapshotSection<[PodMetricsRecord]> {
+        guard let result else {
+            return .available([])
+        }
+
+        return decodedSection(result, decode: decodePodMetrics)
+    }
+
     private func makeMetricsSection(
         nodeRecordsSection: SnapshotSection<[NodeRecord]>,
         metricsRecordsSection: SnapshotSection<[NodeMetricsRecord]>
@@ -263,6 +281,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     private func makePodDetailsSection(
         podRecordsSection: SnapshotSection<[PodRecord]>,
         workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
+        podMetricsSection: SnapshotSection<[PodMetricsRecord]>,
         watchTargets: [WatchTarget]
     ) -> SnapshotSection<[PodDetail]> {
         guard let pods = podRecordsSection.value else {
@@ -273,6 +292,14 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             return .unavailable(reason: workloadSelectorsSection.unavailableReason ?? "invalid workload JSON")
         }
 
+        guard !watchTargets.isEmpty else {
+            return .available([])
+        }
+
+        let resourceSummaryByPod = resourceSummaryByPod(
+            podRecords: pods,
+            podMetricsSection: podMetricsSection
+        )
         var seenPodIDs: Set<String> = []
         var details: [PodDetail] = []
 
@@ -283,11 +310,73 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
                     continue
                 }
 
-                details.append(pod.makeDetail())
+                let resourceSummary = resourceSummaryByPod[id] ?? PodResourceSummary(
+                    resourceAvailabilityMessage: podMetricsSection.unavailableReason
+                )
+                details.append(pod.makeDetail(resourceSummary: resourceSummary))
             }
         }
 
         return .available(details)
+    }
+
+    private func resourceSummaryByPod(
+        podRecords: [PodRecord],
+        podMetricsSection: SnapshotSection<[PodMetricsRecord]>
+    ) -> [String: PodResourceSummary] {
+        guard let podMetrics = podMetricsSection.value else {
+            return Dictionary(
+                uniqueKeysWithValues: podRecords.map { pod in
+                    (
+                        "\(pod.metadata.namespace)/\(pod.metadata.name)",
+                        PodResourceSummary(
+                            cpuRequestNanocores: pod.cpuRequestNanocores,
+                            cpuLimitNanocores: pod.cpuLimitNanocores,
+                            memoryRequestBytes: pod.memoryRequestBytes,
+                            memoryLimitBytes: pod.memoryLimitBytes,
+                            resourceAvailabilityMessage: podMetricsSection.unavailableReason
+                        )
+                    )
+                }
+            )
+        }
+
+        let metricsByPodID = Dictionary(
+            podMetrics.map { metric in
+                (PodRecord.ID(namespace: metric.metadata.namespace, name: metric.metadata.name), metric)
+            },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        return Dictionary(uniqueKeysWithValues: podRecords.map { pod in
+            let key = PodRecord.ID(namespace: pod.metadata.namespace, name: pod.metadata.name)
+            let metric = metricsByPodID[key]
+
+            return (
+                "\(pod.metadata.namespace)/\(pod.metadata.name)",
+                PodResourceSummary(
+                    cpuUsageNanocores: sumPodMetricResource(metric, resource: "cpu", scale: .cpuNanocores),
+                    cpuRequestNanocores: pod.cpuRequestNanocores,
+                    cpuLimitNanocores: pod.cpuLimitNanocores,
+                    memoryUsageBytes: sumPodMetricResource(metric, resource: "memory", scale: .memoryBytes),
+                    memoryRequestBytes: pod.memoryRequestBytes,
+                    memoryLimitBytes: pod.memoryLimitBytes
+                )
+            )
+        })
+    }
+
+    private func sumPodMetricResource(
+        _ metric: PodMetricsRecord?,
+        resource: String,
+        scale: ResourceQuantityScale
+    ) -> Int64? {
+        guard let metric else {
+            return nil
+        }
+
+        let values = metric.containers.compactMap { $0.usage[resource] }
+        return sumQuantities(values, scale: scale)
     }
 
     private func containsCompletedWatchedPods(
@@ -335,11 +424,13 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
 
     private func sumQuantities(_ values: [String?], scale: ResourceQuantityScale) -> Int64? {
         var total: Int64 = 0
+        var hadValue = false
 
         for value in values {
             guard let value, let parsed = parseResourceQuantity(value, scale: scale) else {
                 return nil
             }
+            hadValue = true
 
             let nextTotal = total.addingReportingOverflow(parsed)
             if nextTotal.overflow {
@@ -347,6 +438,10 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             }
 
             total = nextTotal.partialValue
+        }
+
+        guard hadValue else {
+            return nil
         }
 
         return total
@@ -708,6 +803,7 @@ private enum KubectlRead: Hashable, Sendable {
     case nodes
     case pods
     case nodeMetrics
+    case podMetrics
     case warningEvents
     case workload(WorkloadKind)
 
@@ -719,6 +815,8 @@ private enum KubectlRead: Hashable, Sendable {
             return ["get", "pods", "--all-namespaces", "-o", "json"]
         case .nodeMetrics:
             return ["get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes"]
+        case .podMetrics:
+            return ["get", "--raw", "/apis/metrics.k8s.io/v1beta1/pods"]
         case .warningEvents:
             return ["get", "events", "--all-namespaces", "--field-selector", "type=Warning", "-o", "json"]
         case let .workload(kind):
@@ -728,6 +826,10 @@ private enum KubectlRead: Hashable, Sendable {
 
     static func reads(for watchTargets: [WatchTarget]) -> [KubectlRead] {
         var reads: [KubectlRead] = [.nodes, .pods, .nodeMetrics, .warningEvents]
+        if !watchTargets.isEmpty {
+            reads.append(.podMetrics)
+        }
+
         let targetKinds = Set(watchTargets.compactMap { target -> WorkloadKind? in
             guard case let .workload(_, _, kind) = target, kind.supportsSelectorMetadata else {
                 return nil
@@ -841,6 +943,24 @@ private struct NodeMetricsRecord: Decodable, Equatable, Sendable {
     let usage: [String: String]
 }
 
+private struct PodMetricsList: Decodable {
+    let items: [PodMetricsRecord]
+}
+
+private struct PodMetricsRecord: Decodable, Equatable, Sendable {
+    struct Metadata: Decodable, Equatable, Sendable {
+        let namespace: String
+        let name: String
+    }
+
+    struct Container: Decodable, Equatable, Sendable {
+        let usage: [String: String]
+    }
+
+    let metadata: Metadata
+    let containers: [Container]
+}
+
 private func normalizedNodeText(_ value: String?) -> String? {
     let text = value?.trimmingCharacters(in: .whitespacesAndNewlines)
     guard let text, !text.isEmpty else {
@@ -936,6 +1056,24 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         let ownerReferences: [OwnerReference]?
     }
 
+    struct ID: Hashable, Sendable {
+        let namespace: String
+        let name: String
+    }
+
+    struct Spec: Decodable, Equatable, Sendable {
+        let containers: [ContainerSpec]?
+    }
+
+    struct ContainerSpec: Decodable, Equatable, Sendable {
+        let resources: ContainerResources?
+    }
+
+    struct ContainerResources: Decodable, Equatable, Sendable {
+        let requests: [String: String]?
+        let limits: [String: String]?
+    }
+
     struct Status: Decodable, Equatable, Sendable {
         let phase: String?
         let reason: String?
@@ -946,6 +1084,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
 
     let metadata: Metadata
     let status: Status
+    let spec: Spec?
 
     var isRunning: Bool {
         status.phase == "Running"
@@ -1059,7 +1198,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         }
     }
 
-    func makeDetail() -> PodDetail {
+    func makeDetail(resourceSummary: PodResourceSummary) -> PodDetail {
         let waitingState = currentWaitingState
         let terminatedState = currentTerminatedState
         let condition = notReadyCondition
@@ -1082,8 +1221,97 @@ private struct PodRecord: Decodable, Equatable, Sendable {
             isFailed: isFailed,
             isPending: isPending,
             isUnknown: isUnknown,
-            isNotReady: isNotReady
+            isNotReady: isNotReady,
+            resourceSummary: resourceSummary
         )
+    }
+
+    var cpuRequestNanocores: Int64? {
+        sumPodResources(for: "cpu", from: spec?.containers, selector: \.requests, scale: .cpuNanocores)
+    }
+
+    var cpuLimitNanocores: Int64? {
+        sumPodResources(for: "cpu", from: spec?.containers, selector: \.limits, scale: .cpuNanocores)
+    }
+
+    var memoryRequestBytes: Int64? {
+        sumPodResources(for: "memory", from: spec?.containers, selector: \.requests, scale: .memoryBytes)
+    }
+
+    var memoryLimitBytes: Int64? {
+        sumPodResources(for: "memory", from: spec?.containers, selector: \.limits, scale: .memoryBytes)
+    }
+
+    private func sumPodResources(
+        for resource: String,
+        from containers: [ContainerSpec]?,
+        selector: KeyPath<ContainerResources, [String: String]?>,
+        scale: ResourceQuantityScale
+    ) -> Int64? {
+        guard let containers, !containers.isEmpty else {
+            return nil
+        }
+
+        var total: Int64 = 0
+
+        for container in containers {
+            guard
+                let resourceValue = container.resources?[keyPath: selector]?[resource],
+                let parsed = parsePodResourceQuantity(resourceValue, scale: scale)
+            else {
+                return nil
+            }
+
+            let nextTotal = total.addingReportingOverflow(parsed)
+            if nextTotal.overflow {
+                return nil
+            }
+
+            total = nextTotal.partialValue
+        }
+
+        return total
+    }
+
+    private func parsePodResourceQuantity(_ value: String, scale: ResourceQuantityScale) -> Int64? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        if let number = Double(trimmed), number >= 0, number.isFinite {
+            return scaledPodResourceQuantity(number: number, multiplier: scale.multiplier(for: ""))
+        }
+
+        let splitIndex = trimmed.firstIndex {
+            !($0.isNumber || $0 == "." || $0 == "+" || $0 == "-")
+        } ?? trimmed.endIndex
+        let numberText = String(trimmed[..<splitIndex])
+        let suffix = String(trimmed[splitIndex...])
+
+        guard
+            let number = Double(numberText),
+            number >= 0,
+            number.isFinite,
+            let multiplier = scale.multiplier(for: suffix)
+        else {
+            return nil
+        }
+
+        return scaledPodResourceQuantity(number: number, multiplier: multiplier)
+    }
+
+    private func scaledPodResourceQuantity(number: Double, multiplier: Double?) -> Int64? {
+        guard let multiplier else {
+            return nil
+        }
+
+        let scaled = number * multiplier
+        guard scaled.isFinite, scaled <= Double(Int64.max) else {
+            return nil
+        }
+
+        return Int64(scaled.rounded(.toNearestOrAwayFromZero))
     }
 
     func matches(target: WatchTarget, workloadSelectors: [WorkloadIdentity: [String: String]]) -> Bool {

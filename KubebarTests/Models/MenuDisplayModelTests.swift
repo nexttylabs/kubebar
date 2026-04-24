@@ -345,7 +345,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
         #expect(display.primaryStatusReason == "1 pod not ready")
-        #expect(display.overview.statusHelpText == "api/checkout, Watch, 0/1 containers ready, ContainersNotReady: containers with unready status")
+        #expect(display.overview.statusHelpText == "api/checkout, Watch, 0/1 containers ready, CPU -/-/- · Mem -/-/-GiB, ContainersNotReady: containers with unready status")
         #expect(display.overview.statusAccessibilityLabel.contains("ContainersNotReady: containers with unready status"))
     }
 
@@ -514,6 +514,146 @@ struct MenuDisplayModelTests {
         #expect(apiRows[1].readyLabel == "-")
         #expect(apiRows[1].issueText == "Pending")
         #expect(apiRows[2].issueText == nil)
+    }
+
+    @Test("pod rows include resource summary labels")
+    func podRowsIncludeResourceSummaryLabels() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 2, total: 2)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: 500_000_000,
+                        cpuRequestNanocores: 1_000_000_000,
+                        cpuLimitNanocores: 2_000_000_000,
+                        memoryUsageBytes: 1_073_741_824,
+                        memoryRequestBytes: 2_147_483_648,
+                        memoryLimitBytes: 4_294_967_296
+                    )
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.resourceLabel == "CPU 0.5/1/2 · Mem 1/2/4GiB")
+    }
+
+    @Test("pod rows show resource summary when usage is missing")
+    func podRowsShowResourceSummaryWhenUsageIsMissing() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: nil,
+                        cpuRequestNanocores: 1_000_000_000,
+                        cpuLimitNanocores: 2_000_000_000,
+                        memoryUsageBytes: nil,
+                        memoryRequestBytes: 2_147_483_648,
+                        memoryLimitBytes: nil
+                    )
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.resourceLabel == "CPU -/1/2 · Mem -/2/-GiB")
+        #expect(row.helpText.contains("CPU -/1/2 · Mem -/2/-GiB"))
+        #expect(row.accessibilityLabel == row.helpText)
+    }
+
+    @Test("pod row help keeps resource markers when all values are unavailable")
+    func podRowHelpKeepsResourceMarkersWhenAllValuesAreUnavailable() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.resourceLabel == "-")
+        #expect(row.helpText == "api/checkout-7f9d, Ready, 1/1 containers ready, CPU -/-/- · Mem -/-/-GiB")
+        #expect(row.accessibilityLabel == row.helpText)
+    }
+
+    @Test("pod rows can show issue and resource summary together")
+    func podRowsCanShowIssueAndResourceSummaryTogether() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    waitingReason: "CrashLoopBackOff",
+                    waitingMessage: "back-off restarting container",
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: 250_000_000,
+                        cpuRequestNanocores: 500_000_000,
+                        cpuLimitNanocores: 1_000_000_000,
+                        memoryUsageBytes: 268_435_456,
+                        memoryRequestBytes: 536_870_912,
+                        memoryLimitBytes: 1_073_741_824
+                    )
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "1 pod restarting")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.state == .bad)
+        #expect(row.issueText == "CrashLoopBackOff: back-off restarting container")
+        #expect(row.resourceLabel == "CPU 0.3/0.5/1 · Mem 0.3/0.5/1GiB")
     }
 
     @Test("pod tab does not mark historical restarts as bad")
@@ -1350,7 +1490,8 @@ private func podDetail(
     isFailed: Bool = false,
     isPending: Bool = false,
     isUnknown: Bool = false,
-    isNotReady: Bool = false
+    isNotReady: Bool = false,
+    resourceSummary: PodResourceSummary = PodResourceSummary()
 ) -> PodDetail {
     PodDetail(
         namespace: namespace,
@@ -1370,6 +1511,7 @@ private func podDetail(
         isFailed: isFailed,
         isPending: isPending,
         isUnknown: isUnknown,
-        isNotReady: isNotReady
+        isNotReady: isNotReady,
+        resourceSummary: resourceSummary
     )
 }

@@ -53,6 +53,34 @@ public struct PodSummary: Equatable, Sendable {
     }
 }
 
+public struct PodResourceSummary: Equatable, Sendable {
+    public let cpuUsageNanocores: Int64?
+    public let cpuRequestNanocores: Int64?
+    public let cpuLimitNanocores: Int64?
+    public let memoryUsageBytes: Int64?
+    public let memoryRequestBytes: Int64?
+    public let memoryLimitBytes: Int64?
+    public let resourceAvailabilityMessage: String?
+
+    public init(
+        cpuUsageNanocores: Int64? = nil,
+        cpuRequestNanocores: Int64? = nil,
+        cpuLimitNanocores: Int64? = nil,
+        memoryUsageBytes: Int64? = nil,
+        memoryRequestBytes: Int64? = nil,
+        memoryLimitBytes: Int64? = nil,
+        resourceAvailabilityMessage: String? = nil
+    ) {
+        self.cpuUsageNanocores = cpuUsageNanocores
+        self.cpuRequestNanocores = cpuRequestNanocores
+        self.cpuLimitNanocores = cpuLimitNanocores
+        self.memoryUsageBytes = memoryUsageBytes
+        self.memoryRequestBytes = memoryRequestBytes
+        self.memoryLimitBytes = memoryLimitBytes
+        self.resourceAvailabilityMessage = resourceAvailabilityMessage
+    }
+}
+
 public struct PodDetail: Equatable, Sendable {
     public let namespace: String
     public let name: String
@@ -72,6 +100,7 @@ public struct PodDetail: Equatable, Sendable {
     public let isPending: Bool
     public let isUnknown: Bool
     public let isNotReady: Bool
+    public let resourceSummary: PodResourceSummary
 
     public init(
         namespace: String,
@@ -91,7 +120,8 @@ public struct PodDetail: Equatable, Sendable {
         isFailed: Bool = false,
         isPending: Bool = false,
         isUnknown: Bool = false,
-        isNotReady: Bool = false
+        isNotReady: Bool = false,
+        resourceSummary: PodResourceSummary = PodResourceSummary()
     ) {
         self.namespace = namespace
         self.name = name
@@ -111,6 +141,7 @@ public struct PodDetail: Equatable, Sendable {
         self.isPending = isPending
         self.isUnknown = isUnknown
         self.isNotReady = isNotReady
+        self.resourceSummary = resourceSummary
     }
 }
 
