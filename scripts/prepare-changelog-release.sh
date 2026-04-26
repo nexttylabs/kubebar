@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CHANGELOG_FILE="${CHANGELOG_FILE:-$ROOT_DIR/CHANGELOG.md}"
 FRAGMENTS_DIR="${CHANGELOG_FRAGMENTS_DIR:-$ROOT_DIR/changelog.d}"
 VERSION="${1:-}"
-RELEASE_DATE="${2:-$(date +%F)}"
+RELEASE_DATE="${2:-$(date +%Y-%m-%d)}"
 
 usage() {
   echo "Usage: $0 <version> [YYYY-MM-DD]" >&2
@@ -51,6 +51,7 @@ normalize_fragment() {
 }
 
 [ -n "$VERSION" ] || { usage; exit 2; }
+VERSION="${VERSION#v}"
 [[ "$VERSION" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || fail "Version must look like X.Y.Z"
 [[ "$RELEASE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "Date must look like YYYY-MM-DD"
 [ -f "$CHANGELOG_FILE" ] || fail "Changelog not found: $CHANGELOG_FILE"

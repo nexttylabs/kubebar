@@ -15,6 +15,7 @@ fail() {
 }
 
 [ -n "$VERSION" ] || { usage; exit 2; }
+VERSION="${VERSION#v}"
 [[ "$VERSION" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || fail "Version must look like X.Y.Z"
 [ -f "$CHANGELOG_FILE" ] || fail "Changelog not found: $CHANGELOG_FILE"
 
@@ -53,7 +54,7 @@ notes="$(
   ' "$CHANGELOG_FILE"
 )"
 
-if [ -z "$(printf '%s\n' "$notes" | sed '/^[[:space:]]*$/d')" ]; then
+if ! printf '%s\n' "$notes" | grep -q '[^[:space:]]'; then
   fail "Changelog section for $VERSION is empty"
 fi
 
