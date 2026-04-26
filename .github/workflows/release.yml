@@ -37,12 +37,11 @@ jobs:
       - name: Extract Release Notes
         id: extract_notes
         run: |
-          # Extract the section for the latest version from CHANGELOG.md
-          # It assumes the version is the first H2 header under # Changelog
           VERSION="${{ steps.get_version.outputs.VERSION }}"
-          NOTES=$(sed -n "/## \[$VERSION\]/,/## /p" CHANGELOG.md | sed '$d')
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          ./scripts/extract-release-notes.sh "$VERSION" > "$NOTES_FILE"
           echo "NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
+          cat "$NOTES_FILE" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
