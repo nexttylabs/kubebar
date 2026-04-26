@@ -96,6 +96,11 @@ run_qa_artifact_check() {
   done
 }
 
+run_changelog_tool_checks() {
+  echo "Running changelog tooling checks"
+  ./scripts/test-changelog-tools.sh
+}
+
 run_xcode_checks() {
   local workspaces=()
   local projects=()
@@ -186,6 +191,8 @@ run_xcode_checks() {
 
 main() {
   echo "Swift quality gate mode: $MODE"
+
+  run_changelog_tool_checks
 
   run_xcode_checks
 
