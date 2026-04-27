@@ -217,6 +217,8 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
     public let statusLabel: String
     public let cpuLabel: String
     public let memoryLabel: String
+    public let cpuProgress: Double?
+    public let memoryProgress: Double?
     public let issueText: String?
     public let helpText: String
     public let accessibilityLabel: String
@@ -227,6 +229,8 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
         statusLabel: String,
         cpuLabel: String,
         memoryLabel: String,
+        cpuProgress: Double? = nil,
+        memoryProgress: Double? = nil,
         issueText: String? = nil,
         helpText: String,
         accessibilityLabel: String
@@ -237,6 +241,8 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
         self.statusLabel = statusLabel
         self.cpuLabel = cpuLabel
         self.memoryLabel = memoryLabel
+        self.cpuProgress = cpuProgress
+        self.memoryProgress = memoryProgress
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
@@ -289,6 +295,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
     public let state: PodItemState
     public let readyLabel: String
     public let resourceLabel: String
+    public let resourceProgress: Double?
     public let issueText: String?
     public let helpText: String
     public let accessibilityLabel: String
@@ -299,6 +306,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         state: PodItemState,
         readyLabel: String,
         resourceLabel: String,
+        resourceProgress: Double? = nil,
         issueText: String? = nil,
         helpText: String,
         accessibilityLabel: String
@@ -309,6 +317,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         self.state = state
         self.readyLabel = readyLabel
         self.resourceLabel = resourceLabel
+        self.resourceProgress = resourceProgress
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
@@ -378,6 +387,7 @@ public struct OverviewCardDisplay: Equatable, Sendable, Identifiable {
     public let detail: String
     public let systemImageName: String
     public let state: OverviewCardState
+    public let progress: Double?
     public let accessibilityLabel: String
 
     public init(
@@ -387,6 +397,7 @@ public struct OverviewCardDisplay: Equatable, Sendable, Identifiable {
         detail: String,
         systemImageName: String,
         state: OverviewCardState,
+        progress: Double? = nil,
         accessibilityLabel: String
     ) {
         self.id = id
@@ -395,6 +406,7 @@ public struct OverviewCardDisplay: Equatable, Sendable, Identifiable {
         self.detail = detail
         self.systemImageName = systemImageName
         self.state = state
+        self.progress = progress
         self.accessibilityLabel = accessibilityLabel
     }
 }

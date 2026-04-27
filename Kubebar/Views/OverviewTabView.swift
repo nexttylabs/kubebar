@@ -58,6 +58,11 @@ private struct OverviewCardView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .help(Text(card.detail))
+                
+            if let progress = card.progress {
+                InlineProgressBar(progress: progress)
+                    .padding(.top, 2)
+            }
         }
         .padding(10)
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
@@ -110,9 +115,9 @@ private struct RecentWarningsOverviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Recent Warnings")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                Label("Recent Warnings", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.primary)
 
                 Spacer()
 

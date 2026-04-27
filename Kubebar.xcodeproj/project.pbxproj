@@ -23,6 +23,7 @@
 		2CDAFBC7CB5608475636A49F /* MenuRuntimeStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E309AEA967A6E63FE865DCFA /* MenuRuntimeStateTests.swift */; };
 		2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ABF8EE5A9744D188D13166D /* WatchTarget.swift */; };
 		2E7ED6B0CD1AF3FF878FA0BB /* TrackedItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B3876DBAB67B25904E89EA /* TrackedItemDetailView.swift */; };
+		323A03773863A8CD97D0BA65 /* InlineProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5622A0300D830434511EC0A0 /* InlineProgressBar.swift */; };
 		326455E7817B371EE5EFCD27 /* WatchlistSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8240373DA431592CA2BE0AAD /* WatchlistSectionView.swift */; };
 		35EA66F6D54717A319173F66 /* KubebarCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684455D1430321334848EB7F /* AppConfigStoreTests.swift */; };
@@ -139,6 +140,7 @@
 		41CF64AA3581163BEA218DFB /* WatchlistCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistCandidate.swift; sourceTree = "<group>"; };
 		44ED769495D3CCF49456FB7B /* QALaunchMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QALaunchMode.swift; sourceTree = "<group>"; };
 		4602F3AD3687ABB356E1C266 /* NodesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodesTabView.swift; sourceTree = "<group>"; };
+		5622A0300D830434511EC0A0 /* InlineProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineProgressBar.swift; sourceTree = "<group>"; };
 		5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshCadence.swift; sourceTree = "<group>"; };
 		5DC3A00788901BF5DDB724A8 /* KubebarCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KubebarCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		66841095D9A2044E6C8AF517 /* OverviewTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewTabView.swift; sourceTree = "<group>"; };
@@ -237,6 +239,7 @@
 				C15FA43125DF9BF219851EB9 /* CompactCountersView.swift */,
 				85A54CD93E75766F134F4B27 /* ConfigurationRequiredView.swift */,
 				A022D6D54A801257E7493047 /* EventsTabView.swift */,
+				5622A0300D830434511EC0A0 /* InlineProgressBar.swift */,
 				7ED837A9D86DC08DF17C4EAF /* MenuBarRootView.swift */,
 				7A5C67AC5462121537875829 /* MenuFooterView.swift */,
 				ED8BD7D4374CA280EB08BF3E /* MenuTab.swift */,
@@ -563,6 +566,7 @@
 				3F8979A056EF39673CCD3B56 /* CompactCountersView.swift in Sources */,
 				807978CC3ED867BFDD568099 /* ConfigurationRequiredView.swift in Sources */,
 				E557AF4691C5FFE49437ADB4 /* EventsTabView.swift in Sources */,
+				323A03773863A8CD97D0BA65 /* InlineProgressBar.swift in Sources */,
 				1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */,
 				229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */,
 				7E10219D9134064745C7587E /* MenuBarViewModel.swift in Sources */,

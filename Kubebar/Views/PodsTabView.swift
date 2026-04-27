@@ -102,13 +102,16 @@ private struct PodNamespaceSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(section.namespace)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            Label(section.namespace, systemImage: "folder.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .help(Text(section.namespace))
                 .accessibilityLabel(section.namespace)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.rows) { row in
@@ -121,6 +124,11 @@ private struct PodNamespaceSectionView: View {
 
 private struct PodRowView: View {
     let row: PodItemDisplay
+    @State private var isPulsing = false
+
+    private var shouldPulse: Bool {
+        row.state == .watch
+    }
 
     private var statusColor: Color {
         switch row.state {
@@ -138,6 +146,14 @@ private struct PodRowView: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: 7, height: 7)
+                .opacity(shouldPulse && isPulsing ? 0.4 : 1.0)
+                .animation(shouldPulse ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
+                .onAppear {
+                    updatePulse()
+                }
+                .onChange(of: shouldPulse) { _, _ in
+                    updatePulse()
+                }
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -153,17 +169,25 @@ private struct PodRowView: View {
                     Text(row.readyLabel)
                         .font(.caption.weight(.semibold))
                         .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.7))
                         .lineLimit(1)
                 }
 
                 if !row.resourceLabel.isEmpty {
-                    Text(row.resourceLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(row.resourceLabel))
+                    HStack(spacing: 4) {
+                        Text(row.resourceLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(row.resourceLabel))
+                            
+                        if let progress = row.resourceProgress {
+                            InlineProgressBar(progress: progress)
+                                .frame(width: 32)
+                                .padding(.leading, 2)
+                        }
+                    }
                 }
 
                 if let issueText = row.issueText {
@@ -175,11 +199,16 @@ private struct PodRowView: View {
                         .help(Text(issueText))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .help(Text(row.helpText))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.accessibilityLabel)
         .focusable()
+    }
+
+    private func updatePulse() {
+        isPulsing = shouldPulse
     }
 }
 

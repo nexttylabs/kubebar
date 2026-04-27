@@ -11,4 +11,13 @@ enum MenuTab: String, CaseIterable, Identifiable {
     var label: String {
         rawValue
     }
+
+    var sfSymbol: String {
+        switch self {
+        case .overview: return "chart.bar.fill"
+        case .nodes: return "server.rack"
+        case .pods: return "cube.box.fill"
+        case .events: return "exclamationmark.triangle.fill"
+        }
+    }
 }

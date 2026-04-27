@@ -83,10 +83,11 @@ private struct NodeRowView: View {
                     .help(Text(issueText))
             }
 
-            HStack(spacing: 10) {
-                resourceLabel(title: "CPU", value: row.cpuLabel)
-                resourceLabel(title: "Memory", value: row.memoryLabel)
+            HStack(spacing: 12) {
+                resourceLabel(title: "CPU", value: row.cpuLabel, progress: row.cpuProgress)
+                resourceLabel(title: "Memory", value: row.memoryLabel, progress: row.memoryProgress)
             }
+            .padding(.top, 2)
         }
         .padding(isErrorState ? Style.errorPadding : 0)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -117,18 +118,30 @@ private struct NodeRowView: View {
             }
 
             Text(row.statusLabel)
-                .font(.caption.weight(.semibold))
+                .font(.caption.weight(.bold))
         }
-        .foregroundStyle(isErrorState ? Color.red : Color.secondary)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(
+            Capsule()
+                .fill(isErrorState ? Color.red.opacity(0.2) : Color.green.opacity(0.2))
+        )
+        .foregroundStyle(isErrorState ? Color.red : Color.green)
         .lineLimit(1)
     }
 
-    private func resourceLabel(title: String, value: String) -> some View {
+    private func resourceLabel(title: String, value: String, progress: Double?) -> some View {
         HStack(spacing: 4) {
             Text(title)
                 .foregroundStyle(.secondary)
             Text(value)
                 .monospacedDigit()
+            
+            if let progress {
+                InlineProgressBar(progress: progress)
+                    .frame(width: 32)
+                    .padding(.leading, 2)
+            }
         }
         .font(.caption)
         .lineLimit(1)
