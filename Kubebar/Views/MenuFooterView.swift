@@ -11,7 +11,7 @@ struct MenuFooterView: View {
         HStack(spacing: 10) {
             Text("Last checked \(lastUpdated)")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary.opacity(0.7))
                 .lineLimit(1)
                 .truncationMode(.middle)
 
