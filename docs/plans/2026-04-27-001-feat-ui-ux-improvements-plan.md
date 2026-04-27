@@ -1,7 +1,7 @@
 ---
 title: feat: UI/UX Improvements for Kubebar Menu
 type: feat
-status: active
+status: completed
 date: 2026-04-27
 ---
 
