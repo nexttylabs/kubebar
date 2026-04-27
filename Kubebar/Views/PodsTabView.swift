@@ -102,13 +102,16 @@ private struct PodNamespaceSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(section.namespace)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            Label(section.namespace, systemImage: "folder.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .help(Text(section.namespace))
                 .accessibilityLabel(section.namespace)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.rows) { row in
@@ -121,6 +124,7 @@ private struct PodNamespaceSectionView: View {
 
 private struct PodRowView: View {
     let row: PodItemDisplay
+    @State private var isPulsing = false
 
     private var statusColor: Color {
         switch row.state {
@@ -138,6 +142,13 @@ private struct PodRowView: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: 7, height: 7)
+                .opacity(row.state == .watch && isPulsing ? 0.4 : 1.0)
+                .animation(row.state == .watch ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
+                .onAppear {
+                    if row.state == .watch {
+                        isPulsing = true
+                    }
+                }
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {

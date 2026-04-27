@@ -71,7 +71,7 @@ struct MenuBarRootView: View {
     private var tabPicker: some View {
         Picker("Menu section", selection: $selectedTab) {
             ForEach(MenuTab.allCases) { tab in
-                Text(tab.label)
+                Label(tab.label, systemImage: tab.sfSymbol)
                     .tag(tab)
             }
         }
