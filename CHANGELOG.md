@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Improved clarity of `kubectl` dependency requirements in onboarding docs.
 
+
+## [0.2.1] - 2026-04-27
+
+### Added
+- Add changelog fragments and release-note validation for safer GitHub Releases.
+
+### Changed
+- Improve menu status visuals with clearer navigation icons, resource bars, and Pod transition indicators.
+
 ## [0.1.0] - 2026-04-23
 
 ### Added

@@ -1,1 +1,0 @@
-- Improve menu status visuals with clearer navigation icons, resource bars, and Pod transition indicators.

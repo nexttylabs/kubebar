@@ -1,1 +1,0 @@
-- Add changelog fragments and release-note validation for safer GitHub Releases.
