@@ -18,9 +18,9 @@ struct InlineProgressBar: View {
     }
 
     private var fillColor: Color {
-        if progress > 0.9 {
+        if progress >= 0.9 {
             return .red
-        } else if progress > 0.7 {
+        } else if progress >= 0.7 {
             return .orange
         } else {
             return .blue
