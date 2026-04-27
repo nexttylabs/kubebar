@@ -126,6 +126,10 @@ private struct PodRowView: View {
     let row: PodItemDisplay
     @State private var isPulsing = false
 
+    private var shouldPulse: Bool {
+        row.state == .watch
+    }
+
     private var statusColor: Color {
         switch row.state {
         case .ready:
@@ -142,12 +146,13 @@ private struct PodRowView: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: 7, height: 7)
-                .opacity(row.state == .watch && isPulsing ? 0.4 : 1.0)
-                .animation(row.state == .watch ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
+                .opacity(shouldPulse && isPulsing ? 0.4 : 1.0)
+                .animation(shouldPulse ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
                 .onAppear {
-                    if row.state == .watch {
-                        isPulsing = true
-                    }
+                    updatePulse()
+                }
+                .onChange(of: shouldPulse) { _, _ in
+                    updatePulse()
                 }
                 .accessibilityHidden(true)
 
@@ -164,17 +169,25 @@ private struct PodRowView: View {
                     Text(row.readyLabel)
                         .font(.caption.weight(.semibold))
                         .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.7))
                         .lineLimit(1)
                 }
 
                 if !row.resourceLabel.isEmpty {
-                    Text(row.resourceLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(row.resourceLabel))
+                    HStack(spacing: 4) {
+                        Text(row.resourceLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(row.resourceLabel))
+                            
+                        if let progress = row.resourceProgress {
+                            InlineProgressBar(progress: progress)
+                                .frame(width: 32)
+                                .padding(.leading, 2)
+                        }
+                    }
                 }
 
                 if let issueText = row.issueText {
@@ -186,11 +199,16 @@ private struct PodRowView: View {
                         .help(Text(issueText))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .help(Text(row.helpText))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.accessibilityLabel)
         .focusable()
+    }
+
+    private func updatePulse() {
+        isPulsing = shouldPulse
     }
 }
 
