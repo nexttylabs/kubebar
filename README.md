@@ -4,6 +4,8 @@
 
 It provides a lightweight, "watchlist-first" status instrument that tells you at a glance whether your mission-critical workloads are healthy, which ones need attention, and whether the data you're looking at is fresh.
 
+![screenshot](./docs/screenshots/overview-warning.png)
+
 <p align="center">
   <!-- TODO: Add Kubebar menu screenshot here -->
   <i>"Is my cluster okay? Now you know, without leaving your current window."</i>
