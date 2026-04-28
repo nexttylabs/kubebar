@@ -63,6 +63,8 @@ docs/          Requirements, plans, and architecture notes
 scripts/       Local quality checks
 ```
 
+`docs/solutions/` stores documented solutions to past problems and reusable learnings, organized by category with YAML frontmatter such as `module`, `tags`, and `problem_type`; relevant when implementing or debugging in documented areas.
+
 ## Key Exemplar Files
 
 - [KubebarCore/Services/HealthEvaluator.swift](KubebarCore/Services/HealthEvaluator.swift) — Pure evaluation logic, no side effects
