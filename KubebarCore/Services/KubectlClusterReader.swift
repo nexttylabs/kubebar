@@ -1095,9 +1095,8 @@ private struct PodRecord: Decodable, Equatable, Sendable {
     }
 
     var isRestarting: Bool {
-        status.containerStatuses?.contains { status in
-            (status.restartCount ?? 0) > 0 ||
-                status.state?.waiting?.reason == "CrashLoopBackOff"
+        status.containerStatuses?.contains { containerStatus in
+            normalizedReason(containerStatus.state?.waiting?.reason) == "crashloopbackoff"
         } ?? false
     }
 

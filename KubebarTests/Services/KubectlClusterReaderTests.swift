@@ -593,9 +593,25 @@ struct KubectlClusterReaderTests {
         let item = snapshot.trackedItems.first
 
         #expect(item?.state == .bad)
-        #expect(item?.reason == "2 pods restarting")
-        #expect(item?.affectedPodCount == 2)
-        #expect(item?.examplePodNames == ["checkout-a", "checkout-b"])
+        #expect(item?.reason == "1 pod restarting")
+        #expect(item?.affectedPodCount == 1)
+        #expect(item?.examplePodNames == ["checkout-b"])
+    }
+
+    @Test("historical restart count does not mark watched workload bad")
+    func historicalRestartCountDoesNotMarkWatchedWorkloadBad() throws {
+        let snapshot = try readSnapshot(
+            pods: historicallyRestartedReadyPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.workload(namespace: "api", name: "checkout")]
+        )
+        let item = snapshot.trackedItems.first
+
+        #expect(snapshot.podsSection.value == PodSummary(ready: 2, running: 2, total: 2))
+        #expect(item?.state == .ok)
+        #expect(item?.reason == "2/2 pods running")
+        #expect(item?.affectedPodCount == nil)
+        #expect(item?.examplePodNames.isEmpty == true)
     }
 
     @Test("pending and unready pods merge into not ready reason")
@@ -1194,9 +1210,9 @@ private let failedRestartingAndNotReadyPodsJSON = """
       "metadata": {"namespace": "api", "name": "checkout-restarting", "labels": {"app.kubernetes.io/name": "checkout"}},
       "status": {
         "phase": "Running",
-        "conditions": [{"type": "Ready", "status": "True"}],
+        "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}],
         "containerStatuses": [
-          {"ready": true, "restartCount": 2}
+          {"ready": false, "restartCount": 2, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}
         ]
       }
     },
@@ -1225,9 +1241,9 @@ private let restartingPodsJSON = """
       "metadata": {"namespace": "api", "name": "checkout-b", "labels": {"app.kubernetes.io/name": "checkout"}},
       "status": {
         "phase": "Running",
-        "conditions": [{"type": "Ready", "status": "True"}],
+        "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}],
         "containerStatuses": [
-          {"ready": true, "restartCount": 0, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}
+          {"ready": false, "restartCount": 0, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}
         ]
       }
     },
@@ -1238,6 +1254,33 @@ private let restartingPodsJSON = """
         "conditions": [{"type": "Ready", "status": "True"}],
         "containerStatuses": [
           {"ready": true, "restartCount": 0}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let historicallyRestartedReadyPodsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-a", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "status": {
+        "phase": "Running",
+        "conditions": [{"type": "Ready", "status": "True"}],
+        "containerStatuses": [
+          {"ready": true, "restartCount": 1}
+        ]
+      }
+    },
+    {
+      "metadata": {"namespace": "api", "name": "checkout-b", "labels": {"app.kubernetes.io/name": "checkout"}},
+      "status": {
+        "phase": "Running",
+        "conditions": [{"type": "Ready", "status": "True"}],
+        "containerStatuses": [
+          {"ready": true, "restartCount": 3}
         ]
       }
     }
@@ -1408,19 +1451,19 @@ private let cappedRestartingPodsJSON = """
   "items": [
     {
       "metadata": {"namespace": "api", "name": "checkout-d", "labels": {"app.kubernetes.io/name": "checkout"}},
-      "status": {"phase": "Running", "containerStatuses": [{"ready": true, "restartCount": 1}]}
+      "status": {"phase": "Running", "containerStatuses": [{"ready": false, "restartCount": 1, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}]}
     },
     {
       "metadata": {"namespace": "api", "name": "checkout-b", "labels": {"app.kubernetes.io/name": "checkout"}},
-      "status": {"phase": "Running", "containerStatuses": [{"ready": true, "restartCount": 1}]}
+      "status": {"phase": "Running", "containerStatuses": [{"ready": false, "restartCount": 1, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}]}
     },
     {
       "metadata": {"namespace": "api", "name": "checkout-a", "labels": {"app.kubernetes.io/name": "checkout"}},
-      "status": {"phase": "Running", "containerStatuses": [{"ready": true, "restartCount": 1}]}
+      "status": {"phase": "Running", "containerStatuses": [{"ready": false, "restartCount": 1, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}]}
     },
     {
       "metadata": {"namespace": "api", "name": "checkout-c", "labels": {"app.kubernetes.io/name": "checkout"}},
-      "status": {"phase": "Running", "containerStatuses": [{"ready": true, "restartCount": 1}]}
+      "status": {"phase": "Running", "containerStatuses": [{"ready": false, "restartCount": 1, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}]}
     }
   ]
 }
