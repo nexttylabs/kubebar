@@ -1,15 +1,20 @@
 # Kubebar ☸️
 
-**Kubebar** is a native macOS menu bar app for keeping a pulse on your Kubernetes clusters.
+![GitHub release (latest by date)](https://img.shields.io/github/release/nexttylabs/kubebar) ![GitHub License](https://img.shields.io/github/license/nexttylabs/kubebar) ![GitHub stars](https://img.shields.io/github/stars/nexttylabs/kubebar?style=social)
 
-It provides a lightweight, "watchlist-first" status instrument that tells you at a glance whether your mission-critical workloads are healthy, which ones need attention, and whether the data you're looking at is fresh.
+**Kubebar is a native macOS menu bar for Kubernetes health.**
 
-![screenshot](./docs/screenshots/overview-warning.png)
+Kubebar gives Kubernetes operators a lightweight, watchlist-first status instrument that shows whether critical workloads are healthy, need attention, or have gone stale before opening deeper troubleshooting tools.
 
-<p align="center">
-  <!-- TODO: Add Kubebar menu screenshot here -->
-  <i>"Is my cluster okay? Now you know, without leaving your current window."</i>
-</p>
+![Kubebar menu showing Kubernetes health](docs/assets/readme/overview.png)
+
+## Key Features
+
+- **Watchlist-First Monitoring**: Don't get overwhelmed. Monitor only the namespaces and workloads that matter to you.
+- **One-Click `k9s` Handoff**: Jump directly from a menu bar warning into deep troubleshooting in `k9s` with `⌘K`.
+- **Context-Aware**: The menu bar automatically follows your active `kubectl` context, switching watches as you work.
+- **Glanceable Health Summaries**: See Pod readiness, Node availability, and recent Warning events without leaving your current app.
+- **Native & Lightweight**: Built with SwiftUI for macOS, ensuring minimal CPU/Memory footprint.
 
 ## Why Kubebar?
 
@@ -17,6 +22,27 @@ Kubebar is not a replacement for `k9s` or `kubectl`. It is the small, persistent
 - **Visibility**: Always-on health status in your menu bar.
 - **Speed**: Instant access to workload reasons and warning events.
 - **Trust**: Clear indicators for stale data and connectivity issues.
+
+## Why You Can Trust It
+
+- **Local-only**: Kubebar runs on your Mac and keeps cluster status local to the app.
+- **Uses your existing `kubectl`**: Cluster access goes through the Kubernetes CLI already configured on your machine.
+- **No credential storage**: Kubebar stores selected context, watchlist, and refresh cadence only; it does not store Kubernetes tokens, certificates, or passwords.
+- **No telemetry**: Kubebar does not send usage data or cluster information to external servers.
+
+### Architecture
+
+```mermaid
+graph LR
+    subgraph "Your Mac"
+    K[Kubebar App] --> CLI[kubectl CLI]
+    CLI --> CFG[~/.kube/config]
+    end
+    CLI -- "HTTPS" --> Cluster[Kubernetes Cluster]
+    style K fill:#326ce5,color:#fff
+```
+
+See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) for the detailed permissions and privacy boundary.
 
 ## Prerequisites
 
@@ -31,12 +57,14 @@ Kubebar relies on the official Kubernetes CLI to interact with your clusters.
 
 ### 1. Installation
 
-#### Option A: Download Pre-compiled (Coming Soon)
-Download the latest `Kubebar.zip` from [GitHub Releases](https://github.com/nextty/kubebar/releases), extract it, and move `Kubebar.app` to your `/Applications` folder.
+#### Option A: Download Pre-compiled
+Download `Kubebar.zip` from the [latest GitHub Release](https://github.com/nexttylabs/kubebar/releases/latest), extract it, and move `Kubebar.app` to your `/Applications` folder.
+
+If you need the pinned `v0.2.0` build, download `Kubebar.zip` from the [`v0.2.0` release](https://github.com/nexttylabs/kubebar/releases/tag/v0.2.0).
 
 #### Option B: Build from Source
 ```bash
-git clone https://github.com/nextty/kubebar.git
+git clone https://github.com/nexttylabs/kubebar.git
 cd kubebar
 xcodegen generate
 open Kubebar.xcodeproj
@@ -52,7 +80,7 @@ open Kubebar.xcodeproj
 
 ---
 
-## FAQ: Trusting Kubebar
+## FAQ
 
 **Q: Why does macOS say the app is "unverified" or "damaged"?**
 **A**: Currently, Kubebar is distributed with an **Ad-hoc signature** because it is an open-source project without a paid Apple Developer account. To run the app:
@@ -86,4 +114,4 @@ xcodegen generate
 ```
 
 ## License
-MIT • [Nextty](https://github.com/nextty)
+MIT • [Nextty Labs](https://github.com/nexttylabs)

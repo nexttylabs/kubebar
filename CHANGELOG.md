@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved clarity of `kubectl` dependency requirements in onboarding docs.
 
 
+
+## [0.2.2] - 2026-04-28
+
+### Fixed
+- Stop treating historical Pod restart counts as active failures after the Pod has recovered.
+
 ## [0.2.1] - 2026-04-27
 
 ### Added
