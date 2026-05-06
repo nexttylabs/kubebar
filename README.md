@@ -29,21 +29,7 @@ Kubebar is not a replacement for `k9s` or `kubectl`. It is the small, persistent
 - **Uses your existing `kubectl`**: Cluster access goes through the Kubernetes CLI already configured on your machine.
 - **No credential storage**: Kubebar stores selected context, watchlist, and refresh cadence only; it does not store Kubernetes tokens, certificates, or passwords.
 - **No telemetry**: Kubebar does not send usage data or cluster information to external servers.
-
-### Architecture
-
-```mermaid
-graph LR
-    subgraph "Your Mac"
-    K[Kubebar App] --> CLI[kubectl CLI]
-    CLI --> CFG[~/.kube/config]
-    end
-    CLI -- "HTTPS" --> Cluster[Kubernetes Cluster]
-    style K fill:#326ce5,color:#fff
-```
-
-See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) for the detailed permissions and privacy boundary.
-
+  
 ## Prerequisites
 
 Kubebar relies on the official Kubernetes CLI to interact with your clusters.
