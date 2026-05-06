@@ -1,10 +1,6 @@
 # Kubebar ☸️
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/nexttylabs/kubebar)
-![GitHub License](https://img.shields.io/github/license/nexttylabs/kubebar)
-![GitHub stars](https://img.shields.io/github/stars/nexttylabs/kubebar?style=social)
-
-[Download latest release](https://github.com/nexttylabs/kubebar/releases/latest) · [Star this repo](https://github.com/nexttylabs/kubebar)
+![GitHub release (latest by date)](https://img.shields.io/github/release/nexttylabs/kubebar) ![GitHub License](https://img.shields.io/github/license/nexttylabs/kubebar) ![GitHub stars](https://img.shields.io/github/stars/nexttylabs/kubebar?style=social)
 
 **Kubebar is a native macOS menu bar for Kubernetes health.**
 
