@@ -1,14 +1,20 @@
 # Kubebar ☸️
 
-**Kubebar** is a native macOS menu bar app for keeping a pulse on your Kubernetes clusters.
+[Download latest release](https://github.com/nexttylabs/kubebar/releases/latest) · [Star this repo](https://github.com/nexttylabs/kubebar)
 
-It provides a lightweight, "watchlist-first" status instrument that tells you at a glance whether your mission-critical workloads are healthy, which ones need attention, and whether the data you're looking at is fresh.
+**Kubebar is a native macOS menu bar for Kubernetes health.**
 
-![screenshot](./docs/screenshots/overview-warning.png)
+Kubebar gives Kubernetes operators a lightweight, watchlist-first status instrument that shows whether critical workloads are healthy, need attention, or have gone stale before opening deeper troubleshooting tools.
 
-<p align="center">
-  <!-- TODO: Add Kubebar menu screenshot here -->
-  <i>"Is my cluster okay? Now you know, without leaving your current window."</i>
+![Kubebar menu showing Kubernetes health](docs/assets/readme/hero-menu.png)
+
+## Visual Proof
+
+<p>
+  <img src="docs/assets/readme/setup.png" alt="Kubebar setup state" width="24%">
+  <img src="docs/assets/readme/healthy.png" alt="Kubebar healthy state" width="24%">
+  <img src="docs/assets/readme/unhealthy-watch.png" alt="Kubebar unhealthy watch state" width="24%">
+  <img src="docs/assets/readme/stale.png" alt="Kubebar stale state" width="24%">
 </p>
 
 ## Why Kubebar?
@@ -17,6 +23,15 @@ Kubebar is not a replacement for `k9s` or `kubectl`. It is the small, persistent
 - **Visibility**: Always-on health status in your menu bar.
 - **Speed**: Instant access to workload reasons and warning events.
 - **Trust**: Clear indicators for stale data and connectivity issues.
+
+## Why You Can Trust It
+
+- **Local-only**: Kubebar runs on your Mac and keeps cluster status local to the app.
+- **Uses your existing `kubectl`**: Cluster access goes through the Kubernetes CLI already configured on your machine.
+- **No credential storage**: Kubebar stores selected context, watchlist, and refresh cadence only; it does not store Kubernetes tokens, certificates, or passwords.
+- **No telemetry**: Kubebar does not send usage data or cluster information to external servers.
+
+See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) for the detailed permissions and privacy boundary.
 
 ## Prerequisites
 
@@ -31,12 +46,14 @@ Kubebar relies on the official Kubernetes CLI to interact with your clusters.
 
 ### 1. Installation
 
-#### Option A: Download Pre-compiled (Coming Soon)
-Download the latest `Kubebar.zip` from [GitHub Releases](https://github.com/nextty/kubebar/releases), extract it, and move `Kubebar.app` to your `/Applications` folder.
+#### Option A: Download Pre-compiled
+Download `Kubebar.zip` from the [latest GitHub Release](https://github.com/nexttylabs/kubebar/releases/latest), extract it, and move `Kubebar.app` to your `/Applications` folder.
+
+If you need the pinned `v0.2.0` build, download `Kubebar.zip` from the [`v0.2.0` release](https://github.com/nexttylabs/kubebar/releases/tag/v0.2.0).
 
 #### Option B: Build from Source
 ```bash
-git clone https://github.com/nextty/kubebar.git
+git clone https://github.com/nexttylabs/kubebar.git
 cd kubebar
 xcodegen generate
 open Kubebar.xcodeproj
@@ -52,7 +69,7 @@ open Kubebar.xcodeproj
 
 ---
 
-## FAQ: Trusting Kubebar
+## FAQ
 
 **Q: Why does macOS say the app is "unverified" or "damaged"?**
 **A**: Currently, Kubebar is distributed with an **Ad-hoc signature** because it is an open-source project without a paid Apple Developer account. To run the app:
@@ -86,4 +103,4 @@ xcodegen generate
 ```
 
 ## License
-MIT • [Nextty](https://github.com/nextty)
+MIT • [Nextty Labs](https://github.com/nexttylabs)
