@@ -1,21 +1,24 @@
 # Kubebar ☸️
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/nexttylabs/kubebar)
+![GitHub License](https://img.shields.io/github/license/nexttylabs/kubebar)
+![GitHub stars](https://img.shields.io/github/stars/nexttylabs/kubebar?style=social)
+
 [Download latest release](https://github.com/nexttylabs/kubebar/releases/latest) · [Star this repo](https://github.com/nexttylabs/kubebar)
 
 **Kubebar is a native macOS menu bar for Kubernetes health.**
 
 Kubebar gives Kubernetes operators a lightweight, watchlist-first status instrument that shows whether critical workloads are healthy, need attention, or have gone stale before opening deeper troubleshooting tools.
 
-![Kubebar menu showing Kubernetes health](docs/assets/readme/hero-menu.png)
+![Kubebar menu showing Kubernetes health](docs/assets/readme/overview.png)
 
-## Visual Proof
+## Key Features
 
-<p>
-  <img src="docs/assets/readme/setup.png" alt="Kubebar setup state" width="24%">
-  <img src="docs/assets/readme/healthy.png" alt="Kubebar healthy state" width="24%">
-  <img src="docs/assets/readme/unhealthy-watch.png" alt="Kubebar unhealthy watch state" width="24%">
-  <img src="docs/assets/readme/stale.png" alt="Kubebar stale state" width="24%">
-</p>
+- **Watchlist-First Monitoring**: Don't get overwhelmed. Monitor only the namespaces and workloads that matter to you.
+- **One-Click `k9s` Handoff**: Jump directly from a menu bar warning into deep troubleshooting in `k9s` with `⌘K`.
+- **Context-Aware**: The menu bar automatically follows your active `kubectl` context, switching watches as you work.
+- **Glanceable Health Summaries**: See Pod readiness, Node availability, and recent Warning events without leaving your current app.
+- **Native & Lightweight**: Built with SwiftUI for macOS, ensuring minimal CPU/Memory footprint.
 
 ## Why Kubebar?
 
@@ -30,6 +33,18 @@ Kubebar is not a replacement for `k9s` or `kubectl`. It is the small, persistent
 - **Uses your existing `kubectl`**: Cluster access goes through the Kubernetes CLI already configured on your machine.
 - **No credential storage**: Kubebar stores selected context, watchlist, and refresh cadence only; it does not store Kubernetes tokens, certificates, or passwords.
 - **No telemetry**: Kubebar does not send usage data or cluster information to external servers.
+
+### Architecture
+
+```mermaid
+graph LR
+    subgraph "Your Mac"
+    K[Kubebar App] --> CLI[kubectl CLI]
+    CLI --> CFG[~/.kube/config]
+    end
+    CLI -- "HTTPS" --> Cluster[Kubernetes Cluster]
+    style K fill:#326ce5,color:#fff
+```
 
 See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) for the detailed permissions and privacy boundary.
 
