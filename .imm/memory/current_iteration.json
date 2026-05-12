@@ -2,7 +2,7 @@
   "steps": {
     "1": {
       "step_id": "U1",
-      "state": "rework_needed",
+      "state": "closed",
       "result": "Resource usage appears visually scannable.",
       "verification": "./scripts/swift-quality-gate.sh local",
       "depends_on": [],
@@ -15,14 +15,26 @@
         "resource progress preserves health category"
       ],
       "agent_hint": null,
-      "activated_at": "2026-05-12T14:34:32Z"
+      "activated_at": "2026-05-12T14:34:32Z",
+      "execution_evidence": {
+        "changed_files": [
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "KubebarCore/Services/HealthEvaluator.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift"
+        ],
+        "verification_command": "gh pr checks 35",
+        "verification_result": "PR #35 checks passed: Swift Quality Gate, Regression test enforcement, Scope labels, Size / Risk / Tier.",
+        "notes": "Addressed Gemini comments by restoring legacy PodItemDisplay.resourceProgress compatibility and refactoring percentage formatting through the shared progress helper.",
+        "recorded_at": "2026-05-12T15:29:08Z"
+      },
+      "closed_at": "2026-05-12T15:29:16Z"
     }
   },
   "last_review": {
-    "decision": "rework",
-    "evidence": "swift build passed; ./scripts/swift-quality-gate.sh local did not pass because xcodebuild requires full Xcode while active developer directory is CommandLineTools; swift test --filter MenuDisplayModelTests did not run because the Testing module is unavailable in this toolchain.",
-    "artifacts": "",
-    "notes": "Required verification is not available in this environment, so the step cannot be closed here. Rerun the quality gate on a full Xcode/Swift Testing environment; if it passes, review can be changed to pass.",
+    "decision": "pass",
+    "evidence": "PR #35 checks passed after commit 1b84f0d: Swift Quality Gate, Regression test enforcement, Scope labels, Size / Risk / Tier.",
+    "artifacts": "https://github.com/nexttylabs/kubebar/pull/35",
+    "notes": "Gemini comments addressed: legacy resourceProgress compatibility restored and percentage/resourcePercentage now reuse progress helper.",
     "step_number": 1,
     "step_id": "U1"
   },
@@ -76,6 +88,28 @@
         "step_number": 1,
         "step_id": "U1",
         "decision": "rework"
+      }
+    },
+    {
+      "at": "2026-05-12T15:29:08Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "KubebarCore/Services/HealthEvaluator.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift"
+        ]
+      }
+    },
+    {
+      "at": "2026-05-12T15:29:16Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass"
       }
     }
   ],
