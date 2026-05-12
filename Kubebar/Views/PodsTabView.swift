@@ -181,12 +181,12 @@ private struct PodRowView: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .help(Text(row.resourceLabel))
-                            
-                        if let progress = row.resourceProgress {
-                            InlineProgressBar(progress: progress)
-                                .frame(width: 32)
-                                .padding(.leading, 2)
-                        }
+
+                        ResourceProgressPair(
+                            cpuProgress: row.cpuProgress,
+                            memoryProgress: row.memoryProgress
+                        )
+                        .padding(.leading, 2)
                     }
                 }
 
@@ -209,6 +209,26 @@ private struct PodRowView: View {
 
     private func updatePulse() {
         isPulsing = shouldPulse
+    }
+}
+
+private struct ResourceProgressPair: View {
+    let cpuProgress: Double?
+    let memoryProgress: Double?
+
+    var body: some View {
+        HStack(spacing: 3) {
+            if let cpuProgress {
+                InlineProgressBar(progress: cpuProgress)
+                    .frame(width: 26)
+            }
+
+            if let memoryProgress {
+                InlineProgressBar(progress: memoryProgress)
+                    .frame(width: 26)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 

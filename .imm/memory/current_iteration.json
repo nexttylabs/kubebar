@@ -1,0 +1,101 @@
+{
+  "steps": {
+    "1": {
+      "step_id": "U1",
+      "state": "rework_needed",
+      "result": "Resource usage appears visually scannable.",
+      "verification": "./scripts/swift-quality-gate.sh local",
+      "depends_on": [],
+      "test_scenarios": [
+        "Overview progress values match metrics",
+        "missing metrics stay unavailable",
+        "node zero usage yields zero progress",
+        "pod CPU basis follows request then limit",
+        "pod memory basis follows limit then request",
+        "resource progress preserves health category"
+      ],
+      "agent_hint": null,
+      "activated_at": "2026-05-12T14:34:32Z"
+    }
+  },
+  "last_review": {
+    "decision": "rework",
+    "evidence": "swift build passed; ./scripts/swift-quality-gate.sh local did not pass because xcodebuild requires full Xcode while active developer directory is CommandLineTools; swift test --filter MenuDisplayModelTests did not run because the Testing module is unavailable in this toolchain.",
+    "artifacts": "",
+    "notes": "Required verification is not available in this environment, so the step cannot be closed here. Rerun the quality gate on a full Xcode/Swift Testing environment; if it passes, review can be changed to pass.",
+    "step_number": 1,
+    "step_id": "U1"
+  },
+  "history": [
+    {
+      "at": "2026-05-12T14:34:15Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
+        "plan_signature": "f082335e1461ab20945a43f952e98549f0db5904e4aaf5a9ebd0f82aa5a81b1c",
+        "plan_summary": "Resource usage becomes visually scannable.",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-05-12T14:34:23Z",
+      "action": "schema_migration_v1_to_v2",
+      "details": {
+        "migrated_completed_steps": [],
+        "migrated_active_step": null
+      }
+    },
+    {
+      "at": "2026-05-12T14:34:32Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
+        "step_number": 1,
+        "step_id": "U1"
+      }
+    },
+    {
+      "at": "2026-05-12T14:40:12Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "KubebarCore/Services/HealthEvaluator.swift",
+          "Kubebar/Views/PodsTabView.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift",
+          "docs/architecture/runtime-invariants.md"
+        ]
+      }
+    },
+    {
+      "at": "2026-05-12T14:40:38Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "rework"
+      }
+    }
+  ],
+  "requires_replan": false,
+  "schema_version": 2,
+  "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
+  "plan_summary": "Resource usage becomes visually scannable.",
+  "plan_signature": "f082335e1461ab20945a43f952e98549f0db5904e4aaf5a9ebd0f82aa5a81b1c",
+  "plan_last_validated_at": "2026-05-12T14:34:15Z",
+  "validated_plan_snapshot": {
+    "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
+    "plan_signature": "f082335e1461ab20945a43f952e98549f0db5904e4aaf5a9ebd0f82aa5a81b1c",
+    "steps": [
+      {
+        "number": 1,
+        "step_id": "U1",
+        "result": "Resource usage appears visually scannable.",
+        "verification": "./scripts/swift-quality-gate.sh local",
+        "depends_on": []
+      }
+    ]
+  }
+}

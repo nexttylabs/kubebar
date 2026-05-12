@@ -79,3 +79,12 @@ scripts/       Local quality checks
 - Add or update tests for behavior changes.
 - Preserve existing defaults unless the task explicitly changes them.
 - Treat auth, secrets, config loading, persistence, build settings, CI, and public or network-facing APIs as high-risk changes.
+
+<!-- IMMUNE-BRAIN:START -->
+This project uses the Immune-Brain workflow.
+
+- Read `IMMUNE.md` before planning or implementation.
+- Start with `imm-brainstorm` when the task is vague.
+- Use `imm-planner` before implementation work.
+- Use `imm-work` to continue one validated step at a time.
+<!-- IMMUNE-BRAIN:END -->
