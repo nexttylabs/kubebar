@@ -301,6 +301,10 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
     public let helpText: String
     public let accessibilityLabel: String
 
+    public var resourceProgress: Double? {
+        [cpuProgress, memoryProgress].compactMap(\.self).max()
+    }
+
     public init(
         namespace: String,
         name: String,
@@ -324,6 +328,31 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
+    }
+
+    public init(
+        namespace: String,
+        name: String,
+        state: PodItemState,
+        readyLabel: String,
+        resourceLabel: String,
+        resourceProgress: Double?,
+        issueText: String? = nil,
+        helpText: String,
+        accessibilityLabel: String
+    ) {
+        self.init(
+            namespace: namespace,
+            name: name,
+            state: state,
+            readyLabel: readyLabel,
+            resourceLabel: resourceLabel,
+            cpuProgress: resourceProgress,
+            memoryProgress: resourceProgress,
+            issueText: issueText,
+            helpText: helpText,
+            accessibilityLabel: accessibilityLabel
+        )
     }
 }
 

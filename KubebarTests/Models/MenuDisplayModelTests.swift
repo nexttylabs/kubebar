@@ -1061,6 +1061,36 @@ struct MenuDisplayModelTests {
         #expect(WatchItemDetailDisplay(stateLabel: "Watch", reason: "BackOff", latestWarning: warning).hasExpandedContent)
     }
 
+    @Test("pod item display keeps legacy resource progress compatibility")
+    func podItemDisplayKeepsLegacyResourceProgressCompatibility() {
+        let split = PodItemDisplay(
+            namespace: "api",
+            name: "checkout",
+            state: .ready,
+            readyLabel: "1/1",
+            resourceLabel: "CPU 40% req · Mem 70% limit",
+            cpuProgress: 0.4,
+            memoryProgress: 0.7,
+            helpText: "api/checkout",
+            accessibilityLabel: "api/checkout"
+        )
+        let legacy = PodItemDisplay(
+            namespace: "api",
+            name: "checkout",
+            state: .ready,
+            readyLabel: "1/1",
+            resourceLabel: "CPU 60% req · Mem 60% limit",
+            resourceProgress: 0.6,
+            helpText: "api/checkout",
+            accessibilityLabel: "api/checkout"
+        )
+
+        #expect(split.resourceProgress == 0.7)
+        #expect(legacy.cpuProgress == 0.6)
+        #expect(legacy.memoryProgress == 0.6)
+        #expect(legacy.resourceProgress == 0.6)
+    }
+
     @Test("warning event display summary includes occurrence count only when repeated")
     func warningEventDisplaySummaryIncludesOccurrenceCountOnlyWhenRepeated() {
         let single = WarningEventDisplay(

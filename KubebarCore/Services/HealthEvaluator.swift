@@ -428,11 +428,11 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func percentage(usage: Int64, allocatable: Int64) -> String {
-        guard allocatable > 0 else {
+        guard let value = progress(usage: usage, basis: allocatable) else {
             return "-"
         }
 
-        let percent = (Double(usage) / Double(allocatable) * 100).rounded()
+        let percent = (value * 100).rounded()
         return "\(Int(percent))%"
     }
 
@@ -866,7 +866,11 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func resourcePercentage(usage: Int64, basis: Int64) -> String {
-        let percent = (Double(usage) / Double(basis) * 100).rounded()
+        guard let value = progress(usage: usage, basis: basis) else {
+            return "-"
+        }
+
+        let percent = (value * 100).rounded()
         return "\(Int(percent))%"
     }
 
