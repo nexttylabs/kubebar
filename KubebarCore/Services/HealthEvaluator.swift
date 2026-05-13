@@ -382,6 +382,7 @@ public struct HealthEvaluator: Sendable {
             detail: detail,
             systemImageName: "cpu",
             state: cardState(for: state),
+            progress: progress(usage: metrics.cpuUsageNanocores, basis: metrics.cpuAllocatableNanocores),
             accessibilityLabel: "CPU \(percent), \(detail)"
         )
     }
@@ -405,6 +406,7 @@ public struct HealthEvaluator: Sendable {
             detail: detail,
             systemImageName: "memorychip",
             state: cardState(for: state),
+            progress: progress(usage: metrics.memoryUsageBytes, basis: metrics.memoryAllocatableBytes),
             accessibilityLabel: "Memory \(percent), \(detail)"
         )
     }
@@ -426,11 +428,11 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func percentage(usage: Int64, allocatable: Int64) -> String {
-        guard allocatable > 0 else {
+        guard let value = progress(usage: usage, basis: allocatable) else {
             return "-"
         }
 
-        let percent = (Double(usage) / Double(allocatable) * 100).rounded()
+        let percent = (value * 100).rounded()
         return "\(Int(percent))%"
     }
 
@@ -440,6 +442,14 @@ public struct HealthEvaluator: Sendable {
         }
 
         return percentage(usage: usage, allocatable: allocatable)
+    }
+
+    private func progress(usage: Int64?, basis: Int64?) -> Double? {
+        guard let usage, let basis, basis > 0 else {
+            return nil
+        }
+
+        return Double(usage) / Double(basis)
     }
 
     private func formatCores(_ nanocores: Int64) -> String {
@@ -508,6 +518,8 @@ public struct HealthEvaluator: Sendable {
             statusLabel: statusLabel,
             cpuLabel: cpuLabel,
             memoryLabel: memoryLabel,
+            cpuProgress: progress(usage: detail.cpuUsageNanocores, basis: detail.cpuAllocatableNanocores),
+            memoryProgress: progress(usage: detail.memoryUsageBytes, basis: detail.memoryAllocatableBytes),
             issueText: issueText,
             helpText: helpText,
             accessibilityLabel: helpText
@@ -654,6 +666,8 @@ public struct HealthEvaluator: Sendable {
             state: state,
             readyLabel: readyLabel,
             resourceLabel: resourceLabel,
+            cpuProgress: podCPUProgress(from: detail.resourceSummary),
+            memoryProgress: podMemoryProgress(from: detail.resourceSummary),
             issueText: issueText,
             helpText: helpText,
             accessibilityLabel: helpText
@@ -823,8 +837,40 @@ public struct HealthEvaluator: Sendable {
         return "\(name) \(rawFormatter(usage))"
     }
 
+    private func podCPUProgress(from summary: PodResourceSummary) -> Double? {
+        podResourceProgress(
+            usage: summary.cpuUsageNanocores,
+            primaryBasis: summary.cpuRequestNanocores,
+            secondaryBasis: summary.cpuLimitNanocores
+        )
+    }
+
+    private func podMemoryProgress(from summary: PodResourceSummary) -> Double? {
+        podResourceProgress(
+            usage: summary.memoryUsageBytes,
+            primaryBasis: summary.memoryLimitBytes,
+            secondaryBasis: summary.memoryRequestBytes
+        )
+    }
+
+    private func podResourceProgress(
+        usage: Int64?,
+        primaryBasis: Int64?,
+        secondaryBasis: Int64?
+    ) -> Double? {
+        if let value = progress(usage: usage, basis: primaryBasis) {
+            return value
+        }
+
+        return progress(usage: usage, basis: secondaryBasis)
+    }
+
     private func resourcePercentage(usage: Int64, basis: Int64) -> String {
-        let percent = (Double(usage) / Double(basis) * 100).rounded()
+        guard let value = progress(usage: usage, basis: basis) else {
+            return "-"
+        }
+
+        let percent = (value * 100).rounded()
         return "\(Int(percent))%"
     }
 

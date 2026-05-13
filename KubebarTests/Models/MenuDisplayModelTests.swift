@@ -35,6 +35,8 @@ struct MenuDisplayModelTests {
         #expect(display.overview.cards.map(\.id) == ["nodes", "pods", "cpu", "memory"])
         #expect(display.overview.cards.map(\.value) == ["3/3", "12/12", "21%", "17%"])
         #expect(display.overview.cards.allSatisfy { $0.state == .current })
+        #expect(display.overview.cards.first(where: { $0.id == "cpu" })?.progress == 750_000_000.0 / 3_500_000_000.0)
+        #expect(display.overview.cards.first(where: { $0.id == "memory" })?.progress == 2_147_483_648.0 / 12_884_901_888.0)
         #expect(display.overview.recentWarningsEmptyMessage == "No current warning events")
         #expect(display.nodeTab.summary == "3/3 nodes ready")
         #expect(display.nodeTab.emptyMessage == "No node data yet. Refresh or check Settings.")
@@ -368,7 +370,9 @@ struct MenuDisplayModelTests {
         #expect(display.overview.statusHelpText == "Metrics unavailable: metrics API unavailable")
         #expect(display.overview.statusAccessibilityLabel.contains("metrics API unavailable"))
         #expect(display.overview.cards.first(where: { $0.id == "cpu" })?.state == .unavailable)
+        #expect(display.overview.cards.first(where: { $0.id == "cpu" })?.progress == nil)
         #expect(display.overview.cards.first(where: { $0.id == "memory" })?.detail == "metrics API unavailable")
+        #expect(display.overview.cards.first(where: { $0.id == "memory" })?.progress == nil)
     }
 
     @Test("node tab rows show sorted readiness and metrics")
@@ -400,9 +404,13 @@ struct MenuDisplayModelTests {
         #expect(rows[0].issueText == "KubeletNotReady: container runtime is down")
         #expect(rows[0].cpuLabel == "25%")
         #expect(rows[0].memoryLabel == "25%")
+        #expect(rows[0].cpuProgress == 0.25)
+        #expect(rows[0].memoryProgress == 0.25)
         #expect(rows[1].statusLabel == "Ready")
         #expect(rows[1].cpuLabel == "-")
         #expect(rows[1].memoryLabel == "-")
+        #expect(rows[1].cpuProgress == nil)
+        #expect(rows[1].memoryProgress == nil)
         #expect(rows[2].statusLabel == "Ready")
         #expect(rows[2].accessibilityLabel == "worker-z, Ready, CPU 25%, Memory 25%")
     }
@@ -426,6 +434,8 @@ struct MenuDisplayModelTests {
 
         #expect(row?.cpuLabel == "0%")
         #expect(row?.memoryLabel == "0%")
+        #expect(row?.cpuProgress == 0)
+        #expect(row?.memoryProgress == 0)
     }
 
     @Test("node tab empty state uses an explicit display flag")
@@ -549,6 +559,8 @@ struct MenuDisplayModelTests {
         let row = try #require(display.podTab.sections.first?.rows.first)
 
         #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
+        #expect(row.cpuProgress == 0.5)
+        #expect(row.memoryProgress == 0.25)
     }
 
     @Test("pod rows show resource summary when usage is missing")
@@ -584,6 +596,8 @@ struct MenuDisplayModelTests {
         let row = try #require(display.podTab.sections.first?.rows.first)
 
         #expect(row.resourceLabel == "CPU - · Mem -")
+        #expect(row.cpuProgress == nil)
+        #expect(row.memoryProgress == nil)
         #expect(row.helpText.contains("CPU -/1/2 · Mem -/2/-GiB"))
         #expect(row.accessibilityLabel == row.helpText)
     }
@@ -633,7 +647,47 @@ struct MenuDisplayModelTests {
         let rawOnly = try #require(rows.first { $0.name == "raw-only" })
 
         #expect(fallback.resourceLabel == "CPU 25% limit · Mem 50% req")
+        #expect(fallback.cpuProgress == 0.25)
+        #expect(fallback.memoryProgress == 0.5)
         #expect(rawOnly.resourceLabel == "CPU 120m · Mem 256Mi")
+        #expect(rawOnly.cpuProgress == nil)
+        #expect(rawOnly.memoryProgress == nil)
+    }
+
+    @Test("pod progress can exceed selected resource basis")
+    func podProgressCanExceedSelectedResourceBasis() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "hot-pod",
+                    readyContainerCount: 1,
+                    totalContainerCount: 1,
+                    resourceSummary: PodResourceSummary(
+                        cpuUsageNanocores: 2_000_000_000,
+                        cpuRequestNanocores: 1_000_000_000,
+                        memoryUsageBytes: 6_442_450_944,
+                        memoryLimitBytes: 4_294_967_296
+                    )
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "1/1 pods running")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.resourceLabel == "CPU 200% req · Mem 150% limit")
+        #expect(row.cpuProgress == 2)
+        #expect(row.memoryProgress == 1.5)
+        #expect(display.state == .ok)
     }
 
     @Test("pod row help keeps resource markers when all values are unavailable")
@@ -702,6 +756,8 @@ struct MenuDisplayModelTests {
         #expect(row.state == .bad)
         #expect(row.issueText == "CrashLoopBackOff: back-off restarting container")
         #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
+        #expect(row.cpuProgress == 0.5)
+        #expect(row.memoryProgress == 0.25)
     }
 
     @Test("pod tab does not mark historical restarts as bad")
@@ -1003,6 +1059,36 @@ struct MenuDisplayModelTests {
         #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", affectedPodCount: 2).hasExpandedContent)
         #expect(WatchItemDetailDisplay(stateLabel: "Bad", reason: "2 pods failed", examplePodNames: ["checkout-a"]).hasExpandedContent)
         #expect(WatchItemDetailDisplay(stateLabel: "Watch", reason: "BackOff", latestWarning: warning).hasExpandedContent)
+    }
+
+    @Test("pod item display keeps legacy resource progress compatibility")
+    func podItemDisplayKeepsLegacyResourceProgressCompatibility() {
+        let split = PodItemDisplay(
+            namespace: "api",
+            name: "checkout",
+            state: .ready,
+            readyLabel: "1/1",
+            resourceLabel: "CPU 40% req · Mem 70% limit",
+            cpuProgress: 0.4,
+            memoryProgress: 0.7,
+            helpText: "api/checkout",
+            accessibilityLabel: "api/checkout"
+        )
+        let legacy = PodItemDisplay(
+            namespace: "api",
+            name: "checkout",
+            state: .ready,
+            readyLabel: "1/1",
+            resourceLabel: "CPU 60% req · Mem 60% limit",
+            resourceProgress: 0.6,
+            helpText: "api/checkout",
+            accessibilityLabel: "api/checkout"
+        )
+
+        #expect(split.resourceProgress == 0.7)
+        #expect(legacy.cpuProgress == 0.6)
+        #expect(legacy.memoryProgress == 0.6)
+        #expect(legacy.resourceProgress == 0.6)
     }
 
     @Test("warning event display summary includes occurrence count only when repeated")

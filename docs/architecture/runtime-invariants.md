@@ -39,6 +39,9 @@ These are the rules Kubebar must keep true at runtime.
 - CPU and memory cards use `kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes`
   and node allocatable values. Missing Metrics API data is a card-level
   unavailable state, not a cluster-health failure by itself.
+- Resource usage visualization is display-only. Overview cards, node rows, and
+  Pod rows may show compact progress bars from current snapshot data, but those
+  bars must not decide `OK`, `Watch`, `Bad`, or `Stale`.
 - Nodes tab rows come from `MenuDisplayModel` node display data. They show node
   name, readiness, CPU, and memory without letting the view decide health.
 - Not Ready node rows must be distinguishable without relying on color alone
@@ -61,6 +64,9 @@ These are the rules Kubebar must keep true at runtime.
   include the row status.
 - Missing per-Pod container totals show unavailable values such as `-`; missing
   values must not be rendered as `0`.
+- Pod resource visualization keeps CPU and memory progress separate because
+  CPU uses request then limit as its comparison basis, while memory uses limit
+  then request.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
 - Successfully completed Job Pods are not active readiness failures. They do
