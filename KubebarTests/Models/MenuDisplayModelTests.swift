@@ -558,7 +558,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU 50% of request · Mem 25% of limit")
+        #expect(row.resourceLabel == "CPU 50% of request · Memory 25% of limit")
         #expect(row.helpText.contains("CPU usage 0.5 cores, request 1 core, limit 2 cores"))
         #expect(row.helpText.contains("Memory usage 1GiB, request 2GiB, limit 4GiB"))
         #expect(row.cpuProgress == 0.5)
@@ -597,7 +597,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU - · Mem -")
+        #expect(row.resourceLabel == "CPU - · Memory -")
         #expect(row.cpuProgress == nil)
         #expect(row.memoryProgress == nil)
         #expect(row.helpText.contains("CPU usage unavailable, request 1 core, limit 2 cores"))
@@ -650,10 +650,10 @@ struct MenuDisplayModelTests {
         let fallback = try #require(rows.first { $0.name == "fallback-basis" })
         let rawOnly = try #require(rows.first { $0.name == "raw-only" })
 
-        #expect(fallback.resourceLabel == "CPU 25% of limit · Mem 50% of request")
+        #expect(fallback.resourceLabel == "CPU 25% of limit · Memory 50% of request")
         #expect(fallback.cpuProgress == 0.25)
         #expect(fallback.memoryProgress == 0.5)
-        #expect(rawOnly.resourceLabel == "CPU 120m · Mem 256Mi")
+        #expect(rawOnly.resourceLabel == "CPU 120m · Memory 256Mi")
         #expect(rawOnly.cpuProgress == nil)
         #expect(rawOnly.memoryProgress == nil)
     }
@@ -688,7 +688,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU 200% of request · Mem 150% of limit")
+        #expect(row.resourceLabel == "CPU 200% of request · Memory 150% of limit")
         #expect(row.cpuProgress == 2)
         #expect(row.memoryProgress == 1.5)
         #expect(display.state == .ok)
@@ -718,7 +718,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU - · Mem -")
+        #expect(row.resourceLabel == "CPU - · Memory -")
         #expect(row.helpText == "api/checkout-7f9d, Ready, 1/1 containers ready, CPU usage unavailable, request unavailable, limit unavailable, Memory usage unavailable, request unavailable, limit unavailable")
         #expect(row.accessibilityLabel == row.helpText)
     }
@@ -759,7 +759,7 @@ struct MenuDisplayModelTests {
 
         #expect(row.state == .bad)
         #expect(row.issueText == "CrashLoopBackOff: back-off restarting container")
-        #expect(row.resourceLabel == "CPU 50% of request · Mem 25% of limit")
+        #expect(row.resourceLabel == "CPU 50% of request · Memory 25% of limit")
         #expect(row.cpuProgress == 0.5)
         #expect(row.memoryProgress == 0.25)
         let issueRange = try #require(row.helpText.range(of: "CrashLoopBackOff: back-off restarting container"))
@@ -1075,7 +1075,7 @@ struct MenuDisplayModelTests {
             name: "checkout",
             state: .ready,
             readyLabel: "1/1",
-            resourceLabel: "CPU 40% req · Mem 70% limit",
+            resourceLabel: "CPU 40% of request · Memory 70% of limit",
             cpuProgress: 0.4,
             memoryProgress: 0.7,
             helpText: "api/checkout",
@@ -1086,7 +1086,7 @@ struct MenuDisplayModelTests {
             name: "checkout",
             state: .ready,
             readyLabel: "1/1",
-            resourceLabel: "CPU 60% req · Mem 60% limit",
+            resourceLabel: "CPU 60% of request · Memory 60% of limit",
             resourceProgress: 0.6,
             helpText: "api/checkout",
             accessibilityLabel: "api/checkout"

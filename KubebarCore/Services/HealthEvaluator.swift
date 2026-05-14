@@ -771,7 +771,7 @@ public struct HealthEvaluator: Sendable {
         )
 
         let memoryText = podResourceLine(
-            name: "Mem",
+            name: "Memory",
             usage: summary.memoryUsageBytes,
             primaryBasisLabel: "of limit",
             primaryBasis: summary.memoryLimitBytes,
@@ -925,16 +925,10 @@ public struct HealthEvaluator: Sendable {
             readyLabel == "-" ? "container readiness unavailable" : "\(readyLabel) containers ready"
         ]
 
-        if resourceLabel != "-" {
-            if let issueText {
-                parts.append(issueText)
-                parts.append(resourceLabel)
-            } else {
-                parts.append(resourceLabel)
-            }
-        } else if let issueText {
+        if let issueText {
             parts.append(issueText)
         }
+        parts.append(resourceLabel)
 
         return parts.joined(separator: ", ")
     }

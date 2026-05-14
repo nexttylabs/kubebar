@@ -39,7 +39,7 @@ Kubebar already had useful Pod resource data in the Pods tab, but the display
 contract made that data harder to scan than the surrounding health information.
 Compact labels used terse basis text such as `req`, while help text compressed
 usage, request, and limit into slash triples such as `CPU -/-/-` and
-`Mem -/-/-GiB`.
+`Memory -/-/-GiB`.
 
 That was technically dense but not glanceable. It also made unavailable data
 look like compact numeric output instead of an explicit missing-data state.
@@ -50,7 +50,7 @@ Keep resource usage visualization display-only, but make both compact and full
 text self-describing:
 
 - Row labels name the comparison basis: `CPU 50% of request` and
-  `Mem 25% of limit`.
+  `Memory 25% of limit`.
 - Full help and accessibility text spell out labeled values:
   `CPU usage 0.5 cores, request 1 core, limit 2 cores`.
 - Missing usage, request, or limit values render as `unavailable`, not as
