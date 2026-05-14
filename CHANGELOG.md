@@ -7,17 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-05-14
+
 ### Added
-- Refined project documentation with a focus on productization.
-- New `docs/PERMISSIONS.md` providing transparency on `kubectl` usage and data privacy.
-- New `docs/RELEASING.md` outlining the Ad-hoc signing and release checklist.
-- Professionalized `README.md` with visual placeholders, installation guides, and a "Trusting this App" FAQ.
-- Standardized `CHANGELOG.md` format.
+- Add current CPU and memory usage indicators for watched Pods.
+- Add app screenshots, permission notes, and release guidance to help users evaluate and install Kubebar.
+
+### Changed
+- Improve Pod resource labels, hover details, and compact row readability.
+- Refine project documentation with a stronger productization focus.
 
 ### Fixed
-- Improved clarity of `kubectl` dependency requirements in onboarding docs.
-
-
+- Preserve Pod resource progress data when building menu display rows.
+- Improve clarity of `kubectl` dependency requirements in onboarding docs.
 
 ## [0.2.2] - 2026-04-28
 

@@ -1,248 +1,71 @@
 {
-  "last_update": "2026-05-14T16:17:09.701118",
-  "summary": "Closed Pod resource readability: labels now name request/limit basis, help and accessibility text spell out usage/request/limit with unavailable values, and health semantics remain unchanged.",
+  "last_update": "2026-05-14T16:57:18.424689",
+  "summary": "v0.2.3 release notes restored",
   "next_steps": [
-    "Learning captured in docs/solutions for future Pod/resource display work; next workflow entry can start from a fresh brainstorm/planner or compound adjacent completed work if needed."
+    "补充 CHANGELOG 0.2.3 定稿段落",
+    "验证 release notes 提取",
+    "通过 Swift quality gate"
   ],
   "logic_state": {},
   "current_iteration": {
     "steps": {
       "1": {
         "step_id": "U1",
-        "state": "closed",
-        "result": "Pods tab resource details are easier to scan.",
-        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-        "test_scenarios": [
-          "request and limit resource labels use readable basis wording",
-          "unavailable resource help text avoids zero-like triples",
-          "high Pod resource usage preserves Health category",
-          "CPU and memory progress remain separate",
-          "visible Pods tab smoke check confirms compact row layout"
-        ],
+        "state": "pending",
+        "result": "The v0.2.3 release workflow can extract finalized release notes.",
+        "verification": "./scripts/extract-release-notes.sh 0.2.3",
         "depends_on": [],
-        "agent_hint": null,
-        "activated_at": "2026-05-14T08:09:48Z",
-        "execution_evidence": {
-          "changed_files": [
-            "KubebarCore/Services/HealthEvaluator.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift",
-            "docs/architecture/runtime-invariants.md"
-          ],
-          "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local; /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer KUBEBAR_QA_STATE=watch ./scripts/compile-and-run.sh",
-          "verification_result": "PASS: RED failed on readable Pod resource labels and help text; GREEN passed Xcode test, full Swift quality gate, and compile-and-run launched Kubebar watch QA state from DerivedData/Build/Products/Debug/Kubebar.app with PID 75302. Computer Use could not introspect the menu bar app window, so visual layout inspection is limited to successful watch-state launch plus display-model coverage.",
-          "notes": "Resource labels now use readable basis wording such as of request/of limit. Pod resource help and accessibility text now spell out CPU and Memory usage/request/limit with unavailable values instead of slash triples. Health category behavior and separate CPU/memory progress values are preserved.",
-          "recorded_at": "2026-05-14T08:14:21Z"
-        },
-        "closed_at": "2026-05-14T08:14:49Z"
+        "test_scenarios": [
+          "missing section failure is resolved",
+          "release notes contain at least one user-facing bullet",
+          "only one finalized 0.2.3 heading exists"
+        ],
+        "agent_hint": null
       }
     },
-    "last_review": {
-      "decision": "pass",
-      "evidence": "Swift quality gate passed; RED/GREEN evidence is recorded; compile-and-run launched Kubebar watch QA state with PID 75302.",
-      "artifacts": "DerivedData/Logs/Test/Test-Kubebar-2026.05.14_16-12-52-+0800.xcresult; DerivedData/Build/Products/Debug/Kubebar.app",
-      "notes": "QA checked ready_for_review evidence, current-step changed files, display-model coverage for readable request/limit labels, unavailable resource help text without slash triples, preserved OK health for high resource usage, and separate CPU/memory progress values. Computer Use could not introspect the menu bar app window, so visual layout confidence comes from successful watch-state launch plus compact display-model coverage rather than an automated screenshot.",
-      "step_number": 1,
-      "step_id": "U1"
-    },
+    "last_review": null,
     "history": [
       {
-        "at": "2026-05-12T14:34:15Z",
+        "at": "2026-05-14T08:54:38Z",
         "action": "sync_plan_from_imm_plan",
         "details": {
-          "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
-          "plan_signature": "f082335e1461ab20945a43f952e98549f0db5904e4aaf5a9ebd0f82aa5a81b1c",
-          "plan_summary": "Resource usage becomes visually scannable.",
+          "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
+          "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
+          "plan_summary": "The v0.2.3 release workflow can extract finalized release notes.",
           "same_plan": false
         }
       },
       {
-        "at": "2026-05-12T14:34:23Z",
+        "at": "2026-05-14T08:57:18Z",
         "action": "schema_migration_v1_to_v2",
         "details": {
           "migrated_completed_steps": [],
           "migrated_active_step": null
         }
-      },
-      {
-        "at": "2026-05-12T14:34:32Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
-          "step_number": 1,
-          "step_id": "U1"
-        }
-      },
-      {
-        "at": "2026-05-12T14:40:12Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "KubebarCore/Models/MenuDisplayModel.swift",
-            "KubebarCore/Services/HealthEvaluator.swift",
-            "Kubebar/Views/PodsTabView.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift",
-            "docs/architecture/runtime-invariants.md"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-12T14:40:38Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "rework"
-        }
-      },
-      {
-        "at": "2026-05-12T15:29:08Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "KubebarCore/Models/MenuDisplayModel.swift",
-            "KubebarCore/Services/HealthEvaluator.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-12T15:29:16Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-05-14T07:41:49Z",
-        "action": "sync_plan_reset_completed_steps",
-        "details": {
-          "from_plan": "docs/plans/2026-05-12-001-feat-resource-usage-visualization-plan.md",
-          "to_plan": "docs/plans/2026-05-14-001-feat-pod-resource-display-polish-plan.md",
-          "reason": "Plan switched; reset completion state."
-        }
-      },
-      {
-        "at": "2026-05-14T07:41:49Z",
-        "action": "sync_plan_from_imm_plan",
-        "details": {
-          "plan_path": "docs/plans/2026-05-14-001-feat-pod-resource-display-polish-plan.md",
-          "plan_signature": "5468f53eea38cb1010a2890fe5f6f4f9f88c9e38150aba597c56f2b8f091d068",
-          "plan_summary": "Pod resource display becomes clearer.",
-          "same_plan": false
-        }
-      },
-      {
-        "at": "2026-05-14T07:43:09Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-05-14-001-feat-pod-resource-display-polish-plan.md",
-          "step_number": 1,
-          "step_id": "U1"
-        }
-      },
-      {
-        "at": "2026-05-14T07:49:32Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "KubebarCore/Services/HealthEvaluator.swift",
-            "Kubebar/Views/PodsTabView.swift",
-            "Kubebar/Views/InlineProgressBar.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift",
-            "docs/architecture/runtime-invariants.md"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-14T07:50:08Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-05-14T08:03:24Z",
-        "action": "sync_plan_reset_completed_steps",
-        "details": {
-          "from_plan": "docs/plans/2026-05-14-001-feat-pod-resource-display-polish-plan.md",
-          "to_plan": "docs/plans/2026-05-14-002-feat-pod-resource-readability-plan.md",
-          "reason": "Plan switched; reset completion state."
-        }
-      },
-      {
-        "at": "2026-05-14T08:03:24Z",
-        "action": "sync_plan_from_imm_plan",
-        "details": {
-          "plan_path": "docs/plans/2026-05-14-002-feat-pod-resource-readability-plan.md",
-          "plan_signature": "aea9dbd18170efd2e22d2dfa81797fa110a9f95d3ee507a0d43049c12846af4a",
-          "plan_summary": "Pods tab resource details are easier to scan.",
-          "same_plan": false
-        }
-      },
-      {
-        "at": "2026-05-14T08:09:48Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-05-14-002-feat-pod-resource-readability-plan.md",
-          "step_number": 1,
-          "step_id": "U1"
-        }
-      },
-      {
-        "at": "2026-05-14T08:14:21Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "KubebarCore/Services/HealthEvaluator.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift",
-            "docs/architecture/runtime-invariants.md"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-14T08:14:49Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
       }
     ],
     "requires_replan": false,
     "schema_version": 2,
-    "plan_path": "docs/plans/2026-05-14-002-feat-pod-resource-readability-plan.md",
-    "plan_summary": "Pods tab resource details are easier to scan.",
-    "plan_signature": "aea9dbd18170efd2e22d2dfa81797fa110a9f95d3ee507a0d43049c12846af4a",
-    "plan_last_validated_at": "2026-05-14T08:03:24Z",
+    "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
+    "plan_summary": "The v0.2.3 release workflow can extract finalized release notes.",
+    "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
+    "plan_last_validated_at": "2026-05-14T08:54:38Z",
     "validated_plan_snapshot": {
-      "plan_path": "docs/plans/2026-05-14-002-feat-pod-resource-readability-plan.md",
-      "plan_signature": "aea9dbd18170efd2e22d2dfa81797fa110a9f95d3ee507a0d43049c12846af4a",
+      "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
+      "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
       "steps": [
         {
           "number": 1,
           "step_id": "U1",
-          "result": "Pods tab resource details are easier to scan.",
-          "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+          "result": "The v0.2.3 release workflow can extract finalized release notes.",
+          "verification": "./scripts/extract-release-notes.sh 0.2.3",
           "depends_on": []
         }
       ]
     }
   },
   "environment": {
-    "cwd": "/Users/derek/.codex/worktrees/a254/kubebar",
+    "cwd": "/Users/derek/workspaces/kubebar",
     "os": "darwin"
   }
 }
