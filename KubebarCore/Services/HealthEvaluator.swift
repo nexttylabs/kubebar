@@ -763,19 +763,19 @@ public struct HealthEvaluator: Sendable {
         let cpuText = podResourceLine(
             name: "CPU",
             usage: summary.cpuUsageNanocores,
-            primaryBasisLabel: "req",
+            primaryBasisLabel: "of request",
             primaryBasis: summary.cpuRequestNanocores,
-            secondaryBasisLabel: "limit",
+            secondaryBasisLabel: "of limit",
             secondaryBasis: summary.cpuLimitNanocores,
             rawFormatter: formatMillicores
         )
 
         let memoryText = podResourceLine(
-            name: "Mem",
+            name: "Memory",
             usage: summary.memoryUsageBytes,
-            primaryBasisLabel: "limit",
+            primaryBasisLabel: "of limit",
             primaryBasis: summary.memoryLimitBytes,
-            secondaryBasisLabel: "req",
+            secondaryBasisLabel: "of request",
             secondaryBasis: summary.memoryRequestBytes,
             rawFormatter: formatMiB
         )
@@ -791,26 +791,24 @@ public struct HealthEvaluator: Sendable {
                 usage: summary.cpuUsageNanocores,
                 request: summary.cpuRequestNanocores,
                 limit: summary.cpuLimitNanocores,
-                format: formatCores,
-                suffix: "",
+                format: cpuCoreDetailLabel,
                 includeEmpty: true
             ),
             podResourceFullLine(
-                name: "Mem",
+                name: "Memory",
                 usage: summary.memoryUsageBytes,
                 request: summary.memoryRequestBytes,
                 limit: summary.memoryLimitBytes,
-                format: formatGiB,
-                suffix: "GiB",
+                format: memoryGiBDetailLabel,
                 includeEmpty: true
             )
-        ].joined(separator: " · ")
+        ].joined(separator: ", ")
 
         guard let resourceAvailability else {
             return label
         }
 
-        return "\(label) · \(resourceAvailability)"
+        return "\(label), \(resourceAvailability)"
     }
 
     private func podResourceLine(
@@ -888,22 +886,30 @@ public struct HealthEvaluator: Sendable {
         request: Int64?,
         limit: Int64?,
         format: (Int64) -> String,
-        suffix: String,
         includeEmpty: Bool
     ) -> String {
         if !includeEmpty && usage == nil && request == nil && limit == nil {
             return ""
         }
 
-        let usageText = formatOrDash(usage, formatter: format)
-        let requestText = formatOrDash(request, formatter: format)
-        let limitText = formatOrDash(limit, formatter: format)
+        let usageText = formatOrUnavailable(usage, formatter: format)
+        let requestText = formatOrUnavailable(request, formatter: format)
+        let limitText = formatOrUnavailable(limit, formatter: format)
 
-        return "\(name) \(usageText)/\(requestText)/\(limitText)\(suffix)"
+        return "\(name) usage \(usageText), request \(requestText), limit \(limitText)"
     }
 
-    private func formatOrDash(_ value: Int64?, formatter: (Int64) -> String) -> String {
-        value.map(formatter) ?? "-"
+    private func formatOrUnavailable(_ value: Int64?, formatter: (Int64) -> String) -> String {
+        value.map(formatter) ?? "unavailable"
+    }
+
+    private func cpuCoreDetailLabel(_ nanocores: Int64) -> String {
+        let value = formatCores(nanocores)
+        return "\(value) \(value == "1" ? "core" : "cores")"
+    }
+
+    private func memoryGiBDetailLabel(_ bytes: Int64) -> String {
+        "\(formatGiB(bytes))GiB"
     }
 
     private func podHelpText(
@@ -919,13 +925,10 @@ public struct HealthEvaluator: Sendable {
             readyLabel == "-" ? "container readiness unavailable" : "\(readyLabel) containers ready"
         ]
 
-        if resourceLabel != "-" {
-            parts.append(resourceLabel)
-        }
-
         if let issueText {
             parts.append(issueText)
         }
+        parts.append(resourceLabel)
 
         return parts.joined(separator: ", ")
     }

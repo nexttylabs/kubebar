@@ -58,6 +58,11 @@ These are the rules Kubebar must keep true at runtime.
 - Pod rows also show compact resource labels built from request/limit from Pod spec and
   optional usage from `metrics.k8s.io/v1beta1/pods`; resource parsing failures do
   not change pod health state.
+- Pod resource labels must name their comparison basis with readable wording,
+  such as request or limit, instead of relying only on terse abbreviations.
+- Pod resource help and accessibility text must describe usage, request, and
+  limit as labeled values. Missing values show as unavailable and must not be
+  compressed into ambiguous slash triples such as `-/-/-`.
 - When watched Pod rows exceed the available menu space, the Pod item list
   scrolls vertically while the Pods tab summary remains visible.
 - Pod row status must not rely on color alone. Help and accessibility text must
@@ -67,6 +72,9 @@ These are the rules Kubebar must keep true at runtime.
 - Pod resource visualization keeps CPU and memory progress separate because
   CPU uses request then limit as its comparison basis, while memory uses limit
   then request.
+- Pod rows keep issue text above resource text when both are present. Resource
+  visuals remain informational and must be distinguishable without implying a
+  new health alert.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
 - Successfully completed Job Pods are not active readiness failures. They do
