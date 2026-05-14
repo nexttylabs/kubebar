@@ -347,7 +347,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 
         #expect(display.primaryStatusReason == "1 pod not ready")
-        #expect(display.overview.statusHelpText == "api/checkout, Watch, 0/1 containers ready, CPU -/-/- · Mem -/-/-GiB, ContainersNotReady: containers with unready status")
+        #expect(display.overview.statusHelpText == "api/checkout, Watch, 0/1 containers ready, ContainersNotReady: containers with unready status, CPU usage unavailable, request unavailable, limit unavailable, Memory usage unavailable, request unavailable, limit unavailable")
         #expect(display.overview.statusAccessibilityLabel.contains("ContainersNotReady: containers with unready status"))
     }
 
@@ -558,7 +558,9 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
+        #expect(row.resourceLabel == "CPU 50% of request · Mem 25% of limit")
+        #expect(row.helpText.contains("CPU usage 0.5 cores, request 1 core, limit 2 cores"))
+        #expect(row.helpText.contains("Memory usage 1GiB, request 2GiB, limit 4GiB"))
         #expect(row.cpuProgress == 0.5)
         #expect(row.memoryProgress == 0.25)
     }
@@ -598,7 +600,9 @@ struct MenuDisplayModelTests {
         #expect(row.resourceLabel == "CPU - · Mem -")
         #expect(row.cpuProgress == nil)
         #expect(row.memoryProgress == nil)
-        #expect(row.helpText.contains("CPU -/1/2 · Mem -/2/-GiB"))
+        #expect(row.helpText.contains("CPU usage unavailable, request 1 core, limit 2 cores"))
+        #expect(row.helpText.contains("Memory usage unavailable, request 2GiB, limit unavailable"))
+        #expect(!row.helpText.contains("-/"))
         #expect(row.accessibilityLabel == row.helpText)
     }
 
@@ -646,7 +650,7 @@ struct MenuDisplayModelTests {
         let fallback = try #require(rows.first { $0.name == "fallback-basis" })
         let rawOnly = try #require(rows.first { $0.name == "raw-only" })
 
-        #expect(fallback.resourceLabel == "CPU 25% limit · Mem 50% req")
+        #expect(fallback.resourceLabel == "CPU 25% of limit · Mem 50% of request")
         #expect(fallback.cpuProgress == 0.25)
         #expect(fallback.memoryProgress == 0.5)
         #expect(rawOnly.resourceLabel == "CPU 120m · Mem 256Mi")
@@ -684,7 +688,7 @@ struct MenuDisplayModelTests {
         let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
         let row = try #require(display.podTab.sections.first?.rows.first)
 
-        #expect(row.resourceLabel == "CPU 200% req · Mem 150% limit")
+        #expect(row.resourceLabel == "CPU 200% of request · Mem 150% of limit")
         #expect(row.cpuProgress == 2)
         #expect(row.memoryProgress == 1.5)
         #expect(display.state == .ok)
@@ -715,7 +719,7 @@ struct MenuDisplayModelTests {
         let row = try #require(display.podTab.sections.first?.rows.first)
 
         #expect(row.resourceLabel == "CPU - · Mem -")
-        #expect(row.helpText == "api/checkout-7f9d, Ready, 1/1 containers ready, CPU -/-/- · Mem -/-/-GiB")
+        #expect(row.helpText == "api/checkout-7f9d, Ready, 1/1 containers ready, CPU usage unavailable, request unavailable, limit unavailable, Memory usage unavailable, request unavailable, limit unavailable")
         #expect(row.accessibilityLabel == row.helpText)
     }
 
@@ -755,9 +759,12 @@ struct MenuDisplayModelTests {
 
         #expect(row.state == .bad)
         #expect(row.issueText == "CrashLoopBackOff: back-off restarting container")
-        #expect(row.resourceLabel == "CPU 50% req · Mem 25% limit")
+        #expect(row.resourceLabel == "CPU 50% of request · Mem 25% of limit")
         #expect(row.cpuProgress == 0.5)
         #expect(row.memoryProgress == 0.25)
+        let issueRange = try #require(row.helpText.range(of: "CrashLoopBackOff: back-off restarting container"))
+        let resourceRange = try #require(row.helpText.range(of: "CPU usage 0.3 cores, request 0.5 cores, limit 1 core"))
+        #expect(issueRange.lowerBound < resourceRange.lowerBound)
     }
 
     @Test("pod tab does not mark historical restarts as bad")

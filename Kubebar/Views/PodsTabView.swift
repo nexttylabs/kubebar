@@ -173,6 +173,15 @@ private struct PodRowView: View {
                         .lineLimit(1)
                 }
 
+                if let issueText = row.issueText {
+                    Text(issueText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(Text(issueText))
+                }
+
                 if !row.resourceLabel.isEmpty {
                     HStack(spacing: 4) {
                         Text(row.resourceLabel)
@@ -188,15 +197,6 @@ private struct PodRowView: View {
                         )
                         .padding(.leading, 2)
                     }
-                }
-
-                if let issueText = row.issueText {
-                    Text(issueText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(issueText))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -219,16 +219,26 @@ private struct ResourceProgressPair: View {
     var body: some View {
         HStack(spacing: 3) {
             if let cpuProgress {
-                InlineProgressBar(progress: cpuProgress)
-                    .frame(width: 26)
+                resourceProgress(systemImage: "cpu", progress: cpuProgress)
             }
 
             if let memoryProgress {
-                InlineProgressBar(progress: memoryProgress)
-                    .frame(width: 26)
+                resourceProgress(systemImage: "memorychip", progress: memoryProgress)
             }
         }
         .accessibilityHidden(true)
+    }
+
+    private func resourceProgress(systemImage: String, progress: Double) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: systemImage)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(width: 9)
+
+            InlineProgressBar(progress: progress)
+                .frame(width: 24)
+        }
     }
 }
 
