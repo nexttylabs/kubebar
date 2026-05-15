@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-05-15
+
+### Added
+- Add `Open in k9s` handoffs for fresh attention rows, Pod namespace groups, and the Nodes summary.
+
+### Fixed
+- Keep Pod and Node k9s handoff buttons at the list level they actually open, avoiding misleading row-level resource jumps.
+
 ## [0.2.3] - 2026-05-14
 
 ### Added
