@@ -607,6 +607,26 @@ public struct MenuDisplayModel: Equatable, Sendable {
         )
     }
 
+    public var k9sHandoffs: [OverviewK9sHandoff] {
+        var handoffs: [OverviewK9sHandoff] = []
+
+        if let overviewHandoff = overview.k9sHandoff {
+            handoffs.append(overviewHandoff)
+        }
+
+        handoffs += visibleWatchItems.compactMap(\.k9sHandoff)
+        if let nodeTabHandoff = nodeTab.k9sHandoff {
+            handoffs.append(nodeTabHandoff)
+        }
+        handoffs += nodeTab.rows.compactMap(\.k9sHandoff)
+        handoffs += podTab.sections.compactMap(\.k9sHandoff)
+        handoffs += podTab.sections.flatMap { section in
+            section.rows.compactMap(\.k9sHandoff)
+        }
+
+        return handoffs
+    }
+
     private static func makeOverview(
         contextName: String,
         state: ClusterHealthState,

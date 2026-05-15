@@ -245,6 +245,8 @@ struct MenuDisplayModelTests {
         #expect(display.nodeTab.k9sHandoff?.helpText == "Open Nodes in k9s")
         #expect(display.nodeTab.k9sHandoff?.accessibilityLabel == "Open Nodes in k9s")
         #expect(nodeRow.k9sHandoff == nil)
+        #expect(display.k9sHandoffs.contains { $0.target.resource == .podList(namespace: "api") })
+        #expect(display.k9sHandoffs.contains { $0.target.resource == .nodeList })
     }
 
     @Test("stale resource rows do not expose k9s handoff targets")

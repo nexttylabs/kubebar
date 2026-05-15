@@ -377,19 +377,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     private var availableK9sHandoffs: [OverviewK9sHandoff] {
-        var handoffs: [OverviewK9sHandoff] = []
-
-        if let overviewHandoff = display.overview.k9sHandoff {
-            handoffs.append(overviewHandoff)
-        }
-
-        handoffs += display.visibleWatchItems.compactMap(\.k9sHandoff)
-        handoffs += display.nodeTab.rows.compactMap(\.k9sHandoff)
-        handoffs += display.podTab.sections.flatMap { section in
-            section.rows.compactMap(\.k9sHandoff)
-        }
-
-        return handoffs
+        display.k9sHandoffs
     }
 
     private func scheduleFreshnessTimer(now: Date = Date()) {
