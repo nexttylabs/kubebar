@@ -4,7 +4,7 @@ import KubebarCore
 struct StatusSummaryView: View {
     let display: MenuDisplayModel
     let k9sHandoffState: K9sHandoffLaunchState
-    let onOpenK9sHandoff: () -> Void
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
 
     private var presentation: MenuBarStatusPresentation {
         MenuBarStatusPresentation(state: display.state)
@@ -33,6 +33,8 @@ struct StatusSummaryView: View {
                 }
                 .font(.subheadline)
                 .help(Text(display.overview.statusHelpText))
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(display.overview.statusAccessibilityLabel)
             }
 
             if let handoff = display.overview.k9sHandoff {
@@ -40,12 +42,9 @@ struct StatusSummaryView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     handoffStatusRow(text: message, for: handoff)
                 }
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Open watched target in k9s")
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(display.overview.statusAccessibilityLabel)
+        .accessibilityElement(children: .contain)
         .focusable()
     }
 
@@ -64,7 +63,9 @@ struct StatusSummaryView: View {
     }
 
     private func openK9sButton(for handoff: OverviewK9sHandoff) -> some View {
-        Button(action: onOpenK9sHandoff) {
+        Button {
+            onOpenK9sHandoff(handoff)
+        } label: {
             Image(systemName: "arrow.right")
                 .font(.caption)
         }
@@ -74,13 +75,13 @@ struct StatusSummaryView: View {
         .help(Text(handoff.helpText))
         .accessibilityLabel(handoff.accessibilityLabel)
         .accessibilityHint(Text(handoff.buttonLabel(for: k9sHandoffState)))
-        .disabled(k9sHandoffState.isOpeningForSameTarget(handoff))
+        .disabled(k9sHandoffState.blocksNewHandoff(for: handoff))
     }
 }
 
-private extension OverviewK9sHandoff {
+extension OverviewK9sHandoff {
     func buttonLabel(for state: K9sHandoffLaunchState) -> String {
-        if state.isOpeningForSameTarget(self) {
+        if state.blocksNewHandoff(for: self) {
             return "Opening in k9s..."
         }
 

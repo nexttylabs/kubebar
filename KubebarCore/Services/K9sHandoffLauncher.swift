@@ -5,7 +5,7 @@ public enum K9sHandoffLauncherError: Error, Equatable, Sendable {
 }
 
 public protocol K9sHandoffLaunching: Sendable {
-    func launch(contextName: String, namespace: String) throws
+    func launch(target: K9sHandoffTarget) throws
 }
 
 public final class K9sHandoffLauncher: K9sHandoffLaunching {
@@ -15,7 +15,7 @@ public final class K9sHandoffLauncher: K9sHandoffLaunching {
         self.runner = runner
     }
 
-    public func launch(contextName: String, namespace: String) throws {
+    public func launch(target: K9sHandoffTarget) throws {
         let path = ProcessCommandRunner.launchEnvironment(base: ProcessInfo.processInfo.environment)["PATH"]
             ?? "/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -24,8 +24,9 @@ public final class K9sHandoffLauncher: K9sHandoffLaunching {
             arguments: [
                 "-e",
                 launchScript(),
-                contextName,
-                namespace,
+                target.contextName,
+                target.resource.namespace ?? "",
+                resourceCommand(for: target.resource) ?? "",
                 path
             ],
             timeoutSeconds: 12
@@ -36,15 +37,39 @@ public final class K9sHandoffLauncher: K9sHandoffLaunching {
         }
     }
 
+    public func launch(contextName: String, namespace: String) throws {
+        try launch(target: K9sHandoffTarget(contextName: contextName, namespace: namespace))
+    }
+
+    private func resourceCommand(for resource: K9sResourceTarget) -> String? {
+        switch resource {
+        case .namespace:
+            nil
+        case let .workload(_, _, kind):
+            kind.kubectlResource
+        case .podList:
+            "pods"
+        case .nodeList:
+            "nodes"
+        }
+    }
+
     private func launchScript() -> String {
         """
         on run argv
             set contextName to item 1 of argv
             set namespaceName to item 2 of argv
-            set pathEnvironment to item 3 of argv
+            set resourceCommand to item 3 of argv
+            set pathEnvironment to item 4 of argv
 
             tell application "Terminal"
-                set k9sCommand to "export PATH=" & quoted form of pathEnvironment & "; exec k9s --context " & quoted form of contextName & " -n " & quoted form of namespaceName
+                set k9sCommand to "export PATH=" & quoted form of pathEnvironment & "; exec k9s --context " & quoted form of contextName
+                if namespaceName is not "" then
+                    set k9sCommand to k9sCommand & " -n " & quoted form of namespaceName
+                end if
+                if resourceCommand is not "" then
+                    set k9sCommand to k9sCommand & " -c " & quoted form of resourceCommand
+                end if
                 if (count of windows) is greater than 0 then
                     do script k9sCommand in front window
                 else

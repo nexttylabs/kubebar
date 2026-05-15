@@ -143,19 +143,22 @@ public struct WatchItemDisplay: Equatable, Sendable, Identifiable {
     public let state: ClusterHealthState
     public let reason: String
     public let detail: WatchItemDetailDisplay
+    public let k9sHandoff: OverviewK9sHandoff?
 
     public init(
         id: String,
         title: String,
         state: ClusterHealthState,
         reason: String,
-        detail: WatchItemDetailDisplay? = nil
+        detail: WatchItemDetailDisplay? = nil,
+        k9sHandoff: OverviewK9sHandoff? = nil
     ) {
         self.id = id
         self.title = title
         self.state = state
         self.reason = reason
         self.detail = detail ?? WatchItemDetailDisplay(stateLabel: state.label, reason: reason)
+        self.k9sHandoff = k9sHandoff
     }
 }
 
@@ -176,13 +179,59 @@ public struct OverviewNoticeDisplay: Equatable, Sendable, Identifiable {
     }
 }
 
+public enum K9sResourceTarget: Equatable, Sendable {
+    case namespace(String)
+    case workload(namespace: String, name: String, kind: WorkloadKind)
+    case podList(namespace: String)
+    case nodeList
+
+    public var namespace: String? {
+        switch self {
+        case let .namespace(namespace):
+            namespace
+        case let .workload(namespace, _, _):
+            namespace
+        case let .podList(namespace):
+            namespace
+        case .nodeList:
+            nil
+        }
+    }
+
+    public var displayName: String {
+        switch self {
+        case let .namespace(namespace):
+            namespace
+        case let .workload(namespace, name, _):
+            "\(namespace)/\(name)"
+        case let .podList(namespace):
+            "\(namespace) Pods"
+        case .nodeList:
+            "Nodes"
+        }
+    }
+}
+
 public struct K9sHandoffTarget: Equatable, Sendable {
     public let contextName: String
-    public let namespace: String
+    public let resource: K9sResourceTarget
 
     public init(contextName: String, namespace: String) {
         self.contextName = contextName
-        self.namespace = namespace
+        self.resource = .namespace(namespace)
+    }
+
+    public init(contextName: String, resource: K9sResourceTarget) {
+        self.contextName = contextName
+        self.resource = resource
+    }
+
+    public var namespace: String {
+        resource.namespace ?? ""
+    }
+
+    public var displayName: String {
+        resource.displayName
     }
 }
 
@@ -222,6 +271,7 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
     public let issueText: String?
     public let helpText: String
     public let accessibilityLabel: String
+    public let k9sHandoff: OverviewK9sHandoff?
 
     public init(
         name: String,
@@ -233,7 +283,8 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
         memoryProgress: Double? = nil,
         issueText: String? = nil,
         helpText: String,
-        accessibilityLabel: String
+        accessibilityLabel: String,
+        k9sHandoff: OverviewK9sHandoff? = nil
     ) {
         self.id = name
         self.name = name
@@ -246,6 +297,7 @@ public struct NodeItemDisplay: Equatable, Sendable, Identifiable {
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
+        self.k9sHandoff = k9sHandoff
     }
 }
 
@@ -255,19 +307,22 @@ public struct NodeTabDisplay: Equatable, Sendable {
     public let showsEmptyMessage: Bool
     public let unavailableMessage: String?
     public let emptyMessage: String
+    public let k9sHandoff: OverviewK9sHandoff?
 
     public init(
         summary: String,
         rows: [NodeItemDisplay] = [],
         showsEmptyMessage: Bool = false,
         unavailableMessage: String? = nil,
-        emptyMessage: String = "No node data yet. Refresh or check Settings."
+        emptyMessage: String = "No node data yet. Refresh or check Settings.",
+        k9sHandoff: OverviewK9sHandoff? = nil
     ) {
         self.summary = summary
         self.rows = rows
         self.showsEmptyMessage = showsEmptyMessage
         self.unavailableMessage = unavailableMessage
         self.emptyMessage = emptyMessage
+        self.k9sHandoff = k9sHandoff
     }
 }
 
@@ -300,6 +355,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
     public let issueText: String?
     public let helpText: String
     public let accessibilityLabel: String
+    public let k9sHandoff: OverviewK9sHandoff?
 
     public var resourceProgress: Double? {
         [cpuProgress, memoryProgress].compactMap(\.self).max()
@@ -315,7 +371,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         memoryProgress: Double? = nil,
         issueText: String? = nil,
         helpText: String,
-        accessibilityLabel: String
+        accessibilityLabel: String,
+        k9sHandoff: OverviewK9sHandoff? = nil
     ) {
         self.id = "\(namespace)/\(name)"
         self.namespace = namespace
@@ -328,6 +385,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         self.issueText = issueText
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
+        self.k9sHandoff = k9sHandoff
     }
 
     public init(
@@ -339,7 +397,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         resourceProgress: Double?,
         issueText: String? = nil,
         helpText: String,
-        accessibilityLabel: String
+        accessibilityLabel: String,
+        k9sHandoff: OverviewK9sHandoff? = nil
     ) {
         self.init(
             namespace: namespace,
@@ -351,7 +410,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
             memoryProgress: resourceProgress,
             issueText: issueText,
             helpText: helpText,
-            accessibilityLabel: accessibilityLabel
+            accessibilityLabel: accessibilityLabel,
+            k9sHandoff: k9sHandoff
         )
     }
 }
@@ -360,11 +420,17 @@ public struct PodNamespaceDisplay: Equatable, Sendable, Identifiable {
     public let id: String
     public let namespace: String
     public let rows: [PodItemDisplay]
+    public let k9sHandoff: OverviewK9sHandoff?
 
-    public init(namespace: String, rows: [PodItemDisplay]) {
+    public init(
+        namespace: String,
+        rows: [PodItemDisplay],
+        k9sHandoff: OverviewK9sHandoff? = nil
+    ) {
         self.id = namespace
         self.namespace = namespace
         self.rows = rows
+        self.k9sHandoff = k9sHandoff
     }
 }
 
@@ -539,6 +605,26 @@ public struct MenuDisplayModel: Equatable, Sendable {
             warningEventSummaries: warningEventSummaries,
             sectionNotices: sectionNotices
         )
+    }
+
+    public var k9sHandoffs: [OverviewK9sHandoff] {
+        var handoffs: [OverviewK9sHandoff] = []
+
+        if let overviewHandoff = overview.k9sHandoff {
+            handoffs.append(overviewHandoff)
+        }
+
+        handoffs += visibleWatchItems.compactMap(\.k9sHandoff)
+        if let nodeTabHandoff = nodeTab.k9sHandoff {
+            handoffs.append(nodeTabHandoff)
+        }
+        handoffs += nodeTab.rows.compactMap(\.k9sHandoff)
+        handoffs += podTab.sections.compactMap(\.k9sHandoff)
+        handoffs += podTab.sections.flatMap { section in
+            section.rows.compactMap(\.k9sHandoff)
+        }
+
+        return handoffs
     }
 
     private static func makeOverview(

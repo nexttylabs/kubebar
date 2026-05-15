@@ -4,11 +4,20 @@ import KubebarCore
 struct PodsTabView: View {
     let display: MenuDisplayModel
     let itemsMaxHeight: CGFloat
+    let k9sHandoffState: K9sHandoffLaunchState
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
     @State private var podItemsContentHeight: CGFloat = 0
 
-    init(display: MenuDisplayModel, itemsMaxHeight: CGFloat = Layout.defaultItemsMaxHeight) {
+    init(
+        display: MenuDisplayModel,
+        itemsMaxHeight: CGFloat = Layout.defaultItemsMaxHeight,
+        k9sHandoffState: K9sHandoffLaunchState,
+        onOpenK9sHandoff: @escaping (OverviewK9sHandoff) -> Void
+    ) {
         self.display = display
         self.itemsMaxHeight = itemsMaxHeight
+        self.k9sHandoffState = k9sHandoffState
+        self.onOpenK9sHandoff = onOpenK9sHandoff
     }
 
     var body: some View {
@@ -66,7 +75,11 @@ struct PodsTabView: View {
     private var podItemsContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(display.podTab.sections) { section in
-                PodNamespaceSectionView(section: section)
+                PodNamespaceSectionView(
+                    section: section,
+                    k9sHandoffState: k9sHandoffState,
+                    onOpenK9sHandoff: onOpenK9sHandoff
+                )
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -99,19 +112,38 @@ struct PodsTabView: View {
 
 private struct PodNamespaceSectionView: View {
     let section: PodNamespaceDisplay
+    let k9sHandoffState: K9sHandoffLaunchState
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(section.namespace, systemImage: "folder.fill")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .help(Text(section.namespace))
-                .accessibilityLabel(section.namespace)
-                .padding(.vertical, 4)
-                .padding(.horizontal, 6)
-                .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
+            HStack(alignment: .center, spacing: 8) {
+                Label(section.namespace, systemImage: "folder.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(section.namespace))
+                    .accessibilityLabel(section.namespace)
+
+                Spacer(minLength: 8)
+
+                if let handoff = section.k9sHandoff {
+                    openK9sButton(for: handoff)
+                }
+            }
+            .padding(.vertical, 4)
+            .padding(.horizontal, 6)
+            .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
+
+            if let feedbackMessage {
+                Text(feedbackMessage)
+                    .font(.caption)
+                    .foregroundStyle(feedbackColor)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(feedbackMessage))
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.rows) { row in
@@ -119,6 +151,33 @@ private struct PodNamespaceSectionView: View {
                 }
             }
         }
+    }
+
+    private func openK9sButton(for handoff: OverviewK9sHandoff) -> some View {
+        Button {
+            onOpenK9sHandoff(handoff)
+        } label: {
+            Image(systemName: "arrow.right")
+                .font(.caption)
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.small)
+        .help(Text(handoff.helpText))
+        .accessibilityLabel(handoff.accessibilityLabel)
+        .accessibilityHint(Text(handoff.buttonLabel(for: k9sHandoffState)))
+        .disabled(k9sHandoffState.blocksNewHandoff(for: handoff))
+    }
+
+    private var feedbackMessage: String? {
+        section.k9sHandoff.flatMap(k9sHandoffState.feedbackMessage)
+    }
+
+    private var feedbackColor: Color {
+        if case .failed = k9sHandoffState {
+            return .red
+        }
+
+        return .secondary
     }
 }
 
@@ -142,74 +201,79 @@ private struct PodRowView: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 7, height: 7)
-                .opacity(shouldPulse && isPulsing ? 0.4 : 1.0)
-                .animation(shouldPulse ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
-                .onAppear {
-                    updatePulse()
-                }
-                .onChange(of: shouldPulse) { _, _ in
-                    updatePulse()
-                }
-                .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 7, height: 7)
+                    .opacity(shouldPulse && isPulsing ? 0.4 : 1.0)
+                    .animation(shouldPulse ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
+                    .onAppear {
+                        updatePulse()
+                    }
+                    .onChange(of: shouldPulse) { _, _ in
+                        updatePulse()
+                    }
+                    .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(row.name)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(row.name))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(row.name)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(row.name))
 
-                    Spacer(minLength: 8)
+                        Spacer(minLength: 8)
 
-                    Text(row.readyLabel)
-                        .font(.caption.weight(.semibold))
-                        .monospacedDigit()
-                        .foregroundStyle(.primary.opacity(0.7))
-                        .lineLimit(1)
-                }
+                        Text(row.readyLabel)
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.primary.opacity(0.7))
+                            .lineLimit(1)
+                    }
 
-                if let issueText = row.issueText {
-                    Text(issueText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(issueText))
-                }
-
-                if !row.resourceLabel.isEmpty {
-                    HStack(spacing: 4) {
-                        Text(row.resourceLabel)
+                    if let issueText = row.issueText {
+                        Text(issueText)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
-                            .help(Text(row.resourceLabel))
+                            .help(Text(issueText))
+                    }
 
-                        ResourceProgressPair(
-                            cpuProgress: row.cpuProgress,
-                            memoryProgress: row.memoryProgress
-                        )
-                        .padding(.leading, 2)
+                    if !row.resourceLabel.isEmpty {
+                        HStack(spacing: 4) {
+                            Text(row.resourceLabel)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .help(Text(row.resourceLabel))
+
+                            ResourceProgressPair(
+                                cpuProgress: row.cpuProgress,
+                                memoryProgress: row.memoryProgress
+                            )
+                            .padding(.leading, 2)
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(row.accessibilityLabel)
+                .focusable()
+
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .help(Text(row.helpText))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(row.accessibilityLabel)
-        .focusable()
+        .accessibilityElement(children: .contain)
     }
 
     private func updatePulse() {
         isPulsing = shouldPulse
     }
+
 }
 
 private struct ResourceProgressPair: View {

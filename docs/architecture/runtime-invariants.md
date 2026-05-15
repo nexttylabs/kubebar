@@ -104,6 +104,11 @@ These are the rules Kubebar must keep true at runtime.
 - Context, namespace, workload, and warning names stay app-owned display
   strings; tooltips and accessibility labels must not expose command
   transcripts or JSON.
+- `Open in k9s` actions are external handoffs only. Overview rows, watchlist
+  rows, Pod namespace headers, and the Nodes summary may expose them only from
+  fresh `MenuDisplayModel` targets, and they must not mutate Kubernetes
+  resources or infer target semantics in views. Pod and Node item rows must not
+  expose list-level handoffs that imply exact resource positioning.
 
 ## Freshness Rules
 

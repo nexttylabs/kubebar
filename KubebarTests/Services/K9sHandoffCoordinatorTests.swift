@@ -24,6 +24,7 @@ struct K9sHandoffCoordinatorTests {
         #expect(await waitForState(coordinator, expected: .idle, timeout: .seconds(1)))
         #expect(coordinator.state == .idle)
         #expect(launcher.callCount == 1)
+        #expect(launcher.targets == [target.target])
     }
 
     @Test("repeated activation while opening does not retry launch")
@@ -62,6 +63,23 @@ struct K9sHandoffCoordinatorTests {
         launcher.release()
         #expect(await waitForState(coordinator, expected: .failed(target: target, message: "Could not open k9s for prod/api"), timeout: .seconds(1)))
         #expect(coordinator.state == .failed(target: target, message: "Could not open k9s for prod/api"))
+    }
+
+    @Test("failure copy names stable list entry targets")
+    func failureCopyNamesStableListEntryTargets() async {
+        let launcher = ControlledLauncher(result: .failure(K9sHandoffLauncherError.failed), delayNanoseconds: 100_000_000)
+        let coordinator = K9sHandoffCoordinator(launcher: launcher)
+        let target = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "prod", resource: .podList(namespace: "api")),
+            actionLabel: "Open in k9s",
+            helpText: "Open api Pods in k9s",
+            accessibilityLabel: "Open api Pods in k9s"
+        )
+
+        coordinator.open(for: target)
+        launcher.release()
+
+        #expect(await waitForState(coordinator, expected: .failed(target: target, message: "Could not open k9s for prod/api Pods"), timeout: .seconds(1)))
     }
 
     @Test("state clears when target disappears")
@@ -132,6 +150,27 @@ struct K9sHandoffCoordinatorTests {
         #expect(!openingState.isOpeningForSameTarget(otherTarget))
         #expect(!K9sHandoffLaunchState.idle.isOpeningForSameTarget(matchingTarget))
     }
+
+    @Test("opening state blocks every handoff button")
+    func openingStateBlocksEveryHandoffButton() {
+        let matchingTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "prod", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+        let otherTarget = OverviewK9sHandoff(
+            target: K9sHandoffTarget(contextName: "stage", namespace: "api"),
+            actionLabel: "Open in k9s",
+            helpText: "Open watched target in k9s",
+            accessibilityLabel: "Open watched target in k9s"
+        )
+        let openingState = K9sHandoffLaunchState.opening(target: matchingTarget)
+
+        #expect(openingState.blocksNewHandoff(for: matchingTarget))
+        #expect(openingState.blocksNewHandoff(for: otherTarget))
+        #expect(!K9sHandoffLaunchState.idle.blocksNewHandoff(for: matchingTarget))
+    }
 }
 
 private final class ControlledLauncher: K9sHandoffLaunching, @unchecked Sendable {
@@ -139,6 +178,7 @@ private final class ControlledLauncher: K9sHandoffLaunching, @unchecked Sendable
     private let delayNanoseconds: UInt64
     private let releaseGate = DispatchSemaphore(value: 0)
     private(set) var callCount = 0
+    private(set) var targets: [K9sHandoffTarget] = []
 
     init(
         result: Result<Void, Error> = .success(()),
@@ -148,10 +188,9 @@ private final class ControlledLauncher: K9sHandoffLaunching, @unchecked Sendable
         self.delayNanoseconds = delayNanoseconds
     }
 
-    func launch(contextName: String, namespace: String) throws {
-        _ = contextName
-        _ = namespace
+    func launch(target: K9sHandoffTarget) throws {
         callCount += 1
+        targets.append(target)
 
         if delayNanoseconds > 0 {
             releaseGate.wait()

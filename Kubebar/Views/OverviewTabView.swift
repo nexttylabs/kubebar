@@ -4,7 +4,7 @@ import KubebarCore
 struct OverviewTabView: View {
     let display: MenuDisplayModel
     let k9sHandoffState: K9sHandoffLaunchState
-    let onOpenK9sHandoff: () -> Void
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
 
     private let columns = [
         GridItem(.flexible(), spacing: 8),
