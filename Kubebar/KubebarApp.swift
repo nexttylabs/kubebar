@@ -93,7 +93,7 @@ private struct QAFixtureMenuRootView: View {
             onRefresh: {},
             onPrepareSettings: {},
             k9sHandoffState: .idle,
-            onOpenK9sHandoff: {},
+            onOpenK9sHandoff: { _ in },
             onQuit: { NSApplication.shared.terminate(nil) }
         )
     }

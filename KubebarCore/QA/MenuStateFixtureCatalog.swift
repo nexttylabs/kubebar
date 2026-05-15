@@ -77,8 +77,9 @@ public enum MenuStateFixtureCatalog {
                 expectedBehavior: "Overview shows Watch with a pinned BackOff warning row."
                     + " The top detail includes a direct `Open in k9s` action for qa-api."
                     + " Hovering the top status explains the restarting qa-api Pod."
-                    + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text.",
-                limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, and card readability."
+                    + " Pods tab shows the watched Pod first with yellow dot, 0/1, and gray issue text."
+                    + " Pods namespace headers open the namespace Pods view/list in k9s.",
+                limitations: "Requires visible menu inspection to confirm reason-first warning copy, pinned marker, card readability, and namespace-header Pods k9s buttons."
             )
         case .bad:
             return makeFixture(
@@ -87,8 +88,10 @@ public enum MenuStateFixtureCatalog {
                 expectedBehavior: "Overview shows Bad and prioritizes the broken tracked target in the top row."
                     + " The top detail includes a direct `Open in k9s` action for qa-payments."
                     + " Hovering the top status names the affected qa-payments Pods."
-                    + " Pods tab shows failed Pods first with red dots and issue text.",
-                limitations: "Requires visible menu inspection to confirm top-row priority and card state."
+                    + " Pods tab shows failed Pods first with red dots and issue text."
+                    + " Pods namespace headers open the namespace Pods view/list in k9s."
+                    + " Nodes summary opens the Nodes view/list in k9s.",
+                limitations: "Requires visible menu inspection to confirm top-row priority, card state, namespace-header Pods buttons, and Nodes summary button."
             )
         case .staleRefreshFailure:
             return makeFixture(

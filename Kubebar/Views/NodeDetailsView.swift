@@ -3,6 +3,8 @@ import KubebarCore
 
 struct NodeDetailsView: View {
     let display: NodeTabDisplay
+    let k9sHandoffState: K9sHandoffLaunchState
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -24,11 +26,28 @@ struct NodeDetailsView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Node readiness")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Node readiness")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                if let handoff = display.k9sHandoff {
+                    openK9sButton(for: handoff)
+                }
+            }
 
             readableText(display.unavailableMessage ?? display.summary)
+
+            if let feedbackMessage {
+                Text(feedbackMessage)
+                    .font(.caption)
+                    .foregroundStyle(feedbackColor)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(feedbackMessage))
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(display.unavailableMessage ?? display.summary)
@@ -43,6 +62,33 @@ struct NodeDetailsView: View {
             .truncationMode(.middle)
             .help(Text(value))
             .accessibilityLabel(value)
+    }
+
+    private func openK9sButton(for handoff: OverviewK9sHandoff) -> some View {
+        Button {
+            onOpenK9sHandoff(handoff)
+        } label: {
+            Image(systemName: "arrow.right")
+                .font(.caption)
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.small)
+        .help(Text(handoff.helpText))
+        .accessibilityLabel(handoff.accessibilityLabel)
+        .accessibilityHint(Text(handoff.buttonLabel(for: k9sHandoffState)))
+        .disabled(k9sHandoffState.blocksNewHandoff(for: handoff))
+    }
+
+    private var feedbackMessage: String? {
+        display.k9sHandoff.flatMap(k9sHandoffState.feedbackMessage)
+    }
+
+    private var feedbackColor: Color {
+        if case .failed = k9sHandoffState {
+            return .red
+        }
+
+        return .secondary
     }
 }
 
@@ -61,6 +107,28 @@ private struct NodeRowView: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            nodeContent
+        }
+        .padding(isErrorState ? Style.errorPadding : 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            if isErrorState {
+                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
+                    .fill(Color.red.opacity(Style.errorBackgroundOpacity))
+            }
+        }
+        .overlay {
+            if isErrorState {
+                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
+                    .strokeBorder(Color.red.opacity(Style.errorBorderOpacity), lineWidth: 1)
+            }
+        }
+        .help(Text(row.helpText))
+        .accessibilityElement(children: .contain)
+    }
+
+    private var nodeContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(row.name)
@@ -89,21 +157,7 @@ private struct NodeRowView: View {
             }
             .padding(.top, 2)
         }
-        .padding(isErrorState ? Style.errorPadding : 0)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            if isErrorState {
-                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
-                    .fill(Color.red.opacity(Style.errorBackgroundOpacity))
-            }
-        }
-        .overlay {
-            if isErrorState {
-                RoundedRectangle(cornerRadius: Style.errorCornerRadius)
-                    .strokeBorder(Color.red.opacity(Style.errorBorderOpacity), lineWidth: 1)
-            }
-        }
-        .help(Text(row.helpText))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.accessibilityLabel)
         .focusable()

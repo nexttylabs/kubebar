@@ -199,6 +199,92 @@ struct MenuDisplayModelTests {
         #expect(staleDisplay.overview.k9sHandoff == nil)
     }
 
+    @Test("list-level resources expose group-level k9s handoff targets")
+    func listLevelResourcesExposeGroupLevelK9sHandoffTargets() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            nodeDetailsSection: .available([
+                nodeDetail(name: "worker-a", isReady: false, issueReason: "KubeletNotReady")
+            ]),
+            podsSection: .available(PodSummary(ready: 0, running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    waitingReason: "CrashLoopBackOff",
+                    isNotReady: true
+                )
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(
+                    target: .workload(namespace: "api", name: "checkout", kind: .deployment),
+                    state: .bad,
+                    reason: "1 pod restarting"
+                )
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let watchItem = try #require(display.visibleWatchItems.first)
+        let podSection = try #require(display.podTab.sections.first)
+        let podRow = try #require(podSection.rows.first)
+        let nodeRow = try #require(display.nodeTab.rows.first)
+
+        #expect(watchItem.k9sHandoff?.target.contextName == "prod")
+        #expect(watchItem.k9sHandoff?.target.resource == .workload(namespace: "api", name: "checkout", kind: .deployment))
+        #expect(podSection.k9sHandoff?.target.resource == .podList(namespace: "api"))
+        #expect(podSection.k9sHandoff?.helpText == "Open api Pods in k9s")
+        #expect(podSection.k9sHandoff?.accessibilityLabel == "Open api Pods in k9s")
+        #expect(podRow.k9sHandoff == nil)
+        #expect(display.nodeTab.k9sHandoff?.target.resource == .nodeList)
+        #expect(display.nodeTab.k9sHandoff?.helpText == "Open Nodes in k9s")
+        #expect(display.nodeTab.k9sHandoff?.accessibilityLabel == "Open Nodes in k9s")
+        #expect(nodeRow.k9sHandoff == nil)
+    }
+
+    @Test("stale resource rows do not expose k9s handoff targets")
+    func staleResourceRowsDoNotExposeK9sHandoffTargets() throws {
+        let previous = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 2, total: 3)),
+            nodeDetailsSection: .available([
+                nodeDetail(name: "worker-a", isReady: false, issueReason: "KubeletNotReady")
+            ]),
+            podsSection: .available(PodSummary(ready: 0, running: 1, total: 1)),
+            podDetailsSection: .available([
+                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 0, totalContainerCount: 1)
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "1 pod unavailable")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(
+            snapshot: nil,
+            previousSnapshot: previous,
+            failure: nil,
+            now: Date(timeIntervalSince1970: 130),
+            staleAfterSeconds: 10
+        )
+        let watchItem = try #require(display.visibleWatchItems.first)
+        let podRow = try #require(display.podTab.sections.first?.rows.first)
+        let nodeRow = try #require(display.nodeTab.rows.first)
+
+        #expect(display.state == .stale)
+        #expect(watchItem.k9sHandoff == nil)
+        #expect(display.podTab.sections.first?.k9sHandoff == nil)
+        #expect(podRow.k9sHandoff == nil)
+        #expect(display.nodeTab.k9sHandoff == nil)
+        #expect(nodeRow.k9sHandoff == nil)
+    }
+
     @Test("tracked item status help includes expanded detail")
     func trackedItemStatusHelpIncludesExpandedDetail() {
         let latestWarning = warningEvent(

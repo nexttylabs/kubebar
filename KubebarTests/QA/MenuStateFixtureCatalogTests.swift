@@ -104,6 +104,22 @@ struct MenuStateFixtureCatalogTests {
         #expect(warning?.accessibilityLabel.contains("Tracked object warning, BackOff") == true)
     }
 
+    @Test("attention fixtures describe group level k9s actions")
+    func attentionFixturesDescribeGroupLevelK9sActions() {
+        let watch = MenuStateFixtureCatalog.fixture(for: .watch)
+        let bad = MenuStateFixtureCatalog.fixture(for: .bad)
+
+        #expect(watch.display.overview.k9sHandoff != nil)
+        #expect(bad.display.overview.k9sHandoff != nil)
+        #expect(watch.display.podTab.sections.first?.k9sHandoff != nil)
+        #expect(watch.display.podTab.sections.first?.rows.allSatisfy { $0.k9sHandoff == nil } == true)
+        #expect(bad.display.nodeTab.k9sHandoff != nil)
+        #expect(bad.display.nodeTab.rows.allSatisfy { $0.k9sHandoff == nil } == true)
+        #expect(watch.expectedBehavior.contains("Pods namespace headers open the namespace Pods view/list in k9s"))
+        #expect(bad.expectedBehavior.contains("Pods namespace headers open the namespace Pods view/list in k9s"))
+        #expect(bad.expectedBehavior.contains("Nodes summary opens the Nodes view/list in k9s"))
+    }
+
     @Test("first use and empty watchlist remain distinct setup states")
     func firstUseAndEmptyWatchlistRemainDistinctSetupStates() {
         let firstUse = MenuStateFixtureCatalog.fixture(for: .firstUse)

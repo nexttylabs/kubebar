@@ -46,6 +46,10 @@ public extension K9sHandoffLaunchState {
         }
     }
 
+    func blocksNewHandoff(for _: OverviewK9sHandoff) -> Bool {
+        isOpening
+    }
+
     func feedbackMessage(for handoff: OverviewK9sHandoff) -> String? {
         switch self {
         case .idle:
@@ -86,7 +90,7 @@ public final class K9sHandoffCoordinator {
         launchTask = Task(priority: .userInitiated) { [weak self, launcher = launcher] in
             do {
                 try await Task.detached(priority: .userInitiated) {
-                    try launcher.launch(contextName: launchTarget.contextName, namespace: launchTarget.namespace)
+                    try launcher.launch(target: launchTarget)
                 }.value
 
                 self?.completeLaunch()
@@ -124,7 +128,7 @@ public final class K9sHandoffCoordinator {
         transition(
             to: .failed(
                 target: handoff,
-                message: "Could not open k9s for \(handoff.target.contextName)/\(handoff.target.namespace)"
+                message: "Could not open k9s for \(handoff.target.contextName)/\(handoff.target.displayName)"
             )
         )
     }

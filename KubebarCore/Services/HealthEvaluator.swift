@@ -71,12 +71,20 @@ public struct HealthEvaluator: Sendable {
         now: Date,
         staleAfterSeconds: Int?
     ) -> MenuDisplayModel {
-        let sortedItems = sortByAttention(snapshot.trackedItems)
-        let visibleLimit = visibleWatchItemLimit(for: sortedItems)
-        let visibleItems = sortedItems.prefix(visibleLimit).map { makeDisplayItem($0, now: now) }
-        let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let freshnessReason = staleAgeOutReason(for: snapshot, now: now, staleAfterSeconds: staleAfterSeconds)
         let resolvedState = stateOverride ?? (freshnessReason == nil ? evaluateState(snapshot) : .stale)
+        let allowsK9sHandoff = resolvedState != .stale
+        let sortedItems = sortByAttention(snapshot.trackedItems)
+        let visibleLimit = visibleWatchItemLimit(for: sortedItems)
+        let visibleItems = sortedItems.prefix(visibleLimit).map {
+            makeDisplayItem(
+                $0,
+                contextName: snapshot.contextName,
+                allowsK9sHandoff: allowsK9sHandoff,
+                now: now
+            )
+        }
+        let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let pinnedWarningIDs = pinnedWarningIDs(from: snapshot.trackedItems)
         let warningEventSummaries = makeWarningEventSummaries(
             from: snapshot.warningEventsSection.value ?? [],
@@ -131,8 +139,13 @@ public struct HealthEvaluator: Sendable {
                 totalWarningRows: overviewWarningRows.count,
                 k9sHandoff: k9sHandoffTarget(from: snapshot, state: resolvedState)
             ),
-            nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices),
-            podTab: makePodTab(from: snapshot, visibleItems: Array(visibleItems), sectionNotices: sectionNotices),
+            nodeTab: makeNodeTab(from: snapshot, sectionNotices: sectionNotices, allowsK9sHandoff: allowsK9sHandoff),
+            podTab: makePodTab(
+                from: snapshot,
+                visibleItems: Array(visibleItems),
+                sectionNotices: sectionNotices,
+                allowsK9sHandoff: allowsK9sHandoff
+            ),
             eventsTab: makeEventsTab(from: snapshot, rows: warningEventSummaries, sectionNotices: sectionNotices)
         )
     }
@@ -286,12 +299,7 @@ public struct HealthEvaluator: Sendable {
             return nil
         }
 
-        return OverviewK9sHandoff(
-            target: target,
-            actionLabel: "Open in k9s",
-            helpText: "Open watched target in k9s",
-            accessibilityLabel: "Open watched target in k9s"
-        )
+        return k9sHandoff(for: target)
     }
 
     private func handoffTarget(for target: WatchTarget, contextName: String) -> K9sHandoffTarget? {
@@ -307,13 +315,76 @@ public struct HealthEvaluator: Sendable {
                 return nil
             }
 
-            return K9sHandoffTarget(contextName: normalizedContextName, namespace: normalizedNamespace)
-        case let .workload(namespace: namespace, _, _):
-            guard let normalizedNamespace = normalizedText(namespace), !normalizedNamespace.isEmpty else {
+            return K9sHandoffTarget(contextName: normalizedContextName, resource: .namespace(normalizedNamespace))
+        case let .workload(namespace: namespace, name, kind):
+            guard let normalizedNamespace = normalizedText(namespace), !normalizedNamespace.isEmpty,
+                  let normalizedName = normalizedText(name), !normalizedName.isEmpty
+            else {
                 return nil
             }
 
-            return K9sHandoffTarget(contextName: normalizedContextName, namespace: normalizedNamespace)
+            return K9sHandoffTarget(
+                contextName: normalizedContextName,
+                resource: .workload(namespace: normalizedNamespace, name: normalizedName, kind: kind)
+            )
+        }
+    }
+
+    private func k9sHandoff(for target: K9sHandoffTarget?) -> OverviewK9sHandoff? {
+        guard let target else {
+            return nil
+        }
+
+        return OverviewK9sHandoff(
+            target: target,
+            actionLabel: "Open in k9s",
+            helpText: "Open \(target.displayName) in k9s",
+            accessibilityLabel: "Open \(target.displayName) in k9s"
+        )
+    }
+
+    private func resourceHandoff(
+        contextName: String,
+        resource: K9sResourceTarget,
+        allowsK9sHandoff: Bool
+    ) -> OverviewK9sHandoff? {
+        guard allowsK9sHandoff,
+              let normalizedContextName = normalizedText(contextName), !normalizedContextName.isEmpty,
+              normalizedContextName != "Not configured",
+              let normalizedResource = normalizedResourceTarget(resource)
+        else {
+            return nil
+        }
+
+        return k9sHandoff(
+            for: K9sHandoffTarget(contextName: normalizedContextName, resource: normalizedResource)
+        )
+    }
+
+    private func normalizedResourceTarget(_ resource: K9sResourceTarget) -> K9sResourceTarget? {
+        switch resource {
+        case let .namespace(namespace):
+            guard let namespace = normalizedText(namespace), !namespace.isEmpty else {
+                return nil
+            }
+
+            return .namespace(namespace)
+        case let .workload(namespace, name, kind):
+            guard let namespace = normalizedText(namespace), !namespace.isEmpty,
+                  let name = normalizedText(name), !name.isEmpty
+            else {
+                return nil
+            }
+
+            return .workload(namespace: namespace, name: name, kind: kind)
+        case let .podList(namespace):
+            guard let namespace = normalizedText(namespace), !namespace.isEmpty else {
+                return nil
+            }
+
+            return .podList(namespace: namespace)
+        case .nodeList:
+            return .nodeList
         }
     }
 
@@ -469,15 +540,26 @@ public struct HealthEvaluator: Sendable {
         return String(format: "%.1f", rounded)
     }
 
-    private func makeNodeTab(from snapshot: ClusterSnapshot, sectionNotices: [SectionAvailabilityDisplay]) -> NodeTabDisplay {
-        NodeTabDisplay(
+    private func makeNodeTab(
+        from snapshot: ClusterSnapshot,
+        sectionNotices: [SectionAvailabilityDisplay],
+        allowsK9sHandoff: Bool
+    ) -> NodeTabDisplay {
+        let rows = makeNodeRows(from: snapshot)
+
+        return NodeTabDisplay(
             summary: snapshot.nodesSection.value.map { "\($0.ready)/\($0.total) nodes ready" } ?? "- nodes ready",
-            rows: makeNodeRows(from: snapshot),
+            rows: rows,
             showsEmptyMessage: snapshot.nodesSection.value?.total == 0,
             unavailableMessage: tabUnavailableMessage(
                 sectionID: SnapshotSectionName.nodes.rawValue,
                 prefix: "Node data unavailable",
                 sectionNotices: sectionNotices
+            ),
+            k9sHandoff: rows.isEmpty ? nil : resourceHandoff(
+                contextName: snapshot.contextName,
+                resource: .nodeList,
+                allowsK9sHandoff: allowsK9sHandoff
             )
         )
     }
@@ -495,7 +577,9 @@ public struct HealthEvaluator: Sendable {
 
                 return left.name < right.name
             }
-            .map(makeNodeRow)
+            .map {
+                makeNodeRow(from: $0)
+            }
     }
 
     private func makeNodeRow(from detail: NodeDetail) -> NodeItemDisplay {
@@ -569,10 +653,17 @@ public struct HealthEvaluator: Sendable {
     private func makePodTab(
         from snapshot: ClusterSnapshot,
         visibleItems: [WatchItemDisplay],
-        sectionNotices: [SectionAvailabilityDisplay]
+        sectionNotices: [SectionAvailabilityDisplay],
+        allowsK9sHandoff: Bool
     ) -> PodTabDisplay {
         let podDetails = snapshot.podDetailsSection.value
-        let sections = podDetails.map(makePodSections) ?? []
+        let sections = podDetails.map {
+            makePodSections(
+                from: $0,
+                contextName: snapshot.contextName,
+                allowsK9sHandoff: allowsK9sHandoff
+            )
+        } ?? []
 
         return PodTabDisplay(
             summary: podTabSummary(from: snapshot, podDetails: podDetails),
@@ -614,8 +705,17 @@ public struct HealthEvaluator: Sendable {
         return "No pod data yet. Refresh or check Settings."
     }
 
-    private func makePodSections(from podDetails: [PodDetail]) -> [PodNamespaceDisplay] {
-        let rowsByNamespace = Dictionary(grouping: podDetails.map(makePodRow), by: \.namespace)
+    private func makePodSections(
+        from podDetails: [PodDetail],
+        contextName: String,
+        allowsK9sHandoff: Bool
+    ) -> [PodNamespaceDisplay] {
+        let rowsByNamespace = Dictionary(
+            grouping: podDetails.map {
+                makePodRow(from: $0)
+            },
+            by: \.namespace
+        )
 
         return rowsByNamespace
             .map { namespace, rows in
@@ -630,7 +730,12 @@ public struct HealthEvaluator: Sendable {
                         }
 
                         return left.name < right.name
-                    }
+                    },
+                    k9sHandoff: resourceHandoff(
+                        contextName: contextName,
+                        resource: .podList(namespace: namespace),
+                        allowsK9sHandoff: allowsK9sHandoff
+                    )
                 )
             }
             .sorted { left, right in
@@ -1027,7 +1132,12 @@ public struct HealthEvaluator: Sendable {
         }
     }
 
-    private func makeDisplayItem(_ item: TrackedItemStatus, now: Date) -> WatchItemDisplay {
+    private func makeDisplayItem(
+        _ item: TrackedItemStatus,
+        contextName: String,
+        allowsK9sHandoff: Bool,
+        now: Date
+    ) -> WatchItemDisplay {
         WatchItemDisplay(
             id: item.target.displayTitle,
             title: item.target.displayTitle,
@@ -1039,8 +1149,22 @@ public struct HealthEvaluator: Sendable {
                 affectedPodCount: item.affectedPodCount,
                 examplePodNames: Array(item.examplePodNames.prefix(3)),
                 latestWarning: item.latestWarning.map { makeWarningEventDisplay(from: $0, now: now) }
+            ),
+            k9sHandoff: resourceHandoff(
+                contextName: contextName,
+                resource: k9sResourceTarget(for: item.target),
+                allowsK9sHandoff: allowsK9sHandoff
             )
         )
+    }
+
+    private func k9sResourceTarget(for target: WatchTarget) -> K9sResourceTarget {
+        switch target {
+        case let .namespace(namespace):
+            .namespace(namespace)
+        case let .workload(namespace, name, kind):
+            .workload(namespace: namespace, name: name, kind: kind)
+        }
     }
 
     private func makeWarningEventSummaries(
@@ -1314,7 +1438,11 @@ public struct HealthEvaluator: Sendable {
             return nil
         }
 
-        return makePodSections(from: podDetails)
+        return makePodSections(
+            from: podDetails,
+            contextName: snapshot.contextName,
+            allowsK9sHandoff: false
+        )
             .lazy
             .compactMap { section in
                 section.rows.first { $0.state != .ready }?.helpText

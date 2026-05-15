@@ -9,7 +9,7 @@ struct MenuBarRootView: View {
     let onRefresh: () -> Void
     let onPrepareSettings: () -> Void
     let k9sHandoffState: K9sHandoffLaunchState
-    let onOpenK9sHandoff: () -> Void
+    let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
     let onQuit: () -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
@@ -128,9 +128,18 @@ struct MenuBarRootView: View {
                 onOpenK9sHandoff: onOpenK9sHandoff
             )
         case .nodes:
-            NodesTabView(display: display)
+            NodesTabView(
+                display: display,
+                k9sHandoffState: k9sHandoffState,
+                onOpenK9sHandoff: onOpenK9sHandoff
+            )
         case .pods:
-            PodsTabView(display: display, itemsMaxHeight: podItemsMaxHeight)
+            PodsTabView(
+                display: display,
+                itemsMaxHeight: podItemsMaxHeight,
+                k9sHandoffState: k9sHandoffState,
+                onOpenK9sHandoff: onOpenK9sHandoff
+            )
         case .events:
             EventsTabView(display: display)
         }
