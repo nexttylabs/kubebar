@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add a Settings toggle for Start at Login so users can launch Kubebar automatically after signing in.
 
+## [0.3.1] - 2026-05-19
+
+### Added
+- Add a Settings toggle for Start at Login so users can launch Kubebar
+- automatically after signing in.
+
 ## [0.2.4] - 2026-05-15
 
 ### Added
