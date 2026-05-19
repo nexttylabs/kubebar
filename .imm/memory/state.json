@@ -1,71 +1,173 @@
 {
-  "last_update": "2026-05-14T16:57:18.424689",
-  "summary": "v0.2.3 release notes restored",
+  "last_update": "2026-05-19T11:58:46.758941",
+  "summary": "Start at Login setting completed",
   "next_steps": [
-    "补充 CHANGELOG 0.2.3 定稿段落",
-    "验证 release notes 提取",
-    "通过 Swift quality gate"
+    "No known blockers; code review found no rework",
+    " quality gate and visible setup smoke passed."
   ],
   "logic_state": {},
   "current_iteration": {
     "steps": {
       "1": {
         "step_id": "U1",
-        "state": "pending",
-        "result": "The v0.2.3 release workflow can extract finalized release notes.",
-        "verification": "./scripts/extract-release-notes.sh 0.2.3",
+        "state": "closed",
+        "result": "Start at Login can be controlled from Settings.",
+        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+        "discovery_cache": [],
         "depends_on": [],
         "test_scenarios": [
-          "missing section failure is resolved",
-          "release notes contain at least one user-facing bullet",
-          "only one finalized 0.2.3 heading exists"
+          "Settings state reflects current login item status",
+          "enabling registers the login item through a fake boundary",
+          "disabling unregisters the login item through a fake boundary",
+          "failed updates roll the toggle back and show recoverable feedback",
+          "existing cluster setup completion remains independent from Start at Login",
+          "visible Settings smoke check confirms the toggle is reachable"
         ],
-        "agent_hint": null
+        "agent_hint": null,
+        "activated_at": "2026-05-19T03:45:59Z",
+        "execution_evidence": {
+          "changed_files": [
+            ".imm/memory/current_iteration.json",
+            "CONTEXT.md",
+            "Kubebar.xcodeproj/project.pbxproj",
+            "Kubebar/KubebarApp.swift",
+            "Kubebar/MenuBarViewModel.swift",
+            "Kubebar/Services/LoginItemController.swift",
+            "Kubebar/Views/SettingsRootView.swift",
+            "Kubebar/Views/SetupView.swift",
+            "KubebarCore/Models/MenuRuntimeState.swift",
+            "KubebarCore/Models/SetupFlowState.swift",
+            "KubebarCore/Models/StartAtLoginState.swift",
+            "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
+            "KubebarTests/Models/MenuRuntimeStateTests.swift",
+            "KubebarTests/Models/SetupFlowStateTests.swift",
+            "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
+            "docs/architecture/runtime-invariants.md",
+            ".imm/specs/2026-05-19-start-at-login-setting.md",
+            "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md"
+          ],
+          "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local; /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer KUBEBAR_QA_STATE=setup ./scripts/compile-and-run.sh",
+          "verification_result": "PASS: RED test failed on missing Start at Login symbols; focused coordinator/setup/runtime tests passed; full swift-quality-gate.sh local returned code 0; compile-and-run launched Kubebar PID 92242 with QA state setup; Settings window opened and AX tree exposed the Start at Login toggle help text.",
+          "notes": "Implemented one active step only: Settings Start at Login toggle, injectable core coordinator with fake-tested enable/disable/failure rollback, ServiceManagement production boundary, invariant docs. Start at Login remains separate from AppConfig and health evaluation.",
+          "recorded_at": "2026-05-19T03:56:47Z"
+        },
+        "closed_at": "2026-05-19T03:57:14Z"
       }
     },
-    "last_review": null,
+    "last_review": {
+      "decision": "pass",
+      "evidence": "Step U1 is ready_for_review with recorded execution evidence. RED phase failed on missing Start at Login symbols; focused tests passed; full /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local returned code 0; /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer KUBEBAR_QA_STATE=setup ./scripts/compile-and-run.sh returned code 0 and launched Kubebar; Settings AX tree exposed the Start at Login toggle help text.",
+      "artifacts": "Terminal verification output in this run; docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md; .imm/memory/current_iteration.json",
+      "notes": "Plan origin coverage complete; implementation stays within U1 and keeps Start at Login separate from AppConfig and HealthEvaluator.",
+      "step_number": 1,
+      "step_id": "U1"
+    },
     "history": [
       {
-        "at": "2026-05-14T08:54:38Z",
-        "action": "sync_plan_from_imm_plan",
-        "details": {
-          "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
-          "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
-          "plan_summary": "The v0.2.3 release workflow can extract finalized release notes.",
-          "same_plan": false
-        }
-      },
-      {
-        "at": "2026-05-14T08:57:18Z",
+        "at": "2026-05-19T03:44:25Z",
         "action": "schema_migration_v1_to_v2",
         "details": {
           "migrated_completed_steps": [],
           "migrated_active_step": null
         }
+      },
+      {
+        "at": "2026-05-19T03:44:25Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md",
+          "plan_signature": "773bd9da093ee9f16be6aebca7c8f88fdc95721317b30585bdc36b3279bdcc2b",
+          "plan_summary": "Start at Login can be controlled from Settings.",
+          "same_plan": false
+        }
+      },
+      {
+        "at": "2026-05-19T03:45:59Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-05-19T03:56:47Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            ".imm/memory/current_iteration.json",
+            "CONTEXT.md",
+            "Kubebar.xcodeproj/project.pbxproj",
+            "Kubebar/KubebarApp.swift",
+            "Kubebar/MenuBarViewModel.swift",
+            "Kubebar/Services/LoginItemController.swift",
+            "Kubebar/Views/SettingsRootView.swift",
+            "Kubebar/Views/SetupView.swift",
+            "KubebarCore/Models/MenuRuntimeState.swift",
+            "KubebarCore/Models/SetupFlowState.swift",
+            "KubebarCore/Models/StartAtLoginState.swift",
+            "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
+            "KubebarTests/Models/MenuRuntimeStateTests.swift",
+            "KubebarTests/Models/SetupFlowStateTests.swift",
+            "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
+            "docs/architecture/runtime-invariants.md",
+            ".imm/specs/2026-05-19-start-at-login-setting.md",
+            "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md"
+          ]
+        }
+      },
+      {
+        "at": "2026-05-19T03:57:14Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "pass"
+        }
       }
     ],
     "requires_replan": false,
     "schema_version": 2,
-    "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
-    "plan_summary": "The v0.2.3 release workflow can extract finalized release notes.",
-    "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
-    "plan_last_validated_at": "2026-05-14T08:54:38Z",
+    "plan_path": "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md",
+    "plan_summary": "Start at Login can be controlled from Settings.",
+    "plan_signature": "773bd9da093ee9f16be6aebca7c8f88fdc95721317b30585bdc36b3279bdcc2b",
+    "plan_last_validated_at": "2026-05-19T03:57:07Z",
     "validated_plan_snapshot": {
-      "plan_path": "docs/plans/2026-05-14-003-fix-release-v0.2.3-changelog-plan.md",
-      "plan_signature": "c1eec2d982580eb27a1de8ec77164e4e4d849b90e73f7fb1bbcdd58c7704c0eb",
+      "plan_path": "docs/plans/2026-05-19-001-feat-start-at-login-setting-plan.md",
+      "plan_signature": "773bd9da093ee9f16be6aebca7c8f88fdc95721317b30585bdc36b3279bdcc2b",
       "steps": [
         {
           "number": 1,
           "step_id": "U1",
-          "result": "The v0.2.3 release workflow can extract finalized release notes.",
-          "verification": "./scripts/extract-release-notes.sh 0.2.3",
-          "depends_on": []
+          "result": "Start at Login can be controlled from Settings.",
+          "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+          "depends_on": [],
+          "discovery_cache": []
         }
       ]
     }
   },
   "environment": {
-    "cwd": "/Users/derek/workspaces/kubebar",
+    "cwd": "/Users/derek/.codex/worktrees/528e/kubebar",
     "os": "darwin"
   }
 }

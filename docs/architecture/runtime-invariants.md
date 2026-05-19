@@ -126,6 +126,9 @@ These are the rules Kubebar must keep true at runtime.
   snapshot as time passes and must not trigger a Kubernetes read by itself.
 - Refresh cadence is configured in Settings. The menu footer keeps refresh,
   settings, and quit actions but does not expose a separate cadence picker.
+- Start at Login is configured in Settings through macOS login items. It is
+  local app behavior and must not affect saved Kubernetes context, watchlist,
+  refresh cadence, stale handling, or Health category.
 - If refresh fails before any successful snapshot exists, the stale reason is
   `No previous cluster data`.
 - If no valid configuration exists, the app shows setup or recovery state

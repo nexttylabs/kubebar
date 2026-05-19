@@ -12,6 +12,9 @@
   means unavailable and numeric values are clamped by the view for rendering.
 - **Unavailable resource data**: missing or invalid CPU or memory usage or
   comparison basis; it is shown as unavailable, never as healthy zero.
+- **Start at Login setting**: a macOS app setting that controls whether
+  Kubebar opens automatically after the user logs in. It is local app behavior,
+  not Kubernetes configuration, and it must not affect Health category.
 
 ## Vocabulary Guard
 

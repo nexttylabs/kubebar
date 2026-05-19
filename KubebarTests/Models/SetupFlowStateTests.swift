@@ -91,4 +91,12 @@ struct SetupFlowStateTests {
         #expect(!state.isConfigured)
         #expect(state.watchlistHelpText == "Choose namespaces to keep Kubebar focused on the first screen.")
     }
+
+    @Test("start at login defaults off without a message")
+    func startAtLoginDefaultsOffWithoutMessage() {
+        let state = SetupFlowState()
+
+        #expect(!state.startAtLogin.isEnabled)
+        #expect(state.startAtLogin.message == nil)
+    }
 }

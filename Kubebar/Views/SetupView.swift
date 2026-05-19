@@ -7,6 +7,7 @@ struct SetupView: View {
     let onComplete: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
+    let onToggleStartAtLogin: (Bool) -> Void
     let onContentHeightChange: (CGFloat) -> Void
 
     init(
@@ -15,6 +16,7 @@ struct SetupView: View {
         onComplete: @escaping () -> Void = {},
         onSelectContext: @escaping (String?) -> Void = { _ in },
         onRetryTargets: @escaping () -> Void = {},
+        onToggleStartAtLogin: @escaping (Bool) -> Void = { _ in },
         onContentHeightChange: @escaping (CGFloat) -> Void = { _ in }
     ) {
         _state = state
@@ -22,6 +24,7 @@ struct SetupView: View {
         self.onComplete = onComplete
         self.onSelectContext = onSelectContext
         self.onRetryTargets = onRetryTargets
+        self.onToggleStartAtLogin = onToggleStartAtLogin
         self.onContentHeightChange = onContentHeightChange
     }
 
@@ -32,6 +35,7 @@ struct SetupView: View {
                 contextPicker
                 watchlistPicker
                 refreshCadencePicker
+                startAtLoginToggle
                 footer
             }
             .padding(20)
@@ -106,6 +110,20 @@ struct SetupView: View {
         }
     }
 
+    private var startAtLoginToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Start at Login", isOn: startAtLoginBinding)
+                .help(Text("Open Kubebar automatically after login."))
+                .accessibilityLabel(Text("Start at Login"))
+
+            if let message = state.startAtLogin.message, !message.isEmpty {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private var footer: some View {
         HStack {
             if let configurationMessage = state.configurationMessage, !configurationMessage.isEmpty {
@@ -138,6 +156,13 @@ struct SetupView: View {
         Binding(
             get: { state.watchlist },
             set: { state.watchlist = $0 }
+        )
+    }
+
+    private var startAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { state.startAtLogin.isEnabled },
+            set: { onToggleStartAtLogin($0) }
         )
     }
 }

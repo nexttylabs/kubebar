@@ -160,4 +160,18 @@ struct MenuRuntimeStateTests {
         #expect(config.watchTargets.map(\.displayTitle) == ["api"])
         #expect(config.refreshIntervalSeconds == 120)
     }
+
+    @Test("start at login state does not affect completed config")
+    func startAtLoginStateDoesNotAffectCompletedConfig() throws {
+        var state = MenuRuntimeState(config: AppConfig())
+        _ = state.selectContext("prod")
+        state.setupState.watchlist.toggle(.namespace("api"))
+
+        state.applyStartAtLoginState(StartAtLoginState(isEnabled: true))
+
+        let config = try #require(state.completedConfig())
+        #expect(config.selectedContext == "prod")
+        #expect(config.watchTargets == [.namespace("api")])
+        #expect(config.refreshIntervalSeconds == RefreshCadence.default.seconds)
+    }
 }
