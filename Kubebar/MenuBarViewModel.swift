@@ -32,6 +32,7 @@ final class MenuBarViewModel: ObservableObject {
     private var refreshGate: RefreshGate
     private var staleReason: String?
     private let k9sHandoffCoordinator: K9sHandoffCoordinator
+    private let startAtLoginSettings: StartAtLoginSettingsCoordinator
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -39,6 +40,9 @@ final class MenuBarViewModel: ObservableObject {
         contextCatalog: ContextCatalog = ContextCatalog(),
         watchTargetCatalog: any WatchTargetCataloging = WatchTargetCatalog(),
         k9sHandoffCoordinator: K9sHandoffCoordinator = K9sHandoffCoordinator(),
+        startAtLoginSettings: StartAtLoginSettingsCoordinator = StartAtLoginSettingsCoordinator(
+            controller: SystemStartAtLoginController()
+        ),
         now: Date = Date()
     ) {
         self.configStore = configStore
@@ -46,6 +50,7 @@ final class MenuBarViewModel: ObservableObject {
         self.contextCatalog = contextCatalog
         self.watchTargetCatalog = watchTargetCatalog
         self.k9sHandoffCoordinator = k9sHandoffCoordinator
+        self.startAtLoginSettings = startAtLoginSettings
 
         do {
             self.config = try configStore.load()
@@ -136,6 +141,7 @@ final class MenuBarViewModel: ObservableObject {
     func openSetup() {
         k9sHandoffCoordinator.clear()
         runtimeState.openSetup()
+        runtimeState.applyStartAtLoginState(startAtLoginSettings.currentState())
         publishRuntimeState()
         loadContextsIfNeeded()
 
@@ -147,6 +153,7 @@ final class MenuBarViewModel: ObservableObject {
     func prepareSettings() {
         k9sHandoffCoordinator.clear()
         runtimeState.prepareSettings(config: config)
+        runtimeState.applyStartAtLoginState(startAtLoginSettings.currentState())
         publishRuntimeState()
         loadContextsForSettings()
 
@@ -178,6 +185,11 @@ final class MenuBarViewModel: ObservableObject {
             publishRuntimeState()
             return false
         }
+    }
+
+    func setStartAtLoginEnabled(_ isEnabled: Bool) {
+        runtimeState.applyStartAtLoginState(startAtLoginSettings.setEnabled(isEnabled))
+        publishRuntimeState()
     }
 
     func selectSetupContext(_ context: String?) {

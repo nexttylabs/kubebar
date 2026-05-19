@@ -101,6 +101,10 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.configurationMessage = nil
     }
 
+    public mutating func applyStartAtLoginState(_ startAtLogin: StartAtLoginState) {
+        setupState.startAtLogin = startAtLogin
+    }
+
     public mutating func completeSetupSaved() {
         surface = .menu
         setupState.configurationMessage = nil

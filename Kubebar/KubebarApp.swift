@@ -19,7 +19,8 @@ struct KubebarApp: App {
                 onPrepare: viewModel.prepareSettings,
                 onComplete: viewModel.completeSetup,
                 onSelectContext: viewModel.selectSetupContext,
-                onRetryTargets: viewModel.retryWatchTargetLoad
+                onRetryTargets: viewModel.retryWatchTargetLoad,
+                onToggleStartAtLogin: viewModel.setStartAtLoginEnabled
             )
         }
     }

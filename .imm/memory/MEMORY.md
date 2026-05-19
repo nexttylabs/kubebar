@@ -1,12 +1,15 @@
 # Immune-Brain Summary
 
 ## 当前状态
-- **最新摘要**: v0.2.3 release notes restored
-- **待办事项**: 补充 CHANGELOG 0.2.3 定稿段落, 验证 release notes 提取, 通过 Swift quality gate
-- **最后同步**: 2026-05-14 16:57:18
+- **最新摘要**: Start at Login setting completed
+- **待办事项**: No known blockers; code review found no rework,  quality gate and visible setup smoke passed.
+- **最后同步**: 2026-05-19 11:58:46
 
 ## Knowledge Index
 
+- `docs/solutions/app-settings/start-at-login-boundary-2026-05-19.md`:
+  reusable pattern for macOS-only settings that mutate system state through an
+  app-target boundary while keeping state transitions testable in KubebarCore.
 - `docs/solutions/ui-display/pod-resource-readability-2026-05-14.md`:
   reusable pattern for readable current-snapshot Pod resource labels, explicit
   unavailable resource details, and health non-coupling tests.
