@@ -188,8 +188,15 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func setStartAtLoginEnabled(_ isEnabled: Bool) {
-        runtimeState.applyStartAtLoginState(startAtLoginSettings.setEnabled(isEnabled))
-        publishRuntimeState()
+        let coordinator = startAtLoginSettings
+        Task {
+            let updatedState = await Task.detached(priority: .userInitiated) {
+                coordinator.setEnabled(isEnabled)
+            }.value
+
+            runtimeState.applyStartAtLoginState(updatedState)
+            publishRuntimeState()
+        }
     }
 
     func selectSetupContext(_ context: String?) {
