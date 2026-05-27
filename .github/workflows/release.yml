@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - prepare
+          - publish
       version:
         description: Version without v, e.g. 0.3.2.
         required: true
@@ -101,7 +102,7 @@ jobs:
             Review the release notes before merging. Publishing should happen only after this PR lands on `main`.
 
   build-and-release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
     runs-on: macos-latest
     permissions:
       contents: write
@@ -119,29 +120,84 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Get Version from Tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Resolve Release
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            version="${GITHUB_REF#refs/tags/v}"
+            dry_run="false"
+            create_tag="false"
+          else
+            version="${{ inputs.version }}"
+            version="${version#v}"
+            dry_run="${{ inputs.dry_run }}"
+            create_tag="true"
+          fi
+
+          case "$version" in
+            *[!A-Za-z0-9.+-]*)
+              echo "Unsupported version: use SemVer-compatible characters." >&2
+              exit 1
+              ;;
+          esac
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          echo "create_tag=$create_tag" >> "$GITHUB_OUTPUT"
 
       - name: Make Scripts Executable
         run: chmod +x scripts/*.sh
 
+      - name: Add dry-run release notes
+        if: steps.release.outputs.dry_run == 'true' && endsWith(steps.release.outputs.version, '-test')
+        run: |
+          if ! ./scripts/extract-release-notes.sh "${{ steps.release.outputs.version }}" >/dev/null 2>&1; then
+            printf -- '- Exercise release publish dry-run.\n' > changelog.d/dry-run.changed.md
+            ./scripts/prepare-changelog-release.sh "${{ steps.release.outputs.version }}"
+          fi
+
+      - name: Check Tag Availability
+        if: steps.release.outputs.create_tag == 'true'
+        run: |
+          if git rev-parse -q --verify "refs/tags/${{ steps.release.outputs.tag }}" >/dev/null; then
+            echo "Tag already exists: ${{ steps.release.outputs.tag }}" >&2
+            exit 1
+          fi
+
       - name: Build and Package
-        run: ./scripts/build-release.sh ${{ steps.get_version.outputs.VERSION }}
+        if: github.event_name == 'push' || steps.release.outputs.dry_run == 'false'
+        run: ./scripts/build-release.sh ${{ steps.release.outputs.version }}
 
       - name: Extract Release Notes
         id: extract_notes
         run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          VERSION="${{ steps.release.outputs.version }}"
           NOTES_FILE="$RUNNER_TEMP/release-notes.md"
           ./scripts/extract-release-notes.sh "$VERSION" > "$NOTES_FILE"
           echo "NOTES<<EOF" >> $GITHUB_OUTPUT
           cat "$NOTES_FILE" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Create Tag
+        if: steps.release.outputs.create_tag == 'true' && steps.release.outputs.dry_run == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.tag }}"
+          git push origin "${{ steps.release.outputs.tag }}"
+
+      - name: Dry Run Summary
+        if: steps.release.outputs.dry_run == 'true'
+        run: |
+          echo "Dry run succeeded for ${{ steps.release.outputs.tag }}."
+          echo "No tag or GitHub Release was created."
+
       - name: Create GitHub Release
+        if: github.event_name == 'push' || steps.release.outputs.dry_run == 'false'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.release.outputs.tag }}
           files: Kubebar.zip
           body: |
             ${{ steps.extract_notes.outputs.NOTES }}

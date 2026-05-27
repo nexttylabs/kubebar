@@ -45,7 +45,7 @@
     },
     "2": {
       "step_id": "U2",
-      "state": "active",
+      "state": "closed",
       "result": "Release preparation opens or updates a reviewable CHANGELOG PR.",
       "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true",
       "test_scenarios": [
@@ -84,11 +84,23 @@
         1
       ],
       "agent_hint": null,
-      "activated_at": "2026-05-27T10:26:41Z"
+      "activated_at": "2026-05-27T10:26:41Z",
+      "execution_evidence": {
+        "changed_files": [
+          ".github/workflows/release.yml",
+          "docs/RELEASING.md",
+          ".imm/memory/current_iteration.json"
+        ],
+        "verification_command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")'; bash -n scripts/prepare-changelog-release.sh; bash -n scripts/extract-release-notes.sh; isolated fixture prepare/extract for 0.0.0-test; gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true; gh run view 26505760129 --repo nexttylabs/kubebar --json status,conclusion,jobs",
+        "verification_result": "PASS: release workflow YAML parsed; prepare/extract scripts passed bash -n; isolated fixture produced and extracted 0.0.0-test notes; GitHub Actions run 26505760129 completed successfully; prepare-release-notes job prepared and validated notes; dry-run skipped PR creation as intended.",
+        "notes": "Implemented U2 only: Release workflow now supports workflow_dispatch mode=prepare, validates version/date, prepares CHANGELOG.md, validates release notes, supports dry-run, and opens a release notes PR when dry_run=false. Docs now describe GitHub-first release notes preparation.",
+        "recorded_at": "2026-05-27T10:30:38Z"
+      },
+      "closed_at": "2026-05-27T10:30:48Z"
     },
     "3": {
       "step_id": "U3",
-      "state": "pending",
+      "state": "active",
       "result": "A reviewed release can be published from GitHub Actions.",
       "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
       "test_scenarios": [
@@ -122,7 +134,8 @@
       "depends_on": [
         2
       ],
-      "agent_hint": null
+      "agent_hint": null,
+      "activated_at": "2026-05-27T10:31:11Z"
     }
   },
   "last_review": null,
@@ -287,6 +300,54 @@
         "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
         "step_number": 2,
         "step_id": "U2",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-05-27T10:30:38Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "changed_files": [
+          ".github/workflows/release.yml",
+          "docs/RELEASING.md",
+          ".imm/memory/current_iteration.json"
+        ]
+      }
+    },
+    {
+      "at": "2026-05-27T10:30:48Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "decision": "pass"
+      }
+    },
+    {
+      "at": "2026-05-27T10:31:11Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+        "step_number": 3,
+        "step_id": "U3",
         "role_constraints": {
           "imm-work": {
             "role": "execute",

@@ -20,7 +20,9 @@ This document outlines the release process for Kubebar. Since the project curren
 - [ ] **Build Universal App**: Build the app for both `arm64` and `x86_64` architectures.
 - [ ] **Ad-hoc Signing**: Sign the app bundle with a null identity (`-`) to satisfy basic macOS requirements.
 - [ ] **Package**: Create a `.zip` archive of `Kubebar.app`.
-- [ ] **Tag and Publish**: Create a Git tag (e.g., `v0.1.0`). GitHub Actions builds the zip and creates the GitHub Release.
+- [ ] **Publish**: In GitHub Actions, run `Release` with `mode=publish`,
+  the reviewed `version`, and `dry_run=false`. GitHub Actions creates the tag,
+  builds the zip, and creates the GitHub Release.
 
 ## Changelog Workflow
 
@@ -87,6 +89,21 @@ Release owners can draft changelog fragments without local commands:
 
 The workflow also uploads the generated fragments as an artifact. The pull
 request is the normal review path; the artifact is only a fallback.
+
+### Publishing from GitHub
+
+After the release notes PR lands on `main`, publish from GitHub:
+
+1. Open GitHub Actions and run `Release`.
+2. Set `mode` to `publish`.
+3. Set `version` to the reviewed version, such as `0.3.2`.
+4. Set `dry_run=true` first to validate release-note extraction and tag
+   availability without creating a tag or release.
+5. Set `dry_run=false` to create the tag, build `Kubebar.zip`, and publish the
+   GitHub Release.
+
+The tag-push path still works as a fallback for maintainers who need to replay
+an existing tag.
 
 ### During GitHub Release
 
