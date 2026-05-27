@@ -100,7 +100,7 @@
     },
     "3": {
       "step_id": "U3",
-      "state": "active",
+      "state": "closed",
       "result": "A reviewed release can be published from GitHub Actions.",
       "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
       "test_scenarios": [
@@ -135,10 +135,29 @@
         2
       ],
       "agent_hint": null,
-      "activated_at": "2026-05-27T10:31:11Z"
+      "activated_at": "2026-05-27T10:31:11Z",
+      "execution_evidence": {
+        "changed_files": [
+          ".github/workflows/release.yml",
+          "docs/RELEASING.md",
+          ".imm/memory/current_iteration.json"
+        ],
+        "verification_command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")'; bash -n scripts/prepare-changelog-release.sh; bash -n scripts/extract-release-notes.sh; bash -n scripts/build-release.sh; isolated fixture prepare/extract for 0.0.0-test; gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true; gh run view 26505927703 --repo nexttylabs/kubebar --json status,conclusion,jobs; git ls-remote --tags origin refs/tags/v0.0.0-test",
+        "verification_result": "PASS: release workflow YAML parsed; scripts passed bash -n; fixture release notes extraction passed; GitHub Actions run 26505927703 completed successfully; dry-run publish checked tag availability, extracted release notes, skipped build/tag/release as intended; no v0.0.0-test tag exists on origin.",
+        "notes": "Implemented U3 only: Release workflow now supports workflow_dispatch mode=publish, validates notes before publish, checks tag availability, creates/pushes tags only when dry_run=false, keeps tag-push fallback, and documents GitHub-first publishing.",
+        "recorded_at": "2026-05-27T10:35:23Z"
+      },
+      "closed_at": "2026-05-27T10:35:34Z"
     }
   },
-  "last_review": null,
+  "last_review": {
+    "decision": "pass",
+    "evidence": "U3 verified: release workflow YAML parsed; release scripts passed bash -n and fixture extraction; GitHub Actions run 26505927703 completed successfully for mode=publish dry_run=true; tag availability and release-note extraction passed; Build and Package, Create Tag, and Create GitHub Release were skipped by dry-run; origin has no v0.0.0-test tag.",
+    "artifacts": "https://github.com/nexttylabs/kubebar/actions/runs/26505927703",
+    "notes": "Scope stayed within release workflow, release docs, and workflow state. Real publish remains gated by reviewed CHANGELOG.md notes and dry_run=false.",
+    "step_number": 3,
+    "step_id": "U3"
+  },
   "validated_plan_snapshot": {
     "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
     "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
@@ -365,6 +384,28 @@
             "boundary": "Close, rework, or replan based on recorded evidence only."
           }
         }
+      }
+    },
+    {
+      "at": "2026-05-27T10:35:23Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 3,
+        "step_id": "U3",
+        "changed_files": [
+          ".github/workflows/release.yml",
+          "docs/RELEASING.md",
+          ".imm/memory/current_iteration.json"
+        ]
+      }
+    },
+    {
+      "at": "2026-05-27T10:35:34Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 3,
+        "step_id": "U3",
+        "decision": "pass"
       }
     }
   ],
