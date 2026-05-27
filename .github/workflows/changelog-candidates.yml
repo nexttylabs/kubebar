@@ -37,7 +37,19 @@ jobs:
       - name: Collect generated files
         id: collect
         run: |
-          files=$(ls changelog.d/changelog-candidates-*.md 2>/dev/null | tr '\n' ' ')
+          output_prefix="${{ inputs.output_prefix }}"
+          if [ -n "$output_prefix" ]; then
+            case "$output_prefix" in
+              *[!A-Za-z0-9._-]*)
+                echo "Unsupported output_prefix: use letters, numbers, dots, underscores, or hyphens." >&2
+                exit 1
+                ;;
+            esac
+            pattern="changelog.d/${output_prefix}.*.md"
+          else
+            pattern="changelog.d/changelog-candidates-*.md"
+          fi
+          files=$(ls $pattern 2>/dev/null | tr '\n' ' ')
           if [ -n "$files" ]; then
             echo "has_files=true" >> "$GITHUB_OUTPUT"
             echo "files=$files" >> "$GITHUB_OUTPUT"
