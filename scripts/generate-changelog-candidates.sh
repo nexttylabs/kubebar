@@ -87,7 +87,7 @@ add_line() {
   if [ -z "$line" ]; then
     return 0
   fi
-  printf '- %s\n' "$line" >> "$file"
+  printf -- '- %s\n' "$line" >> "$file"
 }
 
 map_type() {
@@ -121,7 +121,9 @@ extract_message_type_and_text() {
   local message="$1"
   local kind
   local body
+  local pattern
   local text
+  local target
 
   text="$(printf '%s' "$message" | sed -n '1p')"
   if [[ "$text" == Merge\ pull\ request\ * ]]; then
@@ -131,7 +133,8 @@ extract_message_type_and_text() {
     fi
   fi
 
-  if [[ "$text" =~ ^([a-zA-Z]+)(\([^)]+\))?:[[:space:]]*(.+)$ ]]; then
+  pattern='^([[:alpha:]]+)(\([^)]*\))?:[[:space:]]*(.+)$'
+  if [[ "$text" =~ $pattern ]]; then
     kind="${BASH_REMATCH[1]}"
     text="${BASH_REMATCH[3]}"
   else

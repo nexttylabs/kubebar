@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       from_ref:
-        description: Start ref (exclusive), e.g. v0.3.0. Default: previous tag.
+        description: "Start ref (exclusive), e.g. v0.3.0. Default: previous tag."
         required: false
         default: ""
       to_ref:
-        description: End ref (exclusive). Default: HEAD.
+        description: "End ref. Default: HEAD."
         required: false
         default: HEAD
       output_prefix:
