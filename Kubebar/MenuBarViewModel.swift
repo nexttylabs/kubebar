@@ -29,10 +29,17 @@ final class MenuBarViewModel: ObservableObject {
     private var refreshLoopTask: Task<Void, Never>?
     private var freshnessTimerTask: Task<Void, Never>?
     private var watchTargetLoadTask: Task<Void, Never>?
+    private var networkRecoveryTask: Task<Void, Never>?
     private var refreshGate: RefreshGate
     private var staleReason: String?
     private let k9sHandoffCoordinator: K9sHandoffCoordinator
     private let startAtLoginSettings: StartAtLoginSettingsCoordinator
+    private let networkReachability: any NetworkReachability
+    private var isNetworkAvailable: Bool = true
+
+    /// Delay before resuming automatic refresh after network recovery.
+    /// Avoids rapid kubectl calls during unstable Wi-Fi reconnection.
+    private static let networkRecoveryDebounceNanoseconds: UInt64 = 2_000_000_000
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -43,6 +50,7 @@ final class MenuBarViewModel: ObservableObject {
         startAtLoginSettings: StartAtLoginSettingsCoordinator = StartAtLoginSettingsCoordinator(
             controller: SystemStartAtLoginController()
         ),
+        networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
         now: Date = Date()
     ) {
         self.configStore = configStore
@@ -51,6 +59,7 @@ final class MenuBarViewModel: ObservableObject {
         self.watchTargetCatalog = watchTargetCatalog
         self.k9sHandoffCoordinator = k9sHandoffCoordinator
         self.startAtLoginSettings = startAtLoginSettings
+        self.networkReachability = networkReachability
 
         do {
             self.config = try configStore.load()
@@ -85,12 +94,16 @@ final class MenuBarViewModel: ObservableObject {
             refreshNow()
             startRefreshLoopIfConfigured()
         }
+
+        startNetworkMonitoring()
     }
 
     deinit {
         refreshLoopTask?.cancel()
         freshnessTimerTask?.cancel()
         watchTargetLoadTask?.cancel()
+        networkRecoveryTask?.cancel()
+        networkReachability.stopMonitoring()
     }
 
     var isEditingExistingConfiguration: Bool {
@@ -98,6 +111,7 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func refreshNow() {
+        guard isNetworkAvailable else { return }
         performRefresh(queueIfBusy: false)
     }
 
@@ -177,7 +191,9 @@ final class MenuBarViewModel: ObservableObject {
             display = Self.initialDisplay(for: config, now: Date())
             runtimeState.completeSetupSaved()
             publishRuntimeState()
-            performRefresh(queueIfBusy: true)
+            if isNetworkAvailable {
+                performRefresh(queueIfBusy: true)
+            }
             startRefreshLoopIfConfigured()
             return true
         } catch {
@@ -323,8 +339,55 @@ final class MenuBarViewModel: ObservableObject {
                 }
 
                 await MainActor.run {
+                    // Guard here as a safety net; refreshNow() also checks isNetworkAvailable.
+                    guard self?.isNetworkAvailable == true else { return }
                     self?.refreshNow()
                 }
+            }
+        }
+    }
+
+    // MARK: - Network Reachability
+
+    private func startNetworkMonitoring() {
+        networkReachability.startMonitoring { [weak self] isAvailable in
+            self?.handleNetworkChange(isAvailable: isAvailable)
+        }
+    }
+
+    private func handleNetworkChange(isAvailable: Bool) {
+        let wasAvailable = isNetworkAvailable
+        isNetworkAvailable = isAvailable
+
+        if isAvailable && !wasAvailable {
+            // Network recovered: debounce 2 s then refresh and restart the loop.
+            scheduleNetworkRecoveryRefresh()
+        } else if !isAvailable {
+            // Network lost: cancel the debounce task and the refresh loop.
+            // The freshness timer keeps running so stale data ages correctly.
+            networkRecoveryTask?.cancel()
+            networkRecoveryTask = nil
+            refreshLoopTask?.cancel()
+            refreshLoopTask = nil
+        }
+    }
+
+    private func scheduleNetworkRecoveryRefresh() {
+        networkRecoveryTask?.cancel()
+
+        networkRecoveryTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: Self.networkRecoveryDebounceNanoseconds)
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard let self, self.isNetworkAvailable else { return }
+                self.performRefresh(queueIfBusy: false)
+                self.startRefreshLoopIfConfigured()
             }
         }
     }

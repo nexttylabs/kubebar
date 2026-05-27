@@ -60,6 +60,9 @@
 		A10000000000000000000002 /* StartAtLoginSettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* StartAtLoginSettingsCoordinator.swift */; };
 		A10000000000000000000003 /* LoginItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* LoginItemController.swift */; };
 		A10000000000000000000004 /* StartAtLoginSettingsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* StartAtLoginSettingsCoordinatorTests.swift */; };
+		A1000000000000000000000A /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000D /* NetworkReachability.swift */; };
+		A1000000000000000000000B /* NetworkReachabilityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000E /* NetworkReachabilityMonitor.swift */; };
+		A1000000000000000000000C /* NetworkReachabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000F /* NetworkReachabilityTests.swift */; };
 		A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFEFC04D522F4DA85DC6FA1 /* RefreshCadence.swift */; };
 		AB13FDF1DD2848688F89CE90 /* MenuStateFixtureCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB1D3C5165ECB1392D2664FC /* MenuStateFixtureCatalogTests.swift */; };
 		AC13EC97905550E7D830828B /* MenuTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8BD7D4374CA280EB08BF3E /* MenuTab.swift */; };
@@ -165,6 +168,9 @@
 		A10000000000000000000006 /* StartAtLoginSettingsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartAtLoginSettingsCoordinator.swift; sourceTree = "<group>"; };
 		A10000000000000000000007 /* LoginItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemController.swift; sourceTree = "<group>"; };
 		A10000000000000000000008 /* StartAtLoginSettingsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartAtLoginSettingsCoordinatorTests.swift; sourceTree = "<group>"; };
+		A1000000000000000000000D /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
+		A1000000000000000000000E /* NetworkReachabilityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachabilityMonitor.swift; sourceTree = "<group>"; };
+		A1000000000000000000000F /* NetworkReachabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachabilityTests.swift; sourceTree = "<group>"; };
 		A022D6D54A801257E7493047 /* EventsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsTabView.swift; sourceTree = "<group>"; };
 		A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshGate.swift; sourceTree = "<group>"; };
 		A59D91E3E139CA91BC232D40 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
@@ -304,6 +310,7 @@
 				F9A5B3E0870DDD42620B5920 /* RefreshCoordinatorTests.swift */,
 				ACC142C4F1E07378E74546FE /* RefreshGateTests.swift */,
 				A10000000000000000000008 /* StartAtLoginSettingsCoordinatorTests.swift */,
+				A1000000000000000000000F /* NetworkReachabilityTests.swift */,
 				68E80FACFC916D53A5004BFF /* WatchTargetCatalogTests.swift */,
 			);
 			path = Services;
@@ -343,6 +350,7 @@
 				B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */,
 				A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */,
 				A10000000000000000000006 /* StartAtLoginSettingsCoordinator.swift */,
+				A1000000000000000000000D /* NetworkReachability.swift */,
 				FD651CCDAAD62B4E7C090D6F /* WatchTargetCatalog.swift */,
 			);
 			path = Services;
@@ -352,6 +360,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000007 /* LoginItemController.swift */,
+				A1000000000000000000000E /* NetworkReachabilityMonitor.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -543,6 +552,7 @@
 				606AFC7528260D78D8BC9E45 /* RefreshGateTests.swift in Sources */,
 				5ABA28F9AE755230D8C237F9 /* SetupFlowStateTests.swift in Sources */,
 				A10000000000000000000004 /* StartAtLoginSettingsCoordinatorTests.swift in Sources */,
+				A1000000000000000000000C /* NetworkReachabilityTests.swift in Sources */,
 				4C818D44CA17CB017E0A5379 /* WatchTargetCatalogTests.swift in Sources */,
 				EA3A58433537560B8EFFE763 /* WatchTargetTests.swift in Sources */,
 				9B671EDA20D6DF7D94CF39C5 /* WatchlistSelectionStateTests.swift in Sources */,
@@ -574,6 +584,7 @@
 				9519708EC07DA17E1E419E8A /* SetupFlowState.swift in Sources */,
 				A10000000000000000000002 /* StartAtLoginSettingsCoordinator.swift in Sources */,
 				A10000000000000000000001 /* StartAtLoginState.swift in Sources */,
+				A1000000000000000000000A /* NetworkReachability.swift in Sources */,
 				2DF27C3BB92708C7E68766C4 /* WatchTarget.swift in Sources */,
 				0ABC7D9044D83EA481BBB112 /* WatchTargetCatalog.swift in Sources */,
 				0C5D3D56CEDAB47E9528A4F6 /* WatchlistCandidate.swift in Sources */,
@@ -592,6 +603,7 @@
 				323A03773863A8CD97D0BA65 /* InlineProgressBar.swift in Sources */,
 				1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */,
 				A10000000000000000000003 /* LoginItemController.swift in Sources */,
+				A1000000000000000000000B /* NetworkReachabilityMonitor.swift in Sources */,
 				229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */,
 				7E10219D9134064745C7587E /* MenuBarViewModel.swift in Sources */,
 				27F09A74FE58CEE20F8E37A6 /* MenuFooterView.swift in Sources */,

@@ -1,0 +1,55 @@
+name: Generate Changelog Candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_ref:
+        description: Start ref (exclusive), e.g. v0.3.0. Default: previous tag.
+        required: false
+        default: ""
+      to_ref:
+        description: End ref (exclusive). Default: HEAD.
+        required: false
+        default: HEAD
+      output_prefix:
+        description: Optional generated filename prefix.
+        required: false
+        default: ""
+
+jobs:
+  generate:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog candidates
+        run: |
+          ./scripts/generate-changelog-candidates.sh \
+            --from "${{ inputs.from_ref }}" \
+            --to "${{ inputs.to_ref }}" \
+            --output-prefix "${{ inputs.output_prefix }}"
+
+      - name: Collect generated files
+        id: collect
+        run: |
+          files=$(ls changelog.d/changelog-candidates-*.md 2>/dev/null | tr '\n' ' ')
+          if [ -n "$files" ]; then
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+            echo "files=$files" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+            echo "No candidate files generated."
+          fi
+
+      - name: Upload generated candidates
+        if: steps.collect.outputs.has_files == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-candidates
+          path: |
+            changelog.d/changelog-candidates-*.md

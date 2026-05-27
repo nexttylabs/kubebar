@@ -5,6 +5,10 @@ This document outlines the release process for Kubebar. Since the project curren
 ## Release Checklist
 
 - [ ] **Finalize Changes**: Ensure all features and fixes for the version are merged.
+- [ ] **Generate Draft Changelog**: Run
+  `./scripts/generate-changelog-candidates.sh --to HEAD` (optionally with
+  `--from <last-tag>`) and review the generated `changelog.d/changelog-candidates-*`
+  fragments.
 - [ ] **Confirm Changelog Fragments**: Ensure every user-facing PR has a
   release-note-ready fragment in `changelog.d/`, or a clear PR explanation for
   why none is needed.

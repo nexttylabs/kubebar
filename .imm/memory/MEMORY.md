@@ -1,9 +1,9 @@
 # Immune-Brain Summary
 
 ## 当前状态
-- **最新摘要**: Start at Login setting completed
-- **待办事项**: No known blockers; code review found no rework,  quality gate and visible setup smoke passed.
-- **最后同步**: 2026-05-19 11:58:46
+- **最新摘要**: Closed: Start at Login settings step U1 completed
+- **待办事项**: Next: Continue on regular review workflow; monitor for follow-up regressions in login item edge cases.
+- **最后同步**: 2026-05-27 17:38:45
 
 ## Knowledge Index
 
