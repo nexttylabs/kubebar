@@ -1,2 +1,0 @@
-- correct changelog workflow syntax
-- upload custom changelog candidates
