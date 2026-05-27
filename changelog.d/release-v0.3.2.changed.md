@@ -1,2 +1,0 @@
-- open changelog candidate prs
-- Pause refresh while network is offline
