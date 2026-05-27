@@ -12,9 +12,9 @@ This document outlines the release process for Kubebar. Since the project curren
 - [ ] **Confirm Changelog Fragments**: Ensure every user-facing PR has a
   release-note-ready fragment in `changelog.d/`, or a clear PR explanation for
   why none is needed.
-- [ ] **Prepare Changelog**: Run
-  `./scripts/prepare-changelog-release.sh <version>` to create the finalized
-  version section in `CHANGELOG.md`.
+- [ ] **Prepare Changelog**: In GitHub Actions, run `Release` with
+  `mode=prepare`, the target `version`, and `dry_run=false`. Review and merge
+  the generated PR containing the finalized `CHANGELOG.md` section.
 - [ ] **Version Bump**: Update the version number in `project.yml` and regenerate the project using `xcodegen`.
 - [ ] **Quality Gate**: Run `./scripts/swift-quality-gate.sh local` to ensure all tests pass.
 - [ ] **Build Universal App**: Build the app for both `arm64` and `x86_64` architectures.
@@ -47,7 +47,21 @@ example:
 
 Internal-only changes can skip a fragment when the pull request explains why.
 
-### Before Tagging
+### Preparing Release Notes from GitHub
+
+After the reviewed `changelog.d/` fragments land on `main`, prepare the final
+release notes from GitHub:
+
+1. Open GitHub Actions and run `Release`.
+2. Set `mode` to `prepare`.
+3. Set `version` to the target version, such as `0.3.2`.
+4. Leave `release_date` blank to use the workflow date, or enter an explicit
+   `YYYY-MM-DD` date.
+5. Set `dry_run=true` first if you only want to validate the generated section.
+6. Set `dry_run=false` to open or update the release notes pull request.
+7. Review and merge the pull request before publishing.
+
+### Local Fallback Before Tagging
 
 Prepare the release changelog:
 

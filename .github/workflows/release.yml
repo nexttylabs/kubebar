@@ -1,12 +1,107 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Release workflow mode.
+        required: true
+        default: prepare
+        type: choice
+        options:
+          - prepare
+      version:
+        description: Version without v, e.g. 0.3.2.
+        required: true
+        type: string
+      release_date:
+        description: Optional release date in YYYY-MM-DD format. Defaults to today.
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: Validate without opening a PR.
+        required: false
+        default: true
+        type: boolean
   push:
     tags:
       - 'v*'
 
 jobs:
+  prepare-release-notes:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare'
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release inputs
+        id: release
+        run: |
+          version="${{ inputs.version }}"
+          version="${version#v}"
+          release_date="${{ inputs.release_date }}"
+          if [ -z "$release_date" ]; then
+            release_date="$(date +%Y-%m-%d)"
+          fi
+
+          case "$version" in
+            *[!A-Za-z0-9.+-]*)
+              echo "Unsupported version: use SemVer-compatible characters." >&2
+              exit 1
+              ;;
+          esac
+
+          safe_version="$(printf '%s' "$version" | tr '+.' '--')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
+          echo "branch=codex/release-notes/v${safe_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Make Scripts Executable
+        run: chmod +x scripts/*.sh
+
+      - name: Add dry-run fragment
+        if: inputs.dry_run && endsWith(steps.release.outputs.version, '-test')
+        run: |
+          if ! find changelog.d -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | grep -q .; then
+            printf -- '- Exercise release preparation dry-run.\n' > changelog.d/dry-run.changed.md
+          fi
+
+      - name: Prepare Changelog
+        run: ./scripts/prepare-changelog-release.sh "${{ steps.release.outputs.version }}" "${{ steps.release.outputs.release_date }}"
+
+      - name: Validate Release Notes
+        run: ./scripts/extract-release-notes.sh "${{ steps.release.outputs.version }}"
+
+      - name: Show dry-run diff
+        if: inputs.dry_run
+        run: git diff -- CHANGELOG.md changelog.d
+
+      - name: Open release notes PR
+        if: ${{ !inputs.dry_run }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.release.outputs.branch }}
+          delete-branch: false
+          add-paths: |
+            CHANGELOG.md
+            changelog.d
+          commit-message: "chore(release): prepare v${{ steps.release.outputs.version }} notes"
+          title: "chore(release): prepare v${{ steps.release.outputs.version }} notes"
+          body: |
+            Prepares the finalized `CHANGELOG.md` section for `v${{ steps.release.outputs.version }}`.
+
+            Review the release notes before merging. Publishing should happen only after this PR lands on `main`.
+
   build-and-release:
+    if: github.event_name == 'push'
     runs-on: macos-latest
     permissions:
       contents: write
