@@ -10,7 +10,6 @@ on:
         type: choice
         options:
           - prepare
-          - publish
       version:
         description: Version without v, e.g. 0.3.2.
         required: true
@@ -26,6 +25,10 @@ on:
         default: true
         type: boolean
   push:
+    branches:
+      - main
+    paths:
+      - CHANGELOG.md
     tags:
       - 'v*'
 
@@ -102,7 +105,7 @@ jobs:
             Review the release notes before merging. Publishing should happen only after this PR lands on `main`.
 
   build-and-release:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
+    if: github.event_name == 'push'
     runs-on: macos-latest
     permissions:
       contents: write
@@ -123,15 +126,27 @@ jobs:
       - name: Resolve Release
         id: release
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
             version="${GITHUB_REF#refs/tags/v}"
-            dry_run="false"
             create_tag="false"
           else
-            version="${{ inputs.version }}"
-            version="${version#v}"
-            dry_run="${{ inputs.dry_run }}"
+            version="$(
+              awk '
+                /^## \[[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?\] - [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
+                  line = $0
+                  sub(/^## \[/, "", line)
+                  sub(/\] - .*/, "", line)
+                  print line
+                  exit
+                }
+              ' CHANGELOG.md
+            )"
             create_tag="true"
+          fi
+
+          if [ -z "$version" ]; then
+            echo "Could not resolve a release version." >&2
+            exit 1
           fi
 
           case "$version" in
@@ -143,33 +158,29 @@ jobs:
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
-          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
           echo "create_tag=$create_tag" >> "$GITHUB_OUTPUT"
 
       - name: Make Scripts Executable
         run: chmod +x scripts/*.sh
 
-      - name: Add dry-run release notes
-        if: steps.release.outputs.dry_run == 'true' && endsWith(steps.release.outputs.version, '-test')
-        run: |
-          if ! ./scripts/extract-release-notes.sh "${{ steps.release.outputs.version }}" >/dev/null 2>&1; then
-            printf -- '- Exercise release publish dry-run.\n' > changelog.d/dry-run.changed.md
-            ./scripts/prepare-changelog-release.sh "${{ steps.release.outputs.version }}"
-          fi
-
       - name: Check Tag Availability
+        id: tag_check
         if: steps.release.outputs.create_tag == 'true'
         run: |
+          git fetch --tags --force
           if git rev-parse -q --verify "refs/tags/${{ steps.release.outputs.tag }}" >/dev/null; then
-            echo "Tag already exists: ${{ steps.release.outputs.tag }}" >&2
-            exit 1
+            echo "Tag already exists: ${{ steps.release.outputs.tag }}. Nothing to publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
 
       - name: Build and Package
-        if: github.event_name == 'push' || steps.release.outputs.dry_run == 'false'
+        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
         run: ./scripts/build-release.sh ${{ steps.release.outputs.version }}
 
       - name: Extract Release Notes
+        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
         id: extract_notes
         run: |
           VERSION="${{ steps.release.outputs.version }}"
@@ -180,21 +191,15 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Tag
-        if: steps.release.outputs.create_tag == 'true' && steps.release.outputs.dry_run == 'false'
+        if: steps.release.outputs.create_tag == 'true' && steps.tag_check.outputs.publish == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.tag }}"
           git push origin "${{ steps.release.outputs.tag }}"
 
-      - name: Dry Run Summary
-        if: steps.release.outputs.dry_run == 'true'
-        run: |
-          echo "Dry run succeeded for ${{ steps.release.outputs.tag }}."
-          echo "No tag or GitHub Release was created."
-
       - name: Create GitHub Release
-        if: github.event_name == 'push' || steps.release.outputs.dry_run == 'false'
+        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}

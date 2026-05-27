@@ -1,0 +1,65 @@
+name: Changelog Fragment Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changelog intent
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+          changed_files="$(git diff --name-only "origin/$BASE_REF...HEAD")"
+
+          has_fragment=false
+          release_pr=false
+          marked_not_user_facing=false
+
+          if printf '%s\n' "$changed_files" | grep -q '^changelog\.d/.*[.][^.][^.]*[.]md$'; then
+            has_fragment=true
+          fi
+
+          if printf '%s\n' "$changed_files" | grep -q '^CHANGELOG[.]md$' && printf '%s' "$PR_TITLE" | grep -Eq '^chore[(]release[)]: prepare v[0-9]'; then
+            release_pr=true
+          fi
+
+          if printf '%s' "$PR_BODY" | grep -Eiq '[-*] \[[xX]\] Not user-facing; changelog entry not needed'; then
+            marked_not_user_facing=true
+          fi
+
+          if [ "$has_fragment" = true ] || [ "$release_pr" = true ] || [ "$marked_not_user_facing" = true ]; then
+            echo "Changelog intent is covered."
+            exit 0
+          fi
+
+          cat <<'MESSAGE' >&2
+          User-facing PRs need a changelog fragment under changelog.d/.
+
+          Add a file like:
+            changelog.d/short-description.added.md
+
+          Or, if this PR has no user-visible impact, check:
+            - [x] Not user-facing; changelog entry not needed
+
+          Release preparation PRs titled "chore(release): prepare vX.Y.Z notes"
+          are allowed to update CHANGELOG.md and remove merged fragments.
+          MESSAGE
+          exit 1

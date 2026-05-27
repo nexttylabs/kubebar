@@ -15,14 +15,9 @@ This document outlines the release process for Kubebar. Since the project curren
 - [ ] **Prepare Changelog**: In GitHub Actions, run `Release` with
   `mode=prepare`, the target `version`, and `dry_run=false`. Review and merge
   the generated PR containing the finalized `CHANGELOG.md` section.
-- [ ] **Version Bump**: Update the version number in `project.yml` and regenerate the project using `xcodegen`.
-- [ ] **Quality Gate**: Run `./scripts/swift-quality-gate.sh local` to ensure all tests pass.
-- [ ] **Build Universal App**: Build the app for both `arm64` and `x86_64` architectures.
-- [ ] **Ad-hoc Signing**: Sign the app bundle with a null identity (`-`) to satisfy basic macOS requirements.
-- [ ] **Package**: Create a `.zip` archive of `Kubebar.app`.
-- [ ] **Publish**: In GitHub Actions, run `Release` with `mode=publish`,
-  the reviewed `version`, and `dry_run=false`. GitHub Actions creates the tag,
-  builds the zip, and creates the GitHub Release.
+- [ ] **Publish**: Merge the generated release notes PR. GitHub Actions reads
+  the latest finalized `CHANGELOG.md` section, creates the tag, builds
+  `Kubebar.zip`, and creates the GitHub Release.
 
 ## Changelog Workflow
 
@@ -48,6 +43,9 @@ example:
 ```
 
 Internal-only changes can skip a fragment when the pull request explains why.
+The `Changelog Fragment Check` workflow enforces this: PRs must either include
+a `changelog.d/*.md` fragment, check the `Not user-facing` box, or be the
+generated release notes PR.
 
 ### Preparing Release Notes from GitHub
 
@@ -92,15 +90,10 @@ request is the normal review path; the artifact is only a fallback.
 
 ### Publishing from GitHub
 
-After the release notes PR lands on `main`, publish from GitHub:
-
-1. Open GitHub Actions and run `Release`.
-2. Set `mode` to `publish`.
-3. Set `version` to the reviewed version, such as `0.3.2`.
-4. Set `dry_run=true` first to validate release-note extraction and tag
-   availability without creating a tag or release.
-5. Set `dry_run=false` to create the tag, build `Kubebar.zip`, and publish the
-   GitHub Release.
+After the release notes PR lands on `main`, publishing is automatic. The
+`Release` workflow reads the latest finalized `CHANGELOG.md` section, validates
+the notes, checks that the matching tag does not already exist, builds
+`Kubebar.zip`, creates the tag, and publishes the GitHub Release.
 
 The tag-push path still works as a fallback for maintainers who need to replay
 an existing tag.
