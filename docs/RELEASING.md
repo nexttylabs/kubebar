@@ -5,10 +5,10 @@ This document outlines the release process for Kubebar. Since the project curren
 ## Release Checklist
 
 - [ ] **Finalize Changes**: Ensure all features and fixes for the version are merged.
-- [ ] **Generate Draft Changelog**: Run
-  `./scripts/generate-changelog-candidates.sh --to HEAD` (optionally with
-  `--from <last-tag>`) and review the generated `changelog.d/changelog-candidates-*`
-  fragments.
+- [ ] **Generate Draft Changelog**: In GitHub Actions, run
+  `Generate Changelog Candidates` with `from_ref` set to the previous release
+  tag and `to_ref` set to the target ref. Review and merge the generated PR
+  containing `changelog.d/` candidate fragments.
 - [ ] **Confirm Changelog Fragments**: Ensure every user-facing PR has a
   release-note-ready fragment in `changelog.d/`, or a clear PR explanation for
   why none is needed.
@@ -58,6 +58,21 @@ Prepare the release changelog:
 This creates a finalized `## [0.2.0] - YYYY-MM-DD` section in `CHANGELOG.md`
 from pending fragments and removes the merged fragments. Run the quality gate
 afterward.
+
+### Drafting Changelog Candidates from GitHub
+
+Release owners can draft changelog fragments without local commands:
+
+1. Open GitHub Actions and run `Generate Changelog Candidates`.
+2. Set `from_ref` to the previous release tag, such as `v0.3.1`.
+3. Set `to_ref` to the target branch or commit, usually `HEAD` or `main`.
+4. Optionally set `output_prefix` to a stable value such as
+   `release-v0.3.2`.
+5. Review the generated pull request and edit or remove any noisy candidate
+   entries before merging it.
+
+The workflow also uploads the generated fragments as an artifact. The pull
+request is the normal review path; the artifact is only a fallback.
 
 ### During GitHub Release
 

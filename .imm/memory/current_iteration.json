@@ -1,8 +1,250 @@
 {
   "schema_version": 2,
-  "steps": {},
+  "steps": {
+    "1": {
+      "step_id": "U1",
+      "state": "active",
+      "result": "Changelog candidate generation opens or updates a reviewable GitHub PR.",
+      "verification": "gh workflow run changelog-candidates.yml --repo nexttylabs/kubebar --ref main -f from_ref=v0.3.1 -f to_ref=HEAD -f output_prefix=release-v0.3.2",
+      "test_scenarios": [
+        "workflow with candidates creates a release branch and PR",
+        "workflow with no candidates exits successfully without an empty PR",
+        "invalid output_prefix fails with a clear message"
+      ],
+      "discovery_cache": [
+        {
+          "path": ".github/workflows/changelog-candidates.yml",
+          "reason": "candidate workflow to extend"
+        },
+        {
+          "path": "scripts/generate-changelog-candidates.sh",
+          "reason": "candidate fragment generator"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "reason": "document GitHub-first candidate flow"
+        }
+      ],
+      "depends_on": [],
+      "agent_hint": null,
+      "activated_at": "2026-05-27T10:22:59Z"
+    },
+    "2": {
+      "step_id": "U2",
+      "state": "pending",
+      "result": "Release preparation opens or updates a reviewable CHANGELOG PR.",
+      "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true",
+      "test_scenarios": [
+        "missing changelog fragments fail during preparation",
+        "duplicate version section fails during preparation",
+        "dry-run preparation does not push a branch",
+        "real preparation opens a PR with one finalized CHANGELOG.md section"
+      ],
+      "discovery_cache": [
+        {
+          "path": ".github/workflows/release.yml",
+          "reason": "current tag-push publisher"
+        },
+        {
+          "path": "scripts/prepare-changelog-release.sh",
+          "reason": "finalizes CHANGELOG.md"
+        },
+        {
+          "path": "scripts/extract-release-notes.sh",
+          "reason": "release note validation"
+        },
+        {
+          "path": "scripts/build-release.sh",
+          "reason": "release artifact build"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "reason": "final release history"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "reason": "document GitHub-first release path"
+        }
+      ],
+      "depends_on": [
+        1
+      ],
+      "agent_hint": null
+    },
+    "3": {
+      "step_id": "U3",
+      "state": "pending",
+      "result": "A reviewed release can be published from GitHub Actions.",
+      "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
+      "test_scenarios": [
+        "missing finalized notes fail before publishing",
+        "dry-run publish does not create a tag or GitHub Release",
+        "real publish creates vX.Y.Z, uploads Kubebar.zip, and appends the ad-hoc signing warning",
+        "existing tag fails before overwriting release state"
+      ],
+      "discovery_cache": [
+        {
+          "path": ".github/workflows/release.yml",
+          "reason": "current tag-push publisher"
+        },
+        {
+          "path": "scripts/extract-release-notes.sh",
+          "reason": "release note validation"
+        },
+        {
+          "path": "scripts/build-release.sh",
+          "reason": "release artifact build"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "reason": "final release history"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "reason": "document GitHub-first release path"
+        }
+      ],
+      "depends_on": [
+        2
+      ],
+      "agent_hint": null
+    }
+  },
   "last_review": null,
-  "validated_plan_snapshot": null,
-  "history": [],
-  "requires_replan": false
+  "validated_plan_snapshot": {
+    "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+    "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
+    "steps": [
+      {
+        "number": 1,
+        "step_id": "U1",
+        "result": "Changelog candidate generation opens or updates a reviewable GitHub PR.",
+        "verification": "gh workflow run changelog-candidates.yml --repo nexttylabs/kubebar --ref main -f from_ref=v0.3.1 -f to_ref=HEAD -f output_prefix=release-v0.3.2",
+        "depends_on": [],
+        "discovery_cache": [
+          {
+            "path": ".github/workflows/changelog-candidates.yml",
+            "reason": "candidate workflow to extend"
+          },
+          {
+            "path": "scripts/generate-changelog-candidates.sh",
+            "reason": "candidate fragment generator"
+          },
+          {
+            "path": "docs/RELEASING.md",
+            "reason": "document GitHub-first candidate flow"
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "step_id": "U2",
+        "result": "Release preparation opens or updates a reviewable CHANGELOG PR.",
+        "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true",
+        "depends_on": [
+          1
+        ],
+        "discovery_cache": [
+          {
+            "path": ".github/workflows/release.yml",
+            "reason": "current tag-push publisher"
+          },
+          {
+            "path": "scripts/prepare-changelog-release.sh",
+            "reason": "finalizes CHANGELOG.md"
+          },
+          {
+            "path": "scripts/extract-release-notes.sh",
+            "reason": "release note validation"
+          },
+          {
+            "path": "scripts/build-release.sh",
+            "reason": "release artifact build"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "reason": "final release history"
+          },
+          {
+            "path": "docs/RELEASING.md",
+            "reason": "document GitHub-first release path"
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "step_id": "U3",
+        "result": "A reviewed release can be published from GitHub Actions.",
+        "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
+        "depends_on": [
+          2
+        ],
+        "discovery_cache": [
+          {
+            "path": ".github/workflows/release.yml",
+            "reason": "current tag-push publisher"
+          },
+          {
+            "path": "scripts/extract-release-notes.sh",
+            "reason": "release note validation"
+          },
+          {
+            "path": "scripts/build-release.sh",
+            "reason": "release artifact build"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "reason": "final release history"
+          },
+          {
+            "path": "docs/RELEASING.md",
+            "reason": "document GitHub-first release path"
+          }
+        ]
+      }
+    ]
+  },
+  "history": [
+    {
+      "at": "2026-05-27T10:21:56Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+        "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
+        "plan_summary": "GitHub Actions can drive changelog review, release preparation, and publishing.",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-05-27T10:22:59Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+        "step_number": 1,
+        "step_id": "U1",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    }
+  ],
+  "requires_replan": false,
+  "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+  "plan_summary": "GitHub Actions can drive changelog review, release preparation, and publishing.",
+  "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
+  "plan_last_validated_at": "2026-05-27T10:21:56Z"
 }

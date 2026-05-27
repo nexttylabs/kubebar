@@ -20,35 +20,44 @@ jobs:
   generate:
     runs-on: macos-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Resolve candidate identifiers
+        id: candidates
+        run: |
+          output_prefix="${{ inputs.output_prefix }}"
+          if [ -z "$output_prefix" ]; then
+            output_prefix="changelog-candidates-${GITHUB_RUN_ID}"
+          fi
+
+          case "$output_prefix" in
+            *[!A-Za-z0-9._-]*)
+              echo "Unsupported output_prefix: use letters, numbers, dots, underscores, or hyphens." >&2
+              exit 1
+              ;;
+          esac
+
+          echo "output_prefix=$output_prefix" >> "$GITHUB_OUTPUT"
+          echo "candidate_pattern=changelog.d/${output_prefix}.*.md" >> "$GITHUB_OUTPUT"
+          echo "branch=codex/changelog-candidates/${output_prefix}" >> "$GITHUB_OUTPUT"
+
       - name: Generate changelog candidates
         run: |
           ./scripts/generate-changelog-candidates.sh \
             --from "${{ inputs.from_ref }}" \
             --to "${{ inputs.to_ref }}" \
-            --output-prefix "${{ inputs.output_prefix }}"
+            --output-prefix "${{ steps.candidates.outputs.output_prefix }}"
 
       - name: Collect generated files
         id: collect
         run: |
-          output_prefix="${{ inputs.output_prefix }}"
-          if [ -n "$output_prefix" ]; then
-            case "$output_prefix" in
-              *[!A-Za-z0-9._-]*)
-                echo "Unsupported output_prefix: use letters, numbers, dots, underscores, or hyphens." >&2
-                exit 1
-                ;;
-            esac
-            pattern="changelog.d/${output_prefix}.*.md"
-          else
-            pattern="changelog.d/changelog-candidates-*.md"
-          fi
+          pattern="${{ steps.candidates.outputs.candidate_pattern }}"
           files=$(ls $pattern 2>/dev/null | tr '\n' ' ')
           if [ -n "$files" ]; then
             echo "has_files=true" >> "$GITHUB_OUTPUT"
@@ -63,5 +72,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: changelog-candidates
-          path: |
-            changelog.d/changelog-candidates-*.md
+          path: ${{ steps.candidates.outputs.candidate_pattern }}
+
+      - name: Open changelog candidate PR
+        if: steps.collect.outputs.has_files == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.candidates.outputs.branch }}
+          delete-branch: false
+          add-paths: ${{ steps.candidates.outputs.candidate_pattern }}
+          commit-message: "chore(release): draft changelog candidates"
+          title: "chore(release): draft changelog candidates"
+          body: |
+            Generated changelog candidate fragments for review.
+
+            Source range:
+            - from: `${{ inputs.from_ref || 'previous v* tag' }}`
+            - to: `${{ inputs.to_ref }}`
+
+            Review the generated `changelog.d/` files before preparing the final `CHANGELOG.md` release section.
