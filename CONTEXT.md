@@ -19,6 +19,10 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **Release build version**: the app bundle build number (`CFBundleVersion` /
+  `CURRENT_PROJECT_VERSION`) used for release artifacts. It must move in sync
+  with release publishing and stay distinct from the user-facing marketing
+  version (`CFBundleShortVersionString` / `MARKETING_VERSION`).
 
 ## Vocabulary Guard
 
@@ -26,3 +30,10 @@ In this repository, "chart" for resource usage means lightweight current-state
 visualization inside the menu. It does not mean historical trends, sparklines,
 time-series storage, or an external monitoring dashboard unless a future plan
 explicitly changes that scope.
+
+## Architecture Map
+
+- Release tooling: `scripts/build-release.sh` owns packaged app version
+  metadata, `scripts/test-release-build-version.sh` guards release metadata
+  regressions, `project.yml` provides XcodeGen defaults, and
+  `docs/RELEASING.md` documents release-owner behavior.

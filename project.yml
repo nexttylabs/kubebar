@@ -23,6 +23,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextty.kubebar
         PRODUCT_NAME: Kubebar
+        MARKETING_VERSION: "0.0.0"
+        CURRENT_PROJECT_VERSION: "0"
+        VERSIONING_SYSTEM: apple-generic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Kubebar

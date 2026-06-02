@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Configuration
 APP_NAME="Kubebar"
@@ -8,8 +8,75 @@ BUILD_DIR=".build/release"
 RELEASE_DIR="release"
 APP_BUNDLE="$RELEASE_DIR/$APP_NAME.app"
 ZIP_NAME="$APP_NAME.zip"
+RELEASE_VERSION="${1:-}"
+EXPLICIT_BUILD_NUMBER="${2:-}"
 
-echo "🚀 Starting release build for $APP_NAME..."
+fail() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+resolve_build_number() {
+  if [ -n "$EXPLICIT_BUILD_NUMBER" ]; then
+    printf '%s\n' "$EXPLICIT_BUILD_NUMBER"
+    return 0
+  fi
+
+  if [ -n "${BUILD_NUMBER:-}" ]; then
+    printf '%s\n' "$BUILD_NUMBER"
+    return 0
+  fi
+
+  git rev-list --count HEAD
+}
+
+validate_release_version() {
+  [ -n "$RELEASE_VERSION" ] || fail "Usage: $0 <version> [build-number]"
+
+  case "$RELEASE_VERSION" in
+    *[!A-Za-z0-9.+-]*)
+      fail "Unsupported release version: use SemVer-compatible characters."
+      ;;
+  esac
+}
+
+validate_build_number() {
+  local value="$1"
+  [ -n "$value" ] || fail "Build number cannot be empty."
+
+  case "$value" in
+    *[!0-9]*)
+      fail "Build number must be an integer."
+      ;;
+  esac
+}
+
+plist_value() {
+  local key="$1"
+  local plist="$APP_BUNDLE/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Print :$key" "$plist"
+}
+
+verify_bundle_versions() {
+  local plist="$APP_BUNDLE/Contents/Info.plist"
+  [ -f "$plist" ] || fail "Missing built app Info.plist."
+
+  local actual_marketing_version
+  local actual_build_number
+  actual_marketing_version="$(plist_value CFBundleShortVersionString)"
+  actual_build_number="$(plist_value CFBundleVersion)"
+
+  [ "$actual_marketing_version" = "$RELEASE_VERSION" ] ||
+    fail "Built app marketing version is $actual_marketing_version, expected $RELEASE_VERSION."
+  [ "$actual_build_number" = "$BUILD_VERSION" ] ||
+    fail "Built app build number is $actual_build_number, expected $BUILD_VERSION."
+}
+
+validate_release_version
+BUILD_VERSION="$(resolve_build_number)"
+validate_build_number "$BUILD_VERSION"
+
+echo "🚀 Starting release build for $APP_NAME $RELEASE_VERSION ($BUILD_VERSION)..."
 
 # 1. Clean and Prepare
 rm -rf "$BUILD_DIR" "$RELEASE_DIR"
@@ -25,13 +92,16 @@ xcodebuild -project "$APP_NAME.xcodeproj" \
            -configuration Release \
            -derivedDataPath "$BUILD_DIR" \
            -destination "generic/platform=macOS" \
-           MARKETING_VERSION="$1" \
-           CURRENT_PROJECT_VERSION="1" \
+           MARKETING_VERSION="$RELEASE_VERSION" \
+           CURRENT_PROJECT_VERSION="$BUILD_VERSION" \
            clean build
 
 # 4. Copy and Package
 echo "📂 Packaging app bundle..."
 cp -R "$BUILD_DIR/Build/Products/Release/$APP_NAME.app" "$RELEASE_DIR/"
+
+echo "🔢 Verifying app version metadata..."
+verify_bundle_versions
 
 # 5. Ad-hoc Signing
 echo "✍️  Applying Ad-hoc signature..."

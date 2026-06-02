@@ -2,65 +2,49 @@
 
 ## Current State
 
-- Plan: `docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md`
+- Plan: `docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md`
 - Status: complete
-- Completed steps: U1 `Settings-controlled Health State Shift Alerts notify only on true deterioration.`
+- Completed steps: U1 `Release builds carry synchronized app version metadata.`
 - Latest review: pass
-- Review follow-up: fixed delayed notification authorization results so they
-  cannot override a later toggle or successful save.
-- Review follow-up: fixed P2 code-review findings for save-failure config
-  pollution, reason-text-only alert re-notification, and hidden watchlist item
-  alert coverage.
-- Review follow-up: fixed same-name workload kind identity collisions so
-  Deployment and StatefulSet `namespace/name` rows compare as distinct alert
-  targets.
 
 ## Verification
 
-- `swift test`
+- `./scripts/test-release-build-version.sh`
 - `/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local`
+- `git diff --check`
 
 ## Notes
 
-- Settings now includes a `Health State Shift Alerts` toggle.
-- The alert setting is persisted in `AppConfig`, defaults off for new and
-  existing configs, and requests macOS notification authorization when enabled.
-- Denied notification authorization leaves the toggle off and shows recoverable
-  Settings feedback.
-- Alert decisions compare fresh `MenuDisplayModel` states only: first refresh
-  establishes a baseline, `Stale` is excluded, repeated unchanged issues are
-  deduplicated, and newly worse watchlist items can notify even when the item is
-  hidden by the first-screen cap.
-- Delivery uses an injectable `UserNotifications` boundary in the app target.
-- Settings authorization requests now use a latest-request gate; closing over an
-  old authorization result is ignored after a later toggle, settings refresh, or
-  successful save.
-- Same-`Bad` watchlist rows no longer notify merely because reason text changes;
-  structured affected-pod count increases can still notify.
-- Watchlist alert identity now includes workload kind while preserving compact
-  display titles such as `team/api`.
-- Settings save failure no longer mutates the in-memory committed config before
-  persistence succeeds.
-- No resource-pressure alerting, historical monitoring, new Kubernetes reads,
-  or `HealthEvaluator` rule changes were added.
+- Release builds now keep `MARKETING_VERSION` equal to the selected release
+  version.
+- `CURRENT_PROJECT_VERSION` is no longer fixed at `1`; it resolves from an
+  explicit second script argument, then `BUILD_NUMBER`, then
+  `git rev-list --count HEAD`.
+- `scripts/build-release.sh` validates integer build numbers and verifies the
+  built app's `Info.plist` before signing and zipping.
+- `project.yml` carries the app target versioning settings so XcodeGen remains
+  the durable source.
+- The local Swift quality gate now runs release build version tests before the
+  Xcode and SwiftPM checks.
+- Release docs describe the default build-number behavior and override paths.
+- No signing, notarization, Sparkle, Homebrew, or runtime version UI behavior
+  was added.
 - No known blockers.
 
 ## Compaction Handoff
 
-- Active plan: `docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md`
+- Active plan: `docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md`
 - Active step: none; U1 is closed.
 - Priority files:
-  - `Kubebar/MenuBarViewModel.swift`
-  - `KubebarCore/Models/MenuDisplayModel.swift`
-  - `KubebarCore/Services/HealthEvaluator.swift`
-  - `KubebarTests/Models/MenuDisplayModelTests.swift`
-  - `KubebarCore/Models/StartAtLoginState.swift`
-  - `Kubebar/Views/SetupView.swift`
-- Uncommitted work summary: Health State Shift Alerts implementation, tests,
-  docs/spec/plan, review follow-up fix, workflow state, and handoff update are
-  uncommitted.
-- Session decisions: notification setting defaults off; enabling requests
-  authorization; `Stale` does not trigger alerts; alert logic consumes
-  `MenuDisplayModel`; full watchlist alert fingerprints are allowed while UI
-  rows remain capped.
+  - `scripts/build-release.sh`
+  - `scripts/test-release-build-version.sh`
+  - `scripts/swift-quality-gate.sh`
+  - `project.yml`
+  - `docs/RELEASING.md`
+- Uncommitted work summary: release build version sync implementation, script
+  tests, quality gate wiring, release docs, context/spec/plan, workflow state,
+  and handoff update are uncommitted.
+- Session decisions: marketing version remains the release version; build
+  version defaults to git commit count; explicit argument beats
+  `BUILD_NUMBER`; app bundle metadata is verified before packaging.
 - Next boundary skill: optional `imm-compounder` for reusable learning capture.

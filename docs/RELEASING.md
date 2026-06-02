@@ -98,6 +98,30 @@ the notes, checks that the matching tag does not already exist, builds
 The tag-push path still works as a fallback for maintainers who need to replay
 an existing tag.
 
+### Release Version Metadata
+
+Release builds set the app bundle marketing version
+(`CFBundleShortVersionString`) from the selected release version, such as
+`0.3.2`.
+
+The app bundle build number (`CFBundleVersion`) defaults to
+`git rev-list --count HEAD`, so release artifacts do not keep reusing build
+number `1`. To override it locally, pass an explicit second argument:
+
+```bash
+./scripts/build-release.sh 0.3.2 123
+```
+
+CI or scripted release runs can also set `BUILD_NUMBER`:
+
+```bash
+BUILD_NUMBER=123 ./scripts/build-release.sh 0.3.2
+```
+
+The release script verifies the built app's `Info.plist` before signing and
+zipping, and fails if the marketing version or build number does not match the
+requested metadata.
+
 ### During GitHub Release
 
 The release workflow extracts notes with:
