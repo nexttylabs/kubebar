@@ -14,7 +14,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
         self.setupState = SetupFlowState(
             selectedContext: config.selectedContext,
             watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
-            refreshCadence: config.refreshCadence
+            refreshCadence: config.refreshCadence,
+            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
         )
     }
 
@@ -47,7 +48,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState = SetupFlowState(
             selectedContext: config.selectedContext,
             watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
-            refreshCadence: config.refreshCadence
+            refreshCadence: config.refreshCadence,
+            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
         )
         setupState.configurationMessage = nil
     }
@@ -105,6 +107,11 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.startAtLogin = startAtLogin
     }
 
+    public mutating func applyHealthShiftAlertsState(_ healthShiftAlerts: HealthShiftAlertsState) {
+        setupState.healthShiftAlerts = healthShiftAlerts
+        setupState.configurationMessage = nil
+    }
+
     public mutating func completeSetupSaved() {
         surface = .menu
         setupState.configurationMessage = nil
@@ -119,14 +126,16 @@ public struct MenuRuntimeState: Equatable, Sendable {
         return AppConfig(
             selectedContext: selectedContext,
             watchTargets: watchTargets,
-            refreshIntervalSeconds: setupState.refreshCadence.seconds
+            refreshIntervalSeconds: setupState.refreshCadence.seconds,
+            healthShiftAlertsEnabled: setupState.healthShiftAlerts.isEnabled
         )
     }
 
     private func hasUnsavedSettingsChanges(comparedTo config: AppConfig) -> Bool {
         setupState.selectedContext != config.selectedContext ||
             setupState.watchlist.selectedNamespaceTargets != Self.namespaceTargets(from: config.watchTargets) ||
-            setupState.refreshCadence.seconds != config.refreshIntervalSeconds
+            setupState.refreshCadence.seconds != config.refreshIntervalSeconds ||
+            setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled
     }
 
     private static func namespaceTargets(from targets: [WatchTarget]) -> Set<WatchTarget> {

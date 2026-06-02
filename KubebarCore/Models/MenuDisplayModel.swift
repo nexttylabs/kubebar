@@ -553,6 +553,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
     public let warningEventSummaries: [WarningEventDisplay]
     public let sectionNotices: [SectionAvailabilityDisplay]
     public let visibleWatchItems: [WatchItemDisplay]
+    public let alertWatchItems: [WatchItemDisplay]
     public let hiddenWatchItemCount: Int
     public let staleBanner: StaleBannerDisplay?
     public let overviewNotice: OverviewNoticeDisplay?
@@ -569,6 +570,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
         lastUpdated: String,
         counters: MenuCounters,
         visibleWatchItems: [WatchItemDisplay],
+        alertWatchItems: [WatchItemDisplay]? = nil,
         hiddenWatchItemCount: Int,
         staleBanner: StaleBannerDisplay?,
         warningEventSummaries: [WarningEventDisplay] = [],
@@ -588,6 +590,7 @@ public struct MenuDisplayModel: Equatable, Sendable {
         self.warningEventSummaries = warningEventSummaries
         self.sectionNotices = sectionNotices
         self.visibleWatchItems = visibleWatchItems
+        self.alertWatchItems = alertWatchItems ?? visibleWatchItems
         self.hiddenWatchItemCount = hiddenWatchItemCount
         self.staleBanner = staleBanner
         self.overviewNotice = overviewNotice ?? Self.makeOverviewNotice(sectionNotices: sectionNotices, warningEventSummaries: warningEventSummaries)
@@ -744,5 +747,165 @@ public struct MenuDisplayModel: Equatable, Sendable {
         }
 
         return "\(prefix): \(notice.reason)"
+    }
+}
+
+public struct HealthShiftAlert: Equatable, Sendable {
+    public let identifier: String
+    public let title: String
+    public let body: String
+
+    public init(identifier: String, title: String, body: String) {
+        self.identifier = identifier
+        self.title = title
+        self.body = body
+    }
+}
+
+public struct HealthShiftAlertTracker: Equatable, Sendable {
+    private var previous: HealthShiftAlertFingerprint?
+
+    public init() {
+        self.previous = nil
+    }
+
+    public mutating func reset() {
+        previous = nil
+    }
+
+    public mutating func record(_ display: MenuDisplayModel) -> HealthShiftAlert? {
+        guard let current = HealthShiftAlertFingerprint(display: display) else {
+            return nil
+        }
+
+        let old = previous
+        previous = current
+
+        guard let old else {
+            return nil
+        }
+
+        if current.stateSeverity > old.stateSeverity {
+            return HealthShiftAlert(
+                identifier: current.identifier(prefix: "health", detail: current.state.label),
+                title: "Kubebar: \(current.contextName) is \(current.state.label)",
+                body: current.primaryStatusReason
+            )
+        }
+
+        if let item = current.newlyWorseWatchItem(comparedTo: old) {
+            return HealthShiftAlert(
+                identifier: current.identifier(prefix: "watch", detail: item.id),
+                title: "Kubebar: \(item.title) is \(item.state.label)",
+                body: item.reason
+            )
+        }
+
+        return nil
+    }
+}
+
+private struct HealthShiftAlertFingerprint: Equatable, Sendable {
+    let contextName: String
+    let state: ClusterHealthState
+    let stateSeverity: Int
+    let primaryStatusReason: String
+    let watchItems: [HealthShiftWatchItemFingerprint]
+
+    init?(display: MenuDisplayModel) {
+        guard let stateSeverity = Self.alertSeverity(for: display.state) else {
+            return nil
+        }
+
+        self.contextName = display.contextName
+        self.state = display.state
+        self.stateSeverity = stateSeverity
+        self.primaryStatusReason = display.primaryStatusReason
+        self.watchItems = display.alertWatchItems.compactMap(HealthShiftWatchItemFingerprint.init(item:))
+    }
+
+    func newlyWorseWatchItem(comparedTo previous: HealthShiftAlertFingerprint) -> HealthShiftWatchItemFingerprint? {
+        var previousItems: [String: HealthShiftWatchItemFingerprint] = [:]
+        for item in previous.watchItems {
+            previousItems[item.id] = item
+        }
+
+        return watchItems.first { item in
+            guard item.severity > 0 else {
+                return false
+            }
+
+            guard let oldItem = previousItems[item.id] else {
+                return item.state == .bad
+            }
+
+            if item.severity > oldItem.severity {
+                return true
+            }
+
+            if item.state == .bad,
+               let affectedPodCount = item.affectedPodCount,
+               let oldAffectedPodCount = oldItem.affectedPodCount {
+                return affectedPodCount > oldAffectedPodCount
+            }
+
+            return false
+        }
+    }
+
+    func identifier(prefix: String, detail: String) -> String {
+        let rawValue = "kubebar-\(prefix)-\(contextName)-\(detail)"
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+        return String(rawValue.unicodeScalars.map { scalar in
+            allowed.contains(scalar) ? Character(scalar) : "-"
+        })
+    }
+
+    private static func alertSeverity(for state: ClusterHealthState) -> Int? {
+        switch state {
+        case .ok:
+            return 0
+        case .watch:
+            return 1
+        case .bad:
+            return 2
+        case .stale:
+            return nil
+        }
+    }
+}
+
+private struct HealthShiftWatchItemFingerprint: Equatable, Sendable {
+    let id: String
+    let title: String
+    let state: ClusterHealthState
+    let severity: Int
+    let reason: String
+    let affectedPodCount: Int?
+
+    init?(item: WatchItemDisplay) {
+        guard let severity = Self.alertSeverity(for: item.state) else {
+            return nil
+        }
+
+        self.id = item.id
+        self.title = item.title
+        self.state = item.state
+        self.severity = severity
+        self.reason = item.reason
+        self.affectedPodCount = item.detail.affectedPodCount
+    }
+
+    private static func alertSeverity(for state: ClusterHealthState) -> Int? {
+        switch state {
+        case .ok:
+            return 0
+        case .watch:
+            return 1
+        case .bad:
+            return 2
+        case .stale:
+            return nil
+        }
     }
 }

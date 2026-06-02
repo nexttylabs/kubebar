@@ -76,7 +76,7 @@ public struct HealthEvaluator: Sendable {
         let allowsK9sHandoff = resolvedState != .stale
         let sortedItems = sortByAttention(snapshot.trackedItems)
         let visibleLimit = visibleWatchItemLimit(for: sortedItems)
-        let visibleItems = sortedItems.prefix(visibleLimit).map {
+        let allWatchItems = sortedItems.map {
             makeDisplayItem(
                 $0,
                 contextName: snapshot.contextName,
@@ -84,6 +84,7 @@ public struct HealthEvaluator: Sendable {
                 now: now
             )
         }
+        let visibleItems = Array(allWatchItems.prefix(visibleLimit))
         let hiddenCount = max(0, sortedItems.count - visibleItems.count)
         let pinnedWarningIDs = pinnedWarningIDs(from: snapshot.trackedItems)
         let warningEventSummaries = makeWarningEventSummaries(
@@ -118,6 +119,7 @@ public struct HealthEvaluator: Sendable {
             lastUpdated: lastUpdated,
             counters: menuCounters(from: snapshot),
             visibleWatchItems: visibleItems,
+            alertWatchItems: allWatchItems,
             hiddenWatchItemCount: hiddenCount,
             staleBanner: staleBanner(
                 for: resolvedState,
@@ -1139,7 +1141,7 @@ public struct HealthEvaluator: Sendable {
         now: Date
     ) -> WatchItemDisplay {
         WatchItemDisplay(
-            id: item.target.displayTitle,
+            id: item.target.stableID,
             title: item.target.displayTitle,
             state: item.state,
             reason: item.reason,

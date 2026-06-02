@@ -1004,6 +1004,14 @@ struct MenuDisplayModelTests {
             "team/stale-a",
             "team/ok-a"
         ])
+        #expect(display.alertWatchItems.map(\.title) == [
+            "team/bad-a",
+            "team/bad-b",
+            "team/watch-a",
+            "team/stale-a",
+            "team/ok-a",
+            "team/ok-b"
+        ])
         #expect(display.hiddenWatchItemCount == 1)
     }
 
@@ -1650,6 +1658,247 @@ struct MenuDisplayModelTests {
     }
 }
 
+@Suite("Health State Shift Alerts")
+struct HealthStateShiftAlertTests {
+    @Test("first fresh display establishes baseline without alert")
+    func firstFreshDisplayEstablishesBaselineWithoutAlert() {
+        var tracker = HealthShiftAlertTracker()
+
+        let alert = tracker.record(alertDisplay(state: .ok, reason: "All watched targets OK"))
+
+        #expect(alert == nil)
+    }
+
+    @Test("fresh health category deterioration emits alert")
+    func freshHealthCategoryDeteriorationEmitsAlert() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(alertDisplay(state: .ok, reason: "All watched targets OK"))
+
+        let maybeAlert = tracker.record(alertDisplay(state: .bad, reason: "api/checkout needs attention"))
+        let alert = try #require(maybeAlert)
+
+        #expect(alert.title == "Kubebar: prod is Bad")
+        #expect(alert.body == "api/checkout needs attention")
+    }
+
+    @Test("watch to bad deterioration emits alert")
+    func watchToBadDeteriorationEmitsAlert() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(alertDisplay(state: .watch, reason: "1 warning event"))
+
+        let maybeAlert = tracker.record(alertDisplay(state: .bad, reason: "api/checkout needs attention"))
+        let alert = try #require(maybeAlert)
+
+        #expect(alert.title.contains("Bad"))
+    }
+
+    @Test("stale display does not emit or replace fresh baseline")
+    func staleDisplayDoesNotEmitOrReplaceFreshBaseline() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(alertDisplay(state: .ok, reason: "All watched targets OK"))
+
+        #expect(tracker.record(alertDisplay(state: .stale, reason: "kubectl timed out", stale: true)) == nil)
+
+        let maybeAlert = tracker.record(alertDisplay(state: .bad, reason: "api/checkout needs attention"))
+        let alert = try #require(maybeAlert)
+        #expect(alert.title.contains("Bad"))
+    }
+
+    @Test("unchanged bad state does not re-notify")
+    func unchangedBadStateDoesNotRenotify() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(alertDisplay(state: .ok, reason: "All watched targets OK"))
+
+        let badDisplay = alertDisplay(
+            state: .bad,
+            reason: "api/checkout needs attention",
+            watchItems: [watchItem(id: "api-checkout", title: "api/checkout", state: .bad, reason: "1 pod restarting")]
+        )
+
+        let firstAlert = tracker.record(badDisplay)
+        _ = try #require(firstAlert)
+        #expect(tracker.record(badDisplay) == nil)
+    }
+
+    @Test("bad reason change alone does not re-notify")
+    func badReasonChangeAloneDoesNotRenotify() throws {
+        var tracker = HealthShiftAlertTracker()
+        let twoRestarting = alertDisplay(
+            state: .bad,
+            reason: "api/checkout needs attention",
+            watchItems: [watchItem(id: "api-checkout", title: "api/checkout", state: .bad, reason: "2 pods restarting")]
+        )
+        _ = tracker.record(twoRestarting)
+
+        let oneRestarting = alertDisplay(
+            state: .bad,
+            reason: "api/checkout needs attention",
+            watchItems: [watchItem(id: "api-checkout", title: "api/checkout", state: .bad, reason: "1 pod restarting")]
+        )
+
+        #expect(tracker.record(oneRestarting) == nil)
+    }
+
+    @Test("bad affected pod count increase emits alert")
+    func badAffectedPodCountIncreaseEmitsAlert() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(
+            alertDisplay(
+                state: .bad,
+                reason: "api/checkout needs attention",
+                watchItems: [
+                    watchItem(
+                        id: "api-checkout",
+                        title: "api/checkout",
+                        state: .bad,
+                        reason: "1 pod restarting",
+                        affectedPodCount: 1
+                    )
+                ]
+            )
+        )
+
+        let maybeAlert = tracker.record(
+            alertDisplay(
+                state: .bad,
+                reason: "api/checkout needs attention",
+                watchItems: [
+                    watchItem(
+                        id: "api-checkout",
+                        title: "api/checkout",
+                        state: .bad,
+                        reason: "2 pods restarting",
+                        affectedPodCount: 2
+                    )
+                ]
+            )
+        )
+
+        let alert = try #require(maybeAlert)
+        #expect(alert.title == "Kubebar: api/checkout is Bad")
+        #expect(alert.body == "2 pods restarting")
+    }
+
+    @Test("newly bad watchlist item emits alert while top state stays bad")
+    func newlyBadWatchlistItemEmitsAlertWhileTopStateStaysBad() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(alertDisplay(state: .ok, reason: "All watched targets OK"))
+
+        let firstBad = alertDisplay(
+            state: .bad,
+            reason: "api/checkout needs attention",
+            watchItems: [watchItem(id: "api-checkout", title: "api/checkout", state: .bad, reason: "1 pod restarting")]
+        )
+        let firstAlert = tracker.record(firstBad)
+        _ = try #require(firstAlert)
+
+        let secondBad = alertDisplay(
+            state: .bad,
+            reason: "ops/worker needs attention",
+            watchItems: [
+                watchItem(id: "api-checkout", title: "api/checkout", state: .bad, reason: "1 pod restarting"),
+                watchItem(id: "ops-worker", title: "ops/worker", state: .bad, reason: "1 pod restarting")
+            ]
+        )
+
+        let maybeAlert = tracker.record(secondBad)
+        let alert = try #require(maybeAlert)
+        #expect(alert.title == "Kubebar: ops/worker is Bad")
+        #expect(alert.body == "1 pod restarting")
+    }
+
+    @Test("hidden newly bad watchlist item emits alert")
+    func hiddenNewlyBadWatchlistItemEmitsAlert() throws {
+        var tracker = HealthShiftAlertTracker()
+        let visibleBadItems = (1...5).map { index in
+            watchItem(id: "team-bad-\(index)", title: "team/bad-\(index)", state: .bad, reason: "1 pod restarting")
+        }
+        let hiddenOk = watchItem(id: "team-hidden", title: "team/hidden", state: .ok, reason: "ready")
+        let hiddenBad = watchItem(id: "team-hidden", title: "team/hidden", state: .bad, reason: "1 pod restarting")
+
+        _ = tracker.record(
+            alertDisplay(
+                state: .bad,
+                reason: "5 watched targets need attention",
+                watchItems: visibleBadItems,
+                alertWatchItems: visibleBadItems + [hiddenOk],
+                hiddenWatchItemCount: 1
+            )
+        )
+
+        let maybeAlert = tracker.record(
+            alertDisplay(
+                state: .bad,
+                reason: "6 watched targets need attention",
+                watchItems: visibleBadItems,
+                alertWatchItems: visibleBadItems + [hiddenBad],
+                hiddenWatchItemCount: 1
+            )
+        )
+
+        let alert = try #require(maybeAlert)
+        #expect(alert.title == "Kubebar: team/hidden is Bad")
+        #expect(alert.body == "1 pod restarting")
+    }
+
+    @Test("same named workload kinds keep distinct alert identities")
+    func sameNamedWorkloadKindsKeepDistinctAlertIdentities() {
+        let display = sameNamedWorkloadKindsDisplay(
+            deploymentState: .bad,
+            deploymentReason: "deployment already bad",
+            statefulSetState: .ok,
+            statefulSetReason: "statefulset ready"
+        )
+
+        #expect(display.alertWatchItems.map(\.title) == ["team/api", "team/api"])
+        #expect(display.alertWatchItems.map(\.id) == [
+            "workload:deployment:team:api",
+            "workload:statefulSet:team:api"
+        ])
+    }
+
+    @Test("same named workload kinds do not re-notify unchanged mixed state")
+    func sameNamedWorkloadKindsDoNotRenotifyUnchangedMixedState() {
+        var tracker = HealthShiftAlertTracker()
+        let display = sameNamedWorkloadKindsDisplay(
+            deploymentState: .bad,
+            deploymentReason: "deployment already bad",
+            statefulSetState: .ok,
+            statefulSetReason: "statefulset ready"
+        )
+
+        _ = tracker.record(display)
+
+        #expect(tracker.record(display) == nil)
+    }
+
+    @Test("same named workload kinds alert on the correct newly bad kind")
+    func sameNamedWorkloadKindsAlertOnCorrectNewlyBadKind() throws {
+        var tracker = HealthShiftAlertTracker()
+        _ = tracker.record(
+            sameNamedWorkloadKindsDisplay(
+                deploymentState: .bad,
+                deploymentReason: "deployment already bad",
+                statefulSetState: .ok,
+                statefulSetReason: "statefulset ready"
+            )
+        )
+
+        let maybeAlert = tracker.record(
+            sameNamedWorkloadKindsDisplay(
+                deploymentState: .bad,
+                deploymentReason: "deployment already bad",
+                statefulSetState: .bad,
+                statefulSetReason: "statefulset now bad"
+            )
+        )
+
+        let alert = try #require(maybeAlert)
+        #expect(alert.title == "Kubebar: team/api is Bad")
+        #expect(alert.body == "statefulset now bad")
+    }
+}
+
 private func warningEvent(
     reason: String,
     namespace: String? = "api",
@@ -1742,5 +1991,76 @@ private func podDetail(
         isUnknown: isUnknown,
         isNotReady: isNotReady,
         resourceSummary: resourceSummary
+    )
+}
+
+private func alertDisplay(
+    state: ClusterHealthState,
+    reason: String,
+    watchItems: [WatchItemDisplay] = [],
+    alertWatchItems: [WatchItemDisplay]? = nil,
+    hiddenWatchItemCount: Int = 0,
+    stale: Bool = false
+) -> MenuDisplayModel {
+    MenuDisplayModel(
+        state: state,
+        contextName: "prod",
+        healthSentence: reason,
+        primaryStatusReason: reason,
+        lastUpdated: "now",
+        counters: MenuCounters(nodes: "1/1", pods: "1/1", warningEvents: "0"),
+        visibleWatchItems: watchItems,
+        alertWatchItems: alertWatchItems,
+        hiddenWatchItemCount: hiddenWatchItemCount,
+        staleBanner: stale ? StaleBannerDisplay(lastUpdated: "now", reason: reason) : nil
+    )
+}
+
+private func sameNamedWorkloadKindsDisplay(
+    deploymentState: ClusterHealthState,
+    deploymentReason: String,
+    statefulSetState: ClusterHealthState,
+    statefulSetReason: String
+) -> MenuDisplayModel {
+    let snapshot = ClusterSnapshot(
+        contextName: "prod",
+        nodeSummary: NodeSummary(ready: 1, total: 1),
+        podSummary: PodSummary(running: 1, total: 1),
+        warningEventCount: 0,
+        trackedItems: [
+            TrackedItemStatus(
+                target: .workload(namespace: "team", name: "api", kind: .deployment),
+                state: deploymentState,
+                reason: deploymentReason
+            ),
+            TrackedItemStatus(
+                target: .workload(namespace: "team", name: "api", kind: .statefulSet),
+                state: statefulSetState,
+                reason: statefulSetReason
+            )
+        ],
+        capturedAt: Date(timeIntervalSince1970: 100)
+    )
+
+    return HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+}
+
+private func watchItem(
+    id: String,
+    title: String,
+    state: ClusterHealthState,
+    reason: String,
+    affectedPodCount: Int? = nil
+) -> WatchItemDisplay {
+    WatchItemDisplay(
+        id: id,
+        title: title,
+        state: state,
+        reason: reason,
+        detail: WatchItemDetailDisplay(
+            stateLabel: state.label,
+            reason: reason,
+            affectedPodCount: affectedPodCount
+        )
     )
 }

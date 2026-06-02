@@ -4,250 +4,75 @@
     "1": {
       "step_id": "U1",
       "state": "closed",
-      "result": "Changelog candidate generation opens or updates a reviewable GitHub PR.",
-      "verification": "gh workflow run changelog-candidates.yml --repo nexttylabs/kubebar --ref main -f from_ref=v0.3.1 -f to_ref=HEAD -f output_prefix=release-v0.3.2",
+      "result": "Settings-controlled Health State Shift Alerts notify only on true deterioration.",
+      "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
       "test_scenarios": [
-        "workflow with candidates creates a release branch and PR",
-        "workflow with no candidates exits successfully without an empty PR",
-        "invalid output_prefix fails with a clear message"
+        "existing configs decode with alerts off",
+        "enabled alert setting round trips through config",
+        "Settings runtime state preserves and saves the alert setting",
+        "enabling denied notification authorization keeps the toggle off with feedback",
+        "first fresh display establishes an alert baseline without notification",
+        "OK to Watch or Bad and Watch to Bad produce one alert",
+        "Stale does not produce an alert",
+        "repeated unchanged Bad state does not re-notify",
+        "a newly Bad watchlist item produces an alert"
       ],
-      "discovery_cache": [
-        {
-          "path": ".github/workflows/changelog-candidates.yml",
-          "reason": "candidate workflow to extend"
-        },
-        {
-          "path": "scripts/generate-changelog-candidates.sh",
-          "reason": "candidate fragment generator"
-        },
-        {
-          "path": "docs/RELEASING.md",
-          "reason": "document GitHub-first candidate flow"
-        }
-      ],
+      "discovery_cache": [],
+      "parallel_probes": [],
       "depends_on": [],
       "agent_hint": null,
-      "activated_at": "2026-05-27T10:22:59Z",
+      "activated_at": "2026-06-01T15:49:23Z",
       "execution_evidence": {
         "changed_files": [
-          ".github/workflows/changelog-candidates.yml",
-          "docs/RELEASING.md",
-          "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "docs/specs/2026-05-27-github-first-release-flow.md",
-          ".imm/memory/current_iteration.json"
+          "CONTEXT.md",
+          ".imm/specs/2026-06-01-health-state-shift-alerts.md",
+          "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+          "KubebarCore/Services/AppConfigStore.swift",
+          "KubebarCore/Models/StartAtLoginState.swift",
+          "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Models/MenuRuntimeState.swift",
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "Kubebar/Services/LoginItemController.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "KubebarTests/Services/AppConfigStoreTests.swift",
+          "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift",
+          "docs/architecture/runtime-invariants.md"
         ],
-        "verification_command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/changelog-candidates.yml\")'; bash -n scripts/generate-changelog-candidates.sh; gh workflow run changelog-candidates.yml --repo nexttylabs/kubebar --ref main -f from_ref=v0.3.1 -f to_ref=HEAD -f output_prefix=release-v0.3.2; gh run view 26505530259 --repo nexttylabs/kubebar --json status,conclusion,jobs; gh pr list --repo nexttylabs/kubebar --head codex/changelog-candidates/release-v0.3.2 --json number,title,state,url",
-        "verification_result": "PASS: local YAML parse and bash -n passed; pushed commit 03390aa; GitHub Actions run 26505530259 completed successfully; Open changelog candidate PR step succeeded; PR #40 opened at https://github.com/nexttylabs/kubebar/pull/40.",
-        "notes": "Implemented U1 only: changelog candidate workflow now resolves a safe output prefix, generates candidates, uploads matching artifacts, and opens or updates a reviewable PR using peter-evans/create-pull-request. Release docs now describe the GitHub-first candidate flow.",
-        "recorded_at": "2026-05-27T10:25:38Z"
+        "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+        "verification_result": "PASS: Added RED tests first, confirmed missing API failures with swift test, implemented Settings-controlled Health State Shift Alerts, then ran swift test (218 tests passed) and the full Swift quality gate successfully. The gate passed changelog tooling checks, Xcode build, Xcode tests, Swift build/test, and QA artifact generation.",
+        "notes": "U1 implemented only: persisted default-off notification setting, Settings toggle with authorization feedback, UserNotifications delivery boundary, display-model alert tracker with stale exclusion and deduplication, refresh-result delivery wiring, runtime invariant/context/spec/plan updates, and focused regression tests.",
+        "recorded_at": "2026-06-01T15:56:47Z"
       },
-      "closed_at": "2026-05-27T10:26:22Z"
-    },
-    "2": {
-      "step_id": "U2",
-      "state": "closed",
-      "result": "Release preparation opens or updates a reviewable CHANGELOG PR.",
-      "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true",
-      "test_scenarios": [
-        "missing changelog fragments fail during preparation",
-        "duplicate version section fails during preparation",
-        "dry-run preparation does not push a branch",
-        "real preparation opens a PR with one finalized CHANGELOG.md section"
-      ],
-      "discovery_cache": [
-        {
-          "path": ".github/workflows/release.yml",
-          "reason": "current tag-push publisher"
-        },
-        {
-          "path": "scripts/prepare-changelog-release.sh",
-          "reason": "finalizes CHANGELOG.md"
-        },
-        {
-          "path": "scripts/extract-release-notes.sh",
-          "reason": "release note validation"
-        },
-        {
-          "path": "scripts/build-release.sh",
-          "reason": "release artifact build"
-        },
-        {
-          "path": "CHANGELOG.md",
-          "reason": "final release history"
-        },
-        {
-          "path": "docs/RELEASING.md",
-          "reason": "document GitHub-first release path"
-        }
-      ],
-      "depends_on": [
-        1
-      ],
-      "agent_hint": null,
-      "activated_at": "2026-05-27T10:26:41Z",
-      "execution_evidence": {
-        "changed_files": [
-          ".github/workflows/release.yml",
-          "docs/RELEASING.md",
-          ".imm/memory/current_iteration.json"
-        ],
-        "verification_command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")'; bash -n scripts/prepare-changelog-release.sh; bash -n scripts/extract-release-notes.sh; isolated fixture prepare/extract for 0.0.0-test; gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true; gh run view 26505760129 --repo nexttylabs/kubebar --json status,conclusion,jobs",
-        "verification_result": "PASS: release workflow YAML parsed; prepare/extract scripts passed bash -n; isolated fixture produced and extracted 0.0.0-test notes; GitHub Actions run 26505760129 completed successfully; prepare-release-notes job prepared and validated notes; dry-run skipped PR creation as intended.",
-        "notes": "Implemented U2 only: Release workflow now supports workflow_dispatch mode=prepare, validates version/date, prepares CHANGELOG.md, validates release notes, supports dry-run, and opens a release notes PR when dry_run=false. Docs now describe GitHub-first release notes preparation.",
-        "recorded_at": "2026-05-27T10:30:38Z"
-      },
-      "closed_at": "2026-05-27T10:30:48Z"
-    },
-    "3": {
-      "step_id": "U3",
-      "state": "closed",
-      "result": "A reviewed release can be published from GitHub Actions.",
-      "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
-      "test_scenarios": [
-        "missing finalized notes fail before publishing",
-        "dry-run publish does not create a tag or GitHub Release",
-        "real publish creates vX.Y.Z, uploads Kubebar.zip, and appends the ad-hoc signing warning",
-        "existing tag fails before overwriting release state"
-      ],
-      "discovery_cache": [
-        {
-          "path": ".github/workflows/release.yml",
-          "reason": "current tag-push publisher"
-        },
-        {
-          "path": "scripts/extract-release-notes.sh",
-          "reason": "release note validation"
-        },
-        {
-          "path": "scripts/build-release.sh",
-          "reason": "release artifact build"
-        },
-        {
-          "path": "CHANGELOG.md",
-          "reason": "final release history"
-        },
-        {
-          "path": "docs/RELEASING.md",
-          "reason": "document GitHub-first release path"
-        }
-      ],
-      "depends_on": [
-        2
-      ],
-      "agent_hint": null,
-      "activated_at": "2026-05-27T10:31:11Z",
-      "execution_evidence": {
-        "changed_files": [
-          ".github/workflows/release.yml",
-          "docs/RELEASING.md",
-          ".imm/memory/current_iteration.json"
-        ],
-        "verification_command": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")'; bash -n scripts/prepare-changelog-release.sh; bash -n scripts/extract-release-notes.sh; bash -n scripts/build-release.sh; isolated fixture prepare/extract for 0.0.0-test; gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true; gh run view 26505927703 --repo nexttylabs/kubebar --json status,conclusion,jobs; git ls-remote --tags origin refs/tags/v0.0.0-test",
-        "verification_result": "PASS: release workflow YAML parsed; scripts passed bash -n; fixture release notes extraction passed; GitHub Actions run 26505927703 completed successfully; dry-run publish checked tag availability, extracted release notes, skipped build/tag/release as intended; no v0.0.0-test tag exists on origin.",
-        "notes": "Implemented U3 only: Release workflow now supports workflow_dispatch mode=publish, validates notes before publish, checks tag availability, creates/pushes tags only when dry_run=false, keeps tag-push fallback, and documents GitHub-first publishing.",
-        "recorded_at": "2026-05-27T10:35:23Z"
-      },
-      "closed_at": "2026-05-27T10:35:34Z"
+      "closed_at": "2026-06-01T15:56:58Z"
     }
   },
   "last_review": {
     "decision": "pass",
-    "evidence": "U3 verified: release workflow YAML parsed; release scripts passed bash -n and fixture extraction; GitHub Actions run 26505927703 completed successfully for mode=publish dry_run=true; tag availability and release-note extraction passed; Build and Package, Create Tag, and Create GitHub Release were skipped by dry-run; origin has no v0.0.0-test tag.",
-    "artifacts": "https://github.com/nexttylabs/kubebar/actions/runs/26505927703",
-    "notes": "Scope stayed within release workflow, release docs, and workflow state. Real publish remains gated by reviewed CHANGELOG.md notes and dry_run=false.",
-    "step_number": 3,
-    "step_id": "U3"
+    "evidence": "U1 verified: RED tests were added and failed on missing Health State Shift Alerts APIs; implementation added the Settings toggle, persisted default-off config, authorization/delivery boundaries, display-model alert tracker, stale exclusion, deduplication, and refresh-result delivery wiring. swift test passed with 218 tests, and the full Swift quality gate passed.",
+    "artifacts": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+    "notes": "Scope stayed within Health State Shift Alerts and Settings; no resource-pressure alerting, historical monitoring, Kubernetes reads, or HealthEvaluator rule changes were added.",
+    "step_number": 1,
+    "step_id": "U1"
   },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-    "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
+    "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+    "plan_signature": "8ee40c41ed03645db1cd176577f2bd4bdc3061deaffe165b2461756f73e5b878",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "Changelog candidate generation opens or updates a reviewable GitHub PR.",
-        "verification": "gh workflow run changelog-candidates.yml --repo nexttylabs/kubebar --ref main -f from_ref=v0.3.1 -f to_ref=HEAD -f output_prefix=release-v0.3.2",
+        "result": "Settings-controlled Health State Shift Alerts notify only on true deterioration.",
+        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
         "depends_on": [],
-        "discovery_cache": [
-          {
-            "path": ".github/workflows/changelog-candidates.yml",
-            "reason": "candidate workflow to extend"
-          },
-          {
-            "path": "scripts/generate-changelog-candidates.sh",
-            "reason": "candidate fragment generator"
-          },
-          {
-            "path": "docs/RELEASING.md",
-            "reason": "document GitHub-first candidate flow"
-          }
-        ]
-      },
-      {
-        "number": 2,
-        "step_id": "U2",
-        "result": "Release preparation opens or updates a reviewable CHANGELOG PR.",
-        "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=prepare -f version=0.0.0-test -f dry_run=true",
-        "depends_on": [
-          1
-        ],
-        "discovery_cache": [
-          {
-            "path": ".github/workflows/release.yml",
-            "reason": "current tag-push publisher"
-          },
-          {
-            "path": "scripts/prepare-changelog-release.sh",
-            "reason": "finalizes CHANGELOG.md"
-          },
-          {
-            "path": "scripts/extract-release-notes.sh",
-            "reason": "release note validation"
-          },
-          {
-            "path": "scripts/build-release.sh",
-            "reason": "release artifact build"
-          },
-          {
-            "path": "CHANGELOG.md",
-            "reason": "final release history"
-          },
-          {
-            "path": "docs/RELEASING.md",
-            "reason": "document GitHub-first release path"
-          }
-        ]
-      },
-      {
-        "number": 3,
-        "step_id": "U3",
-        "result": "A reviewed release can be published from GitHub Actions.",
-        "verification": "gh workflow run release.yml --repo nexttylabs/kubebar --ref main -f mode=publish -f version=0.0.0-test -f dry_run=true",
-        "depends_on": [
-          2
-        ],
-        "discovery_cache": [
-          {
-            "path": ".github/workflows/release.yml",
-            "reason": "current tag-push publisher"
-          },
-          {
-            "path": "scripts/extract-release-notes.sh",
-            "reason": "release note validation"
-          },
-          {
-            "path": "scripts/build-release.sh",
-            "reason": "release artifact build"
-          },
-          {
-            "path": "CHANGELOG.md",
-            "reason": "final release history"
-          },
-          {
-            "path": "docs/RELEASING.md",
-            "reason": "document GitHub-first release path"
-          }
-        ]
+        "discovery_cache": [],
+        "parallel_probes": []
       }
     ]
   },
@@ -407,11 +232,96 @@
         "step_id": "U3",
         "decision": "pass"
       }
+    },
+    {
+      "at": "2026-06-01T15:48:40Z",
+      "action": "sync_plan_reset_completed_steps",
+      "details": {
+        "from_plan": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+        "to_plan": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+        "reason": "Plan switched; reset completion state."
+      }
+    },
+    {
+      "at": "2026-06-01T15:48:40Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+        "plan_signature": "8ee40c41ed03645db1cd176577f2bd4bdc3061deaffe165b2461756f73e5b878",
+        "plan_summary": "Settings can enable macOS notifications for true Health category or",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-06-01T15:49:23Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+        "step_number": 1,
+        "step_id": "U1",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-01T15:56:47Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          "CONTEXT.md",
+          ".imm/specs/2026-06-01-health-state-shift-alerts.md",
+          "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+          "KubebarCore/Services/AppConfigStore.swift",
+          "KubebarCore/Models/StartAtLoginState.swift",
+          "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Models/MenuRuntimeState.swift",
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "Kubebar/Services/LoginItemController.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "KubebarTests/Services/AppConfigStoreTests.swift",
+          "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift",
+          "docs/architecture/runtime-invariants.md"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-01T15:56:58Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass"
+      }
     }
   ],
   "requires_replan": false,
-  "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-  "plan_summary": "GitHub Actions can drive changelog review, release preparation, and publishing.",
-  "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
-  "plan_last_validated_at": "2026-05-27T10:21:56Z"
+  "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+  "plan_summary": "Settings can enable macOS notifications for true Health category or",
+  "plan_signature": "8ee40c41ed03645db1cd176577f2bd4bdc3061deaffe165b2461756f73e5b878",
+  "plan_last_validated_at": "2026-06-01T15:48:40Z",
+  "pending_follow_up": null
 }

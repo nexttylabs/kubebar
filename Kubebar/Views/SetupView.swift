@@ -8,6 +8,7 @@ struct SetupView: View {
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
+    let onToggleHealthShiftAlerts: (Bool) -> Void
     let onContentHeightChange: (CGFloat) -> Void
 
     init(
@@ -17,6 +18,7 @@ struct SetupView: View {
         onSelectContext: @escaping (String?) -> Void = { _ in },
         onRetryTargets: @escaping () -> Void = {},
         onToggleStartAtLogin: @escaping (Bool) -> Void = { _ in },
+        onToggleHealthShiftAlerts: @escaping (Bool) -> Void = { _ in },
         onContentHeightChange: @escaping (CGFloat) -> Void = { _ in }
     ) {
         _state = state
@@ -25,6 +27,7 @@ struct SetupView: View {
         self.onSelectContext = onSelectContext
         self.onRetryTargets = onRetryTargets
         self.onToggleStartAtLogin = onToggleStartAtLogin
+        self.onToggleHealthShiftAlerts = onToggleHealthShiftAlerts
         self.onContentHeightChange = onContentHeightChange
     }
 
@@ -36,6 +39,7 @@ struct SetupView: View {
                 watchlistPicker
                 refreshCadencePicker
                 startAtLoginToggle
+                healthShiftAlertsToggle
                 footer
             }
             .padding(20)
@@ -124,6 +128,20 @@ struct SetupView: View {
         }
     }
 
+    private var healthShiftAlertsToggle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Health State Shift Alerts", isOn: healthShiftAlertsBinding)
+                .help(Text("Notify when cluster health or watched items get worse."))
+                .accessibilityLabel(Text("Health State Shift Alerts"))
+
+            if let message = state.healthShiftAlerts.message, !message.isEmpty {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private var footer: some View {
         HStack {
             if let configurationMessage = state.configurationMessage, !configurationMessage.isEmpty {
@@ -163,6 +181,13 @@ struct SetupView: View {
         Binding(
             get: { state.startAtLogin.isEnabled },
             set: { onToggleStartAtLogin($0) }
+        )
+    }
+
+    private var healthShiftAlertsBinding: Binding<Bool> {
+        Binding(
+            get: { state.healthShiftAlerts.isEnabled },
+            set: { onToggleHealthShiftAlerts($0) }
         )
     }
 }

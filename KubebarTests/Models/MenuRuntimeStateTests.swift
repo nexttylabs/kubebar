@@ -62,7 +62,8 @@ struct MenuRuntimeStateTests {
                 .namespace("api"),
                 .workload(namespace: "ops", name: "worker", kind: .deployment)
             ],
-            refreshIntervalSeconds: 120
+            refreshIntervalSeconds: 120,
+            healthShiftAlertsEnabled: true
         )
         var state = MenuRuntimeState(config: config)
 
@@ -71,6 +72,7 @@ struct MenuRuntimeStateTests {
         #expect(state.setupState.selectedContext == "prod")
         #expect(state.setupState.watchlist.selectedTargets == [.namespace("api")])
         #expect(state.setupState.refreshCadence == .twoMinutes)
+        #expect(state.setupState.healthShiftAlerts.isEnabled)
         #expect(state.setupState.configurationMessage == nil)
     }
 
@@ -100,12 +102,14 @@ struct MenuRuntimeStateTests {
         _ = state.selectContext("staging")
         state.setupState.watchlist.toggle(.namespace("ops"))
         state.selectRefreshCadence(.twoMinutes)
+        state.applyHealthShiftAlertsState(HealthShiftAlertsState(isEnabled: true))
 
         state.prepareSettings(config: config)
 
         #expect(state.setupState.selectedContext == "staging")
         #expect(state.setupState.watchlist.isSelected(.namespace("ops")))
         #expect(state.setupState.refreshCadence == .twoMinutes)
+        #expect(state.setupState.healthShiftAlerts.isEnabled)
         #expect(state.surface == .menu)
     }
 
@@ -173,5 +177,17 @@ struct MenuRuntimeStateTests {
         #expect(config.selectedContext == "prod")
         #expect(config.watchTargets == [.namespace("api")])
         #expect(config.refreshIntervalSeconds == RefreshCadence.default.seconds)
+    }
+
+    @Test("completed config saves health shift alert setting")
+    func completedConfigSavesHealthShiftAlertSetting() throws {
+        var state = MenuRuntimeState(config: AppConfig())
+        _ = state.selectContext("prod")
+        state.setupState.watchlist.toggle(.namespace("api"))
+        state.applyHealthShiftAlertsState(HealthShiftAlertsState(isEnabled: true))
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.healthShiftAlertsEnabled)
     }
 }

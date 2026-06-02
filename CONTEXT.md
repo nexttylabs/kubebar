@@ -15,6 +15,10 @@
 - **Start at Login setting**: a macOS app setting that controls whether
   Kubebar opens automatically after the user logs in. It is local app behavior,
   not Kubernetes configuration, and it must not affect Health category.
+- **Health State Shift Alerts**: optional macOS notifications for true
+  directionally worse Health category or watchlist attention changes. They are
+  local app behavior, consume `MenuDisplayModel`, and must not add new health
+  rules.
 
 ## Vocabulary Guard
 

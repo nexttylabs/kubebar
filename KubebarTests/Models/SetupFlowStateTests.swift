@@ -99,4 +99,12 @@ struct SetupFlowStateTests {
         #expect(!state.startAtLogin.isEnabled)
         #expect(state.startAtLogin.message == nil)
     }
+
+    @Test("health shift alerts default off without a message")
+    func healthShiftAlertsDefaultOffWithoutMessage() {
+        let state = SetupFlowState()
+
+        #expect(!state.healthShiftAlerts.isEnabled)
+        #expect(state.healthShiftAlerts.message == nil)
+    }
 }
