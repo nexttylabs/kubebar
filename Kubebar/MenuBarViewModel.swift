@@ -34,8 +34,12 @@ final class MenuBarViewModel: ObservableObject {
     private var staleReason: String?
     private let k9sHandoffCoordinator: K9sHandoffCoordinator
     private let startAtLoginSettings: StartAtLoginSettingsCoordinator
+    private let healthShiftAlertSettings: HealthShiftAlertSettingsCoordinator
+    private let healthShiftAlertNotifier: any HealthShiftAlertNotifying
     private let networkReachability: any NetworkReachability
     private var isNetworkAvailable: Bool = true
+    private var healthShiftAlertTracker: HealthShiftAlertTracker
+    private var healthShiftAlertSettingsRequestGate: HealthShiftAlertSettingsRequestGate
 
     /// Delay before resuming automatic refresh after network recovery.
     /// Avoids rapid kubectl calls during unstable Wi-Fi reconnection.
@@ -50,6 +54,7 @@ final class MenuBarViewModel: ObservableObject {
         startAtLoginSettings: StartAtLoginSettingsCoordinator = StartAtLoginSettingsCoordinator(
             controller: SystemStartAtLoginController()
         ),
+        healthShiftAlertNotifier: any HealthShiftAlertNotifying = SystemHealthShiftAlertNotifier(),
         networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
         now: Date = Date()
     ) {
@@ -59,6 +64,8 @@ final class MenuBarViewModel: ObservableObject {
         self.watchTargetCatalog = watchTargetCatalog
         self.k9sHandoffCoordinator = k9sHandoffCoordinator
         self.startAtLoginSettings = startAtLoginSettings
+        self.healthShiftAlertSettings = HealthShiftAlertSettingsCoordinator(authorizer: healthShiftAlertNotifier)
+        self.healthShiftAlertNotifier = healthShiftAlertNotifier
         self.networkReachability = networkReachability
 
         do {
@@ -78,6 +85,8 @@ final class MenuBarViewModel: ObservableObject {
         self.staleReason = nil
         self.display = Self.initialDisplay(for: config, now: now)
         self.k9sHandoffState = .idle
+        self.healthShiftAlertTracker = HealthShiftAlertTracker()
+        self.healthShiftAlertSettingsRequestGate = HealthShiftAlertSettingsRequestGate()
 
         self.k9sHandoffCoordinator.onStateChange = { [weak self] state in
             self?.k9sHandoffState = state
@@ -166,6 +175,7 @@ final class MenuBarViewModel: ObservableObject {
 
     func prepareSettings() {
         k9sHandoffCoordinator.clear()
+        healthShiftAlertSettingsRequestGate.invalidate()
         runtimeState.prepareSettings(config: config)
         runtimeState.applyStartAtLoginState(startAtLoginSettings.currentState())
         publishRuntimeState()
@@ -183,10 +193,10 @@ final class MenuBarViewModel: ObservableObject {
             return false
         }
 
-        config = completedConfig
-
         do {
-            try configStore.save(config)
+            try configStore.save(completedConfig)
+            config = completedConfig
+            healthShiftAlertSettingsRequestGate.invalidate()
             invalidateRefreshState(clearSnapshot: true)
             display = Self.initialDisplay(for: config, now: Date())
             runtimeState.completeSetupSaved()
@@ -211,6 +221,27 @@ final class MenuBarViewModel: ObservableObject {
             }.value
 
             runtimeState.applyStartAtLoginState(updatedState)
+            publishRuntimeState()
+        }
+    }
+
+    func setHealthShiftAlertsEnabled(_ isEnabled: Bool) {
+        let requestToken = healthShiftAlertSettingsRequestGate.beginRequest()
+
+        guard isEnabled else {
+            runtimeState.applyHealthShiftAlertsState(HealthShiftAlertsState(isEnabled: false))
+            publishRuntimeState()
+            return
+        }
+
+        let coordinator = healthShiftAlertSettings
+        Task {
+            let updatedState = await coordinator.setEnabled(true)
+            guard healthShiftAlertSettingsRequestGate.accepts(requestToken) else {
+                return
+            }
+
+            runtimeState.applyHealthShiftAlertsState(updatedState)
             publishRuntimeState()
         }
     }
@@ -398,6 +429,7 @@ final class MenuBarViewModel: ObservableObject {
         freshnessTimerTask = nil
         staleReason = nil
         k9sHandoffCoordinator.clear()
+        healthShiftAlertTracker.reset()
 
         if clearSnapshot {
             snapshot = nil
@@ -407,10 +439,23 @@ final class MenuBarViewModel: ObservableObject {
     private func applyRefreshResult(_ result: RefreshResult) {
         snapshot = result.snapshot
         display = result.display
+        let alert = healthShiftAlertTracker.record(result.display)
         staleReason = result.display.staleBanner?.reason
         resetK9sHandoffStateForCurrentDisplay()
         k9sHandoffState = k9sHandoffCoordinator.state
+        deliverHealthShiftAlertIfNeeded(alert)
         scheduleFreshnessTimer()
+    }
+
+    private func deliverHealthShiftAlertIfNeeded(_ alert: HealthShiftAlert?) {
+        guard config.healthShiftAlertsEnabled, let alert else {
+            return
+        }
+
+        let notifier = healthShiftAlertNotifier
+        Task {
+            await notifier.deliver(alert)
+        }
     }
 
     private func updateFreshnessDisplay(now: Date = Date()) {

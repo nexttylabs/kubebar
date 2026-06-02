@@ -20,7 +20,8 @@ struct KubebarApp: App {
                 onComplete: viewModel.completeSetup,
                 onSelectContext: viewModel.selectSetupContext,
                 onRetryTargets: viewModel.retryWatchTargetLoad,
-                onToggleStartAtLogin: viewModel.setStartAtLoginEnabled
+                onToggleStartAtLogin: viewModel.setStartAtLoginEnabled,
+                onToggleHealthShiftAlerts: viewModel.setHealthShiftAlertsEnabled
             )
         }
     }

@@ -1,0 +1,1 @@
+- Add optional Health State Shift Alerts in Settings so Kubebar can notify users when cluster health or watched workloads worsen.

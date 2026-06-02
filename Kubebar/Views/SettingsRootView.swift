@@ -10,6 +10,7 @@ struct SettingsRootView: View {
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
+    let onToggleHealthShiftAlerts: (Bool) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var contentHeight = SettingsWindowLayout.minimumHeight
 
@@ -21,6 +22,7 @@ struct SettingsRootView: View {
             onSelectContext: onSelectContext,
             onRetryTargets: onRetryTargets,
             onToggleStartAtLogin: onToggleStartAtLogin,
+            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts,
             onContentHeightChange: updateContentHeight
         )
         .frame(

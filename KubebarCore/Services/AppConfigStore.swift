@@ -4,21 +4,25 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public let selectedContext: String?
     public let watchTargets: [WatchTarget]
     public let refreshIntervalSeconds: Int
+    public let healthShiftAlertsEnabled: Bool
 
     private enum CodingKeys: String, CodingKey {
         case selectedContext
         case watchTargets
         case refreshIntervalSeconds
+        case healthShiftAlertsEnabled
     }
 
     public init(
         selectedContext: String? = nil,
         watchTargets: [WatchTarget] = [],
-        refreshIntervalSeconds: Int = RefreshCadence.default.seconds
+        refreshIntervalSeconds: Int = RefreshCadence.default.seconds,
+        healthShiftAlertsEnabled: Bool = false
     ) {
         self.selectedContext = selectedContext
         self.watchTargets = watchTargets
         self.refreshIntervalSeconds = RefreshCadence.from(seconds: refreshIntervalSeconds).seconds
+        self.healthShiftAlertsEnabled = healthShiftAlertsEnabled
     }
 
     public var needsSetup: Bool {
@@ -35,7 +39,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.init(
             selectedContext: try container.decodeIfPresent(String.self, forKey: .selectedContext),
             watchTargets: try container.decodeIfPresent([WatchTarget].self, forKey: .watchTargets) ?? [],
-            refreshIntervalSeconds: try container.decodeIfPresent(Int.self, forKey: .refreshIntervalSeconds) ?? RefreshCadence.default.seconds
+            refreshIntervalSeconds: try container.decodeIfPresent(Int.self, forKey: .refreshIntervalSeconds) ?? RefreshCadence.default.seconds,
+            healthShiftAlertsEnabled: try container.decodeIfPresent(Bool.self, forKey: .healthShiftAlertsEnabled) ?? false
         )
     }
 
@@ -45,6 +50,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encodeIfPresent(selectedContext, forKey: .selectedContext)
         try container.encode(watchTargets, forKey: .watchTargets)
         try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
+        try container.encode(healthShiftAlertsEnabled, forKey: .healthShiftAlertsEnabled)
     }
 }
 

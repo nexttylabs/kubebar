@@ -15,6 +15,7 @@ struct AppConfigStoreTests {
         #expect(config.needsSetup)
         #expect(config.refreshIntervalSeconds == 60)
         #expect(config.refreshCadence == .oneMinute)
+        #expect(!config.healthShiftAlertsEnabled)
     }
 
     @Test("unknown refresh interval normalizes to default")
@@ -27,6 +28,28 @@ struct AppConfigStoreTests {
 
         #expect(config.refreshIntervalSeconds == 60)
         #expect(config.refreshCadence == .oneMinute)
+        #expect(!config.healthShiftAlertsEnabled)
+    }
+
+    @Test("saved config without health shift alert setting defaults off")
+    func savedConfigWithoutHealthShiftAlertSettingDefaultsOff() throws {
+        let directory = makeTemporaryDirectory()
+        let configURL = directory.appendingPathComponent("config.json")
+        let json = """
+        {
+          "selectedContext": "prod",
+          "refreshIntervalSeconds": 60,
+          "watchTargets": [
+            {"namespace": {"_0": "api"}}
+          ]
+        }
+        """
+        try json.write(to: configURL, atomically: true, encoding: .utf8)
+        let store = AppConfigStore(directory: directory)
+
+        let config = try store.load()
+
+        #expect(!config.healthShiftAlertsEnabled)
     }
 
     @Test("unknown saved refresh interval loads as default")
@@ -60,7 +83,8 @@ struct AppConfigStoreTests {
                 .workload(namespace: "api", name: "checkout", kind: .deployment),
                 .namespace("monitoring")
             ],
-            refreshIntervalSeconds: 60
+            refreshIntervalSeconds: 60,
+            healthShiftAlertsEnabled: true
         )
 
         try store.save(config)

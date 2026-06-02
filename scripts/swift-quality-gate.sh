@@ -101,6 +101,11 @@ run_changelog_tool_checks() {
   ./scripts/test-changelog-tools.sh
 }
 
+run_release_build_version_checks() {
+  echo "Running release build version checks"
+  ./scripts/test-release-build-version.sh
+}
+
 run_xcode_checks() {
   local workspaces=()
   local projects=()
@@ -193,6 +198,7 @@ main() {
   echo "Swift quality gate mode: $MODE"
 
   run_changelog_tool_checks
+  run_release_build_version_checks
 
   run_xcode_checks
 

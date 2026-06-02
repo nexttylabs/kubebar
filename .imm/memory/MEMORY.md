@@ -1,12 +1,16 @@
 # Immune-Brain Summary
 
 ## 当前状态
-- **最新摘要**: Closed: Start at Login settings step U1 completed
-- **待办事项**: Next: Continue on regular review workflow; monitor for follow-up regressions in login item edge cases.
-- **最后同步**: 2026-05-27 17:38:45
+- **最新摘要**: Closed: release build version metadata sync completed; captured reusable release-tooling guidance for synchronizing release inputs, xcodebuild settings, and packaged Info.plist metadata.
+- **待办事项**: Next: work is closed; optional next step is to commit/publish these changes or start a new scoped task.
+- **最后同步**: 2026-06-02 09:40:25
 
 ## Knowledge Index
 
+- `docs/solutions/release-tooling/release-build-version-metadata-2026-06-02.md`:
+  reusable pattern for keeping release version inputs, Xcode build settings, and
+  packaged app `Info.plist` metadata synchronized with fake-tool tests and
+  post-build verification.
 - `docs/solutions/app-settings/start-at-login-boundary-2026-05-19.md`:
   reusable pattern for macOS-only settings that mutate system state through an
   app-target boundary while keeping state transitions testable in KubebarCore.

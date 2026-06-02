@@ -129,6 +129,21 @@ These are the rules Kubebar must keep true at runtime.
 - Start at Login is configured in Settings through macOS login items. It is
   local app behavior and must not affect saved Kubernetes context, watchlist,
   refresh cadence, stale handling, or Health category.
+- Health State Shift Alerts are configured in Settings through macOS
+  notifications. They are optional local app behavior, consume display-model
+  health state, and must not introduce new Health category rules or resource
+  pressure alerting.
+- Health State Shift Alerts must not treat `Stale` as a fresh directional
+  deterioration. Stale remains visible in the menu instead of being folded into
+  OK, Watch, or Bad notification comparisons.
+- Health State Shift Alerts compare the full display-model watchlist fingerprint
+  for notification decisions, not only the first-screen capped rows.
+- Health State Shift Alerts must key watched items by stable target identity.
+  Same-title workloads with different kinds, such as Deployment and
+  StatefulSet `team/api`, remain distinct for notification comparisons.
+- A same-`Bad` watchlist row does not notify merely because display text changed.
+  It must be newly `Bad`, severity-worse, or have a structured affected-pod
+  count increase.
 - If refresh fails before any successful snapshot exists, the stale reason is
   `No previous cluster data`.
 - If no valid configuration exists, the app shows setup or recovery state

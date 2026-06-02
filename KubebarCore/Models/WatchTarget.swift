@@ -13,6 +13,15 @@ public enum WatchTarget: Codable, Equatable, Hashable, Sendable {
         }
     }
 
+    public var stableID: String {
+        switch self {
+        case let .namespace(name):
+            "namespace:\(name)"
+        case let .workload(namespace, name, kind):
+            "workload:\(kind.rawValue):\(namespace):\(name)"
+        }
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: TargetCodingKeys.self)
 

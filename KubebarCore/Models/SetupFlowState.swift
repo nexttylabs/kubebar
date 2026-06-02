@@ -16,6 +16,7 @@ public struct SetupFlowState: Equatable, Sendable {
     public var configurationMessage: String?
     public var refreshCadence: RefreshCadence
     public var startAtLogin: StartAtLoginState
+    public var healthShiftAlerts: HealthShiftAlertsState
 
     public init(
         selectedContext: String? = nil,
@@ -24,7 +25,8 @@ public struct SetupFlowState: Equatable, Sendable {
         targetLoadingState: WatchTargetLoadingState = .idle,
         configurationMessage: String? = nil,
         refreshCadence: RefreshCadence = .default,
-        startAtLogin: StartAtLoginState = StartAtLoginState()
+        startAtLogin: StartAtLoginState = StartAtLoginState(),
+        healthShiftAlerts: HealthShiftAlertsState = HealthShiftAlertsState()
     ) {
         self.selectedContext = selectedContext
         self.availableContexts = availableContexts
@@ -33,6 +35,7 @@ public struct SetupFlowState: Equatable, Sendable {
         self.configurationMessage = configurationMessage
         self.refreshCadence = refreshCadence
         self.startAtLogin = startAtLogin
+        self.healthShiftAlerts = healthShiftAlerts
     }
 
     public var isConfigured: Bool {
