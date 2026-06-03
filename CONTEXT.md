@@ -19,12 +19,19 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **App Settings tab**: the fixed first Settings tab for global app behavior
+  such as refresh cadence, Start at Login, and Health State Shift Alerts. It is
+  not tied to a Kubernetes context.
+- **Context Settings tab**: a Settings tab generated from local context
+  information. It edits the per-context watchlist for exactly one Kubernetes
+  context.
 - **Per-context watchlist**: a saved set of watch targets keyed by Kubernetes
   context name. Kubebar still has one active selected context at a time, but
   each context may keep its own watchlist for refreshes and Settings editing.
-- **Quick Context Selector**: the menu-surface control that switches Kubebar's
-  active app-owned selected context. It must use the active context's
-  per-context watchlist and must not change the terminal's current context.
+- **Quick Context Selector**: the menu-surface submenu that switches Kubebar's
+  active app-owned selected context. It must list local context information,
+  use the active context's per-context watchlist, and must not change the
+  terminal's current context.
 - **Release build version**: the app bundle build number (`CFBundleVersion` /
   `CURRENT_PROJECT_VERSION`) used for release artifacts. It must move in sync
   with release publishing and stay distinct from the user-facing marketing
@@ -43,3 +50,11 @@ explicitly changes that scope.
   metadata, `scripts/test-release-build-version.sh` guards release metadata
   regressions, `project.yml` provides XcodeGen defaults, and
   `docs/RELEASING.md` documents release-owner behavior.
+- Context and Settings state: `KubebarCore/Services/AppConfigStore.swift` owns
+  saved active context and per-context watchlists,
+  `KubebarCore/Models/SetupFlowState.swift` and
+  `KubebarCore/Models/MenuRuntimeState.swift` model Settings/menu state,
+  `Kubebar/MenuBarViewModel.swift` wires local context loading and active
+  context switching, and
+  `docs/solutions/architecture/per-context-watchlists-active-context-2026-06-03.md`
+  captures the reusable ownership pattern.

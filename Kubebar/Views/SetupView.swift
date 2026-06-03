@@ -35,10 +35,7 @@ struct SetupView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                contextWatchlistTabs
-                refreshCadencePicker
-                startAtLoginToggle
-                healthShiftAlertsToggle
+                settingsTabs
                 footer
             }
             .padding(20)
@@ -58,41 +55,110 @@ struct SetupView: View {
         }
     }
 
-    private var contextWatchlistTabs: some View {
+    private var settingsTabs: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Cluster contexts")
-                .font(.headline)
+            settingsTabPicker
+            selectedSettingsTabContent
+        }
+    }
 
-            Text(state.contextHelpText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            if state.contextTabs.isEmpty {
-                Text("No contexts available.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
-            } else {
-                Picker("Cluster context", selection: selectedContextBinding) {
-                    ForEach(state.contextTabs, id: \.self) { context in
-                        Text(context)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .help(Text(context))
-                            .accessibilityLabel(context)
-                            .tag(Optional(context))
-                    }
-                }
+    @ViewBuilder
+    private var settingsTabPicker: some View {
+        if state.settingsTabs.count > 4 {
+            settingsTabPickerContent
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            settingsTabPickerContent
                 .pickerStyle(.segmented)
+        }
+    }
 
-                WatchlistPickerView(
-                    state: watchlistBinding,
-                    loadingState: state.targetLoadingState,
-                    onRetryTargets: onRetryTargets
-                )
+    private var settingsTabPickerContent: some View {
+        Picker("Settings tab", selection: selectedSettingsTabBinding) {
+            ForEach(state.settingsTabs, id: \.self) { tab in
+                Text(tab.title)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(tab.helpText))
+                    .accessibilityLabel(Text(tab.helpText))
+                    .tag(tab)
             }
+        }
+        .labelsHidden()
+    }
+
+    @ViewBuilder
+    private var selectedSettingsTabContent: some View {
+        switch state.selectedSettingsTab {
+        case .appSettings:
+            appSettingsContent
+        case let .context(context):
+            contextSettingsContent(for: context)
+        }
+    }
+
+    private var appSettingsContent: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            refreshCadencePicker
+            startAtLoginToggle
+            healthShiftAlertsToggle
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func contextSettingsContent(for context: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Context watchlist")
+                    .font(.headline)
+
+                Text(context)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(Text(context))
+                    .accessibilityLabel(Text(context))
+            }
+
+            WatchlistPickerView(
+                state: watchlistBinding,
+                loadingState: state.targetLoadingState,
+                onRetryTargets: onRetryTargets
+            )
+        }
+    }
+
+    private var selectedSettingsTabBinding: Binding<SettingsTabSelection> {
+        Binding(
+            get: { state.selectedSettingsTab },
+            set: { tab in
+                switch tab {
+                case .appSettings:
+                    state.selectAppSettingsTab()
+                    state.configurationMessage = nil
+                case let .context(context):
+                    onSelectContext(context)
+                }
+            }
+        )
+    }
+
+    private var footerHelpText: String {
+        switch state.selectedSettingsTab {
+        case .appSettings:
+            if state.contextTabs.isEmpty {
+                return "No contexts available."
+            }
+
+            if let context = state.selectedContextForCompletedConfig {
+                return "Active context: \(context)"
+            }
+
+            return "Choose a context tab to finish setup."
+        case .context:
+            return state.watchlistHelpText
         }
     }
 
@@ -145,9 +211,10 @@ struct SetupView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                Text(state.watchlistHelpText)
+                Text(footerHelpText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
 
             Spacer()
@@ -157,13 +224,6 @@ struct SetupView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(!state.isConfigured)
         }
-    }
-
-    private var selectedContextBinding: Binding<String?> {
-        Binding(
-            get: { state.selectedContext },
-            set: { onSelectContext($0) }
-        )
     }
 
     private var watchlistBinding: Binding<WatchlistSelectionState> {

@@ -75,6 +75,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
 
         try container.encodeIfPresent(selectedContext, forKey: .selectedContext)
         try container.encode(watchlistsByContext, forKey: .watchlistsByContext)
+        try container.encode(watchTargets, forKey: .watchTargets)
         try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
         try container.encode(healthShiftAlertsEnabled, forKey: .healthShiftAlertsEnabled)
     }

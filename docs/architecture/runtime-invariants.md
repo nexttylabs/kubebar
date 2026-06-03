@@ -37,6 +37,8 @@ These are the rules Kubebar must keep true at runtime.
 - The Quick Context Selector changes only Kubebar's app-owned selected context.
   It must not call `kubectl config use-context`, mutate kubeconfig's current
   context, or depend on the terminal's current context.
+- The Quick Context Selector lives in a nested menu control on the menu surface,
+  not as a standalone top-level row above the menu tabs.
 - `CommandRunner` remains an injectable boundary so reads can be tested without
   shelling out.
 - Kubebar uses `kubectl` only for the saved context and the status/setup reads
@@ -174,6 +176,8 @@ These are the rules Kubebar must keep true at runtime.
   cluster.
 - A selected context with no saved active watchlist is configuration-required,
   not `OK`.
+- Settings keeps `App Settings` as the fixed first tab. Refresh cadence, Start
+  at Login, and Health State Shift Alerts remain app-wide settings in that tab.
 - Settings context tabs must include both available kubectl contexts and locally
   saved contexts with watchlists, so local config does not disappear when
   kubeconfig is temporarily unavailable.

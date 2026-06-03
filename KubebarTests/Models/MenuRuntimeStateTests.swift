@@ -329,6 +329,30 @@ struct MenuRuntimeStateTests {
         #expect(config.watchTargets.map(\.displayTitle) == ["ops", "web"])
     }
 
+    @Test("completed config from app settings preserves active context")
+    func completedConfigFromAppSettingsPreservesActiveContext() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+        state.selectAppSettingsTab()
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.selectedContext == "prod")
+        #expect(config.watchlistsByContext["prod"]?.map(\.displayTitle) == ["api"])
+        #expect(config.watchlistsByContext["stage"]?.map(\.displayTitle) == ["ops", "web"])
+        #expect(config.watchTargets.map(\.displayTitle) == ["api"])
+    }
+
     @Test("start at login state does not affect completed config")
     func startAtLoginStateDoesNotAffectCompletedConfig() throws {
         var state = MenuRuntimeState(config: AppConfig())

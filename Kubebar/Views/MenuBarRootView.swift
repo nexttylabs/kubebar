@@ -26,12 +26,6 @@ struct MenuBarRootView: View {
 
     private var menuContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ContextSelectorView(
-                activeContextName: activeContextName,
-                contexts: contextSelectorContexts,
-                onSelectContext: onSelectContext
-            )
-
             mainContent
                 .frame(maxWidth: .infinity, alignment: .topLeading)
 
@@ -39,7 +33,10 @@ struct MenuBarRootView: View {
             MenuFooterView(
                 lastUpdated: display.lastUpdated,
                 isRefreshing: isRefreshing,
+                activeContextName: activeContextName,
+                contextSelectorContexts: contextSelectorContexts,
                 onRefresh: onRefresh,
+                onSelectContext: onSelectContext,
                 onOpenSettings: openSettingsFromMenu,
                 onQuit: onQuit
             )
@@ -218,7 +215,7 @@ struct MenuBarRootView: View {
         static func selectedTabMaxContentHeight(forMenuMaxHeight menuMaxHeight: CGFloat) -> CGFloat {
             MenuLayoutSizing.contentHeight(
                 forMenuHeight: menuMaxHeight,
-                reservedHeight: MenuLayoutSizing.selectedTabReservedHeightWithContextSelector,
+                reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
                 preferredHeight: maximumSelectedTabContentHeight
             )
         }
@@ -233,66 +230,6 @@ struct MenuBarRootView: View {
                 minimumHeight: minimumMainContentHeight
             )
         }
-    }
-}
-
-private struct ContextSelectorView: View {
-    let activeContextName: String?
-    let contexts: [String]
-    let onSelectContext: (String) -> Void
-
-    var body: some View {
-        Menu {
-            if contexts.isEmpty {
-                Text("No contexts available")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(contexts, id: \.self) { context in
-                    Button {
-                        onSelectContext(context)
-                    } label: {
-                        Label {
-                            Text(context)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        } icon: {
-                            Image(systemName: context == activeContextName ? "checkmark" : "circle")
-                        }
-                    }
-                    .help(Text(context))
-                    .accessibilityLabel(Text(accessibilityLabel(for: context)))
-                }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "server.rack")
-                    .foregroundStyle(.secondary)
-                    .frame(width: 16)
-
-                Text("Context")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer(minLength: 8)
-
-                Text(activeContextName ?? "Not configured")
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .menuStyle(.button)
-        .help(Text(activeContextName ?? "No context selected"))
-        .accessibilityLabel(Text("Current context, \(activeContextName ?? "not configured")"))
-    }
-
-    private func accessibilityLabel(for context: String) -> String {
-        if context == activeContextName {
-            return "Current context, \(context)"
-        }
-
-        return "Switch to context \(context)"
     }
 }
 

@@ -51,6 +51,57 @@ struct SetupFlowStateTests {
         #expect(state.watchlist.isSelected(.namespace("api")))
     }
 
+    @Test("settings tabs start with app settings and then contexts")
+    func settingsTabsStartWithAppSettingsAndThenContexts() {
+        let state = SetupFlowState(
+            selectedContext: "prod",
+            availableContexts: ["stage"],
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
+            ]
+        )
+
+        #expect(state.settingsTabs == [.appSettings, .context("prod"), .context("stage")])
+        #expect(state.settingsTabs.first == .appSettings)
+    }
+
+    @Test("selecting app settings preserves current context watchlist edits")
+    func selectingAppSettingsPreservesCurrentContextWatchlistEdits() {
+        var state = SetupFlowState(
+            selectedContext: "prod",
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")]),
+                "stage": WatchlistSelectionState(selectedTargets: [.namespace("web")])
+            ]
+        )
+
+        state.selectContext("stage")
+        state.watchlist.toggle(.namespace("ops"))
+        state.selectAppSettingsTab()
+
+        #expect(state.selectedSettingsTab == .appSettings)
+        #expect(state.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("web")) == true)
+        #expect(state.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("ops")) == true)
+    }
+
+    @Test("app settings completion context keeps original selected context")
+    func appSettingsCompletionContextKeepsOriginalSelectedContext() {
+        var state = SetupFlowState(
+            selectedContext: "prod",
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")]),
+                "stage": WatchlistSelectionState(selectedTargets: [.namespace("web")])
+            ]
+        )
+
+        state.selectContext("stage")
+        state.selectAppSettingsTab()
+
+        #expect(state.selectedContext == "stage")
+        #expect(state.selectedContextForCompletedConfig == "prod")
+        #expect(state.isConfigured)
+    }
+
     @Test("configured setup can use settings save primary action")
     func configuredSetupCanUseSettingsSavePrimaryAction() {
         let state = SetupFlowState(

@@ -1,73 +1,69 @@
 # Kubebar Handoff
 
+**Last updated**: 2026-06-03T08:06:53Z
+
 ## Current State
 
-- Plan: `docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md`
-- Status: complete
+- Plan: `docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md`
+- Summary: Settings separates global app settings from context watchlist tabs, and the menu moves context switching into a nested submenu.
+- Status: complete; ready for optional `imm-compounder`.
 - Completed steps:
-  - U1 `App config supports compatible per-context watchlist storage.`
-  - U2 `Settings edits separate watchlists through context tabs.`
-  - U3 `The menu Quick Context Selector switches active context safely with the matching watchlist.`
-- Latest review: code-review follow-ups fixed; menu layout reserves the
-  top-level Context selector height, and runtime invariants now document
-  per-context watchlists plus Quick Context Selector behavior.
+  - U1 `Settings uses an App/Context tab structure.`
+  - U2 `The menu Quick Context Selector moves into a nested submenu.`
+- Active step: none.
+- Latest review: U2 passed QA after the preferred full Swift quality gate passed.
 
 ## Verification
 
-- `rtk swift test --filter 'AppConfigTests|MenuRuntimeStateTests|MenuBarRootViewTests'`
-- `/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local`
-- Passed with 240 tests in 28 suites after the layout follow-up.
-- `rtk git diff --check`
-  - Passed.
+- U1 passed:
+  - `swift build` passed outside sandbox after SwiftPM cache writes were blocked in sandbox.
+  - `swift build --target KubebarCoreTests` passed outside sandbox for the same cache reason.
+  - `rtk git diff --check` passed.
+- U2 passed:
+  - Preferred full quality gate passed: changelog tooling checks, release build version checks, Xcode build, Xcode test, SwiftPM build, SwiftPM test, and QA artifact generation check.
+  - Xcode test passed with 242 tests in 27 suites.
+  - SwiftPM test passed with 244 tests in 28 suites.
+  - `rtk git diff --check` passed.
 
 ## Notes
 
-- App config now stores `watchlistsByContext` and keeps legacy `watchTargets`
-  decode compatibility by migrating the old list under `selectedContext`.
-- `watchTargets` remains the active-context view of the config, so refreshes
-  use only the selected context's watchlist.
-- Settings now uses a segmented context control and preserves a separate
-  namespace watchlist per context.
-- The menu now shows a top-level `Context` selector. It lists saved and
-  available contexts, marks the current context, truncates long names, and keeps
-  full help/accessibility text.
-- The selected tab height budget now includes the Context selector so long tab
-  content stays capped within the visible menu height.
-- Selecting a configured context saves Kubebar's app-owned context, clears old
-  snapshot/freshness/handoff/alert state, rejects stale refresh results, restarts
-  the refresh loop, and refreshes with that context's watchlist.
-- Selecting a context without a watchlist saves that selected context and shows
-  the configuration-required state.
-- Refresh cadence, Start at Login, and Health State Shift Alerts remain global.
-- The selector does not call `kubectl config use-context` or otherwise mutate
-  the terminal/current kubeconfig context.
-- `docs/architecture/runtime-invariants.md` now records the new per-context
-  watchlist ownership, context-switch invalidation, and Settings tab rules.
-- No known blockers.
+- U1 implementation is closed under the replanned test-backed recovery closure.
+- U2 implementation moved the Quick Context Selector out of the top-level row and into the menu footer as a nested `Menu`.
+- `MenuBarRootView` now passes context selector state/actions into `MenuFooterView`.
+- `MenuLayoutSizing` no longer reserves the removed top-level context selector height for selected tab content.
+- `MenuLayoutSizingTests` now protects the no-top-selector height budget.
+- `docs/architecture/runtime-invariants.md` now states that Quick Context Selector is a nested menu control, not a standalone row.
+- The same-plan replanning ledger had to be repaired from old `replanning` to `pending` after the plan was revised and synced; this is recorded in `.imm/memory/current_iteration.json` history.
+- No subagents were dispatched for U2 because `imm_activation_plan` returned no candidates (`trigger_not_hit`).
 
 ## Compaction Handoff
 
-- Active plan: `docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md`
-- Active step: none; U1, U2, and U3 are closed.
-- Priority files:
-  - `KubebarCore/Services/AppConfigStore.swift`
-  - `KubebarCore/Models/SetupFlowState.swift`
-  - `KubebarCore/Models/MenuRuntimeState.swift`
-  - `Kubebar/MenuBarViewModel.swift`
-  - `Kubebar/Views/SetupView.swift`
-  - `Kubebar/Views/MenuBarRootView.swift`
-  - `KubebarCore/Services/MenuLayoutSizing.swift`
-  - `KubebarTests/Services/MenuLayoutSizingTests.swift`
-  - `docs/architecture/runtime-invariants.md`
-  - `Kubebar/KubebarApp.swift`
-- Uncommitted work summary: per-context watchlist persistence, Settings
-  context tabs, menu Quick Context Selector, menu layout budget follow-up,
-  runtime invariants follow-up, tests, spec/plan/context docs, workflow state,
-  skill registry support, and this handoff update.
-- Session decisions: per-context watchlists are namespace-only for this task;
-  cadence/start-at-login/alerts stay global; the menu changes only Kubebar's
-  app-owned selected context and never the terminal current context.
-- Verification note: a focused SwiftPM `MenuLayoutSizingTests` filter hung in
-  `swiftpm-xctest-helper` and was killed; the full quality gate subsequently
-  passed the same test suite.
-- Next boundary skill: optional `imm-compounder` for reusable learning capture.
+### Active plan
+
+`docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md`
+
+### Active step
+
+None. U1 and U2 are closed.
+
+### Files in play (compaction priority)
+
+1. `.imm/memory/current_iteration.json` - workflow state with both steps closed
+2. `docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md` - active plan with revised U2 verification closure
+3. `Kubebar/Views/MenuBarRootView.swift` - removed top-level selector row
+4. `Kubebar/Views/MenuFooterView.swift` - nested Quick Context Selector menu
+5. `KubebarCore/Services/MenuLayoutSizing.swift` - no-top-selector layout budget
+
+### Uncommitted work
+
+13 modified files and 3 untracked files. Top paths: `.imm/memory/current_iteration.json`, `Kubebar/Views/MenuBarRootView.swift`, `Kubebar/Views/MenuFooterView.swift`, `KubebarCore/Services/MenuLayoutSizing.swift`, `docs/architecture/runtime-invariants.md`, plus `.imm/memory/current_iteration_history.jsonl`.
+
+### Decisions this session
+
+- U1 is closed and should not be reopened unless new evidence appears.
+- U2 is closed by QA pass; fallback was not used because the preferred full quality gate passed.
+- Do not advance to `imm-compounder`.
+
+### Next boundary
+
+Optional `imm-compounder` for reusable learning capture.

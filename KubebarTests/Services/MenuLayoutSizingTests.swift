@@ -53,8 +53,8 @@ struct MenuLayoutSizingTests {
         )
     }
 
-    @Test("content height reserves the menu context selector")
-    func contentHeightReservesTheMenuContextSelector() {
+    @Test("content height uses the no top context selector budget")
+    func contentHeightUsesTheNoTopContextSelectorBudget() {
         let menuHeight = MenuLayoutSizing.maximumMenuHeight(
             forScreenVisibleHeight: 500,
             minimumHeight: 220,
@@ -62,17 +62,12 @@ struct MenuLayoutSizingTests {
         )
         let contentHeight = MenuLayoutSizing.contentHeight(
             forMenuHeight: menuHeight,
-            reservedHeight: MenuLayoutSizing.selectedTabReservedHeightWithContextSelector,
+            reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
             preferredHeight: 560
         )
 
-        #expect(contentHeight == 238)
-        #expect(contentHeight + MenuLayoutSizing.selectedTabReservedHeightWithContextSelector <= menuHeight)
-        #expect(contentHeight < MenuLayoutSizing.contentHeight(
-            forMenuHeight: menuHeight,
-            reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
-            preferredHeight: 560
-        ))
+        #expect(contentHeight == 282)
+        #expect(contentHeight + MenuLayoutSizing.selectedTabReservedHeight <= menuHeight)
     }
 
     @Test("short content filler only fills missing height")

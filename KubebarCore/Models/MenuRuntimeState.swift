@@ -71,6 +71,11 @@ public struct MenuRuntimeState: Equatable, Sendable {
         return context
     }
 
+    public mutating func selectAppSettingsTab() {
+        setupState.selectAppSettingsTab()
+        setupState.configurationMessage = nil
+    }
+
     public mutating func beginTargetLoading(for context: String) {
         guard setupState.selectedContext == context else {
             return
@@ -121,7 +126,7 @@ public struct MenuRuntimeState: Equatable, Sendable {
 
     public func completedConfig() -> AppConfig? {
         let watchlistsByContext = completedWatchlistsByContext()
-        guard let selectedContext = setupState.selectedContext,
+        guard let selectedContext = setupState.selectedContextForCompletedConfig,
               !(watchlistsByContext[selectedContext] ?? []).isEmpty else {
             return nil
         }
@@ -135,7 +140,7 @@ public struct MenuRuntimeState: Equatable, Sendable {
     }
 
     private func hasUnsavedSettingsChanges(comparedTo config: AppConfig) -> Bool {
-        setupState.selectedContext != config.selectedContext ||
+        setupState.selectedContextForCompletedConfig != config.selectedContext ||
             completedWatchlistsByContext() != Self.namespaceWatchlists(from: config.watchlistsByContext) ||
             setupState.refreshCadence.seconds != config.refreshIntervalSeconds ||
             setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled

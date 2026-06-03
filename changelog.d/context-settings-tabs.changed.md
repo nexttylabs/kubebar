@@ -1,0 +1,1 @@
+- Split Settings into app-wide and per-context tabs, and move context switching into a nested menu selector.

@@ -101,7 +101,8 @@ struct AppConfigStoreTests {
 
     @Test("per-context watchlists round trip")
     func perContextWatchlistsRoundTrip() throws {
-        let store = AppConfigStore(directory: makeTemporaryDirectory())
+        let directory = makeTemporaryDirectory()
+        let store = AppConfigStore(directory: directory)
         let config = AppConfig(
             selectedContext: "stage",
             watchlistsByContext: [
@@ -121,6 +122,10 @@ struct AppConfigStoreTests {
         #expect(loaded.watchlistsByContext["stage"] == [.namespace("web"), .namespace("ops")])
         #expect(loaded.refreshIntervalSeconds == 120)
         #expect(loaded.healthShiftAlertsEnabled)
+
+        let savedData = try Data(contentsOf: directory.appendingPathComponent("config.json"))
+        let savedPayload = try JSONDecoder().decode(SavedConfigPayload.self, from: savedData)
+        #expect(savedPayload.watchTargets == [.namespace("web"), .namespace("ops")])
     }
 
     @Test("selected context without watchlist needs setup")
@@ -187,5 +192,9 @@ struct AppConfigStoreTests {
             .appendingPathComponent("kubebar-tests-\(UUID().uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory
+    }
+
+    private struct SavedConfigPayload: Decodable {
+        let watchTargets: [WatchTarget]
     }
 }

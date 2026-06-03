@@ -2,9 +2,6 @@ import CoreGraphics
 
 public enum MenuLayoutSizing {
     public static let selectedTabReservedHeight: CGFloat = 170
-    public static let contextSelectorReservedHeight: CGFloat = 44
-    public static let selectedTabReservedHeightWithContextSelector =
-        selectedTabReservedHeight + contextSelectorReservedHeight
 
     public static func maximumMenuHeight(
         forScreenVisibleHeight visibleHeight: CGFloat,
