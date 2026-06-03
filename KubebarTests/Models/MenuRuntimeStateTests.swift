@@ -249,6 +249,29 @@ struct MenuRuntimeStateTests {
         #expect(state.setupState.watchlist.isSelected(.namespace("ops")))
     }
 
+    @Test("selecting app settings tab preserves edits and clears message")
+    func selectingAppSettingsTabPreservesEditsAndClearsMessage() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+        state.setupState.configurationMessage = "Could not save settings."
+        state.selectAppSettingsTab()
+
+        #expect(state.setupState.selectedSettingsTab == .appSettings)
+        #expect(state.setupState.configurationMessage == nil)
+        #expect(state.setupState.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("web")) == true)
+        #expect(state.setupState.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("ops")) == true)
+    }
+
     @Test("failed target load preserves per-context selections")
     func failedTargetLoadPreservesPerContextSelections() {
         var state = MenuRuntimeState(

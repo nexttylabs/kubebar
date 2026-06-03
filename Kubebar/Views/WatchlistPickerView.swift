@@ -21,6 +21,7 @@ struct WatchlistPickerView: View {
             header
             content
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -63,13 +64,17 @@ struct WatchlistPickerView: View {
             emptyMessage: "Choose a cluster context or retry loading namespaces.",
             hasItems: !state.availableNamespaces.isEmpty
         ) {
-            ForEach(state.availableNamespaces, id: \.self) { namespace in
-                Toggle(isOn: binding(for: .namespace(namespace))) {
-                    Text(namespace)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(Text(namespace))
-                        .accessibilityLabel(namespace)
+            LazyVStack(alignment: .leading, spacing: 6) {
+                ForEach(state.availableNamespaces, id: \.self) { namespace in
+                    Toggle(isOn: binding(for: .namespace(namespace))) {
+                        Text(namespace)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .help(Text(namespace))
+                            .accessibilityLabel(namespace)
+                    }
+                    .toggleStyle(.checkbox)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
@@ -138,10 +143,11 @@ private struct StateCard<Content: View>: View {
     }
 
     var body: some View {
-        content
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        GroupBox {
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -172,9 +178,10 @@ private struct SectionCard<Content: View>: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            Group {
+            GroupBox {
                 if hasItems {
                     content
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(emptyTitle)
@@ -186,9 +193,8 @@ private struct SectionCard<Content: View>: View {
                     }
                 }
             }
-            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

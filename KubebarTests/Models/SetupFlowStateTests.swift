@@ -65,6 +65,22 @@ struct SetupFlowStateTests {
         #expect(state.settingsTabs.first == .appSettings)
     }
 
+    @Test("settings tab ids stay stable with two contexts")
+    func settingsTabIDsStayStableWithTwoContexts() {
+        let state = SetupFlowState(
+            selectedContext: "prod",
+            availableContexts: ["stage"],
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
+            ]
+        )
+
+        #expect(state.selectedSettingsTabID == .appSettings)
+        #expect(state.settingsTabs.map(\.id) == [.appSettings, .context("prod"), .context("stage")])
+        #expect(state.settingsTab(for: .appSettings) == .appSettings)
+        #expect(state.settingsTab(for: .context("stage")) == .context("stage"))
+    }
+
     @Test("selecting app settings preserves current context watchlist edits")
     func selectingAppSettingsPreservesCurrentContextWatchlistEdits() {
         var state = SetupFlowState(
@@ -80,6 +96,7 @@ struct SetupFlowStateTests {
         state.selectAppSettingsTab()
 
         #expect(state.selectedSettingsTab == .appSettings)
+        #expect(state.selectedSettingsTabID == .appSettings)
         #expect(state.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("web")) == true)
         #expect(state.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("ops")) == true)
     }

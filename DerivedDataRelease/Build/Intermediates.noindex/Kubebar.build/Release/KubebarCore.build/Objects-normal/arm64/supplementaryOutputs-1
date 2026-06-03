@@ -1,0 +1,12 @@
+{
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/AppConfigStore.swift" : {
+    "abi-baseline-json" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore.abi.json",
+    "const-values" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.dia",
+    "objc-header" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-Swift.h",
+    "swiftdoc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore.swiftdoc",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore.swiftmodule",
+    "swiftsourceinfo" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore.swiftsourceinfo"
+  }
+}

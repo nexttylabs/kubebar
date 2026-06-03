@@ -1,0 +1,146 @@
+{
+  "" : {
+    "const-values" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.dia",
+    "emit-module-dependencies" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary-emit-module.dia",
+    "pch" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubebarCore-primary.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/ClusterHealthState.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/ClusterSnapshot.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/MenuBarStatusPresentation.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuBarStatusPresentation.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuBarStatusPresentation.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuBarStatusPresentation.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/MenuDisplayModel.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuDisplayModel.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuDisplayModel.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuDisplayModel.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/MenuRuntimeState.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/RefreshCadence.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCadence.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCadence.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCadence.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/SetupFlowState.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/SetupFlowState.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/SetupFlowState.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/SetupFlowState.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/StartAtLoginState.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/WatchTarget.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTarget.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTarget.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTarget.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/WatchlistCandidate.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistCandidate.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistCandidate.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistCandidate.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/WatchlistSelectionState.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistSelectionState.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistSelectionState.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchlistSelectionState.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Models/WorkloadKind.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WorkloadKind.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WorkloadKind.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WorkloadKind.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/QA/MenuStateFixtureCatalog.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/AppConfigStore.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/AppConfigStore.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/AppConfigStore.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/AppConfigStore.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/CommandRunner.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/CommandRunner.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/CommandRunner.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/CommandRunner.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/ContextCatalog.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ContextCatalog.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ContextCatalog.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/ContextCatalog.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/FreshnessDisplaySchedule.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/FreshnessDisplaySchedule.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/FreshnessDisplaySchedule.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/FreshnessDisplaySchedule.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/HealthEvaluator.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/HealthEvaluator.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/HealthEvaluator.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/HealthEvaluator.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/K9sHandoffCoordinator.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffCoordinator.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffCoordinator.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffCoordinator.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/K9sHandoffLauncher.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffLauncher.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffLauncher.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/K9sHandoffLauncher.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/KubectlClusterReader.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubectlClusterReader.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubectlClusterReader.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/KubectlClusterReader.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/MenuLayoutSizing.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/NetworkReachability.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/NetworkReachability.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/NetworkReachability.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/NetworkReachability.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/RefreshCoordinator.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/RefreshGate.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshGate.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshGate.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/RefreshGate.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/StartAtLoginSettingsCoordinator.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.o"
+  },
+  "/Users/derek/.codex/worktrees/e438/kubebar/KubebarCore/Services/WatchTargetCatalog.swift" : {
+    "index-unit-output-path" : "/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTargetCatalog.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTargetCatalog.bc",
+    "object" : "/Users/derek/.codex/worktrees/e438/kubebar/DerivedDataRelease/Build/Intermediates.noindex/Kubebar.build/Release/KubebarCore.build/Objects-normal/arm64/WatchTargetCatalog.o"
+  }
+}

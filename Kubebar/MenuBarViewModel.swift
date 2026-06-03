@@ -264,6 +264,12 @@ final class MenuBarViewModel: ObservableObject {
         contextToLoad.map(loadWatchTargets)
     }
 
+    func selectAppSettingsTab() {
+        k9sHandoffCoordinator.clear()
+        runtimeState.selectAppSettingsTab()
+        publishRuntimeState()
+    }
+
     func refreshContextSelectorContexts() {
         loadContexts()
     }

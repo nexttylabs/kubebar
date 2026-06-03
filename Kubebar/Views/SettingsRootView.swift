@@ -7,38 +7,31 @@ struct SettingsRootView: View {
     let isEditingExistingConfig: Bool
     let onPrepare: () -> Void
     let onComplete: () -> Bool
+    let onSelectAppSettings: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
     let onToggleHealthShiftAlerts: (Bool) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var contentHeight = SettingsWindowLayout.minimumHeight
 
     var body: some View {
         SetupView(
             state: $state,
             primaryActionTitle: state.primaryActionTitle(isEditingExistingConfig: isEditingExistingConfig),
             onComplete: completeAndDismissIfSaved,
+            onSelectAppSettings: onSelectAppSettings,
             onSelectContext: onSelectContext,
             onRetryTargets: onRetryTargets,
             onToggleStartAtLogin: onToggleStartAtLogin,
-            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts,
-            onContentHeightChange: updateContentHeight
+            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts
         )
         .frame(
             width: SettingsWindowLayout.width,
-            height: settingsWindowHeight,
+            height: SettingsWindowLayout.height,
             alignment: .topLeading
         )
         .background(SettingsWindowFocusBridge())
         .onAppear(perform: onPrepare)
-    }
-
-    private var settingsWindowHeight: CGFloat {
-        min(
-            max(contentHeight, SettingsWindowLayout.minimumHeight),
-            SettingsWindowLayout.maximumHeight
-        )
     }
 
     private func completeAndDismissIfSaved() {
@@ -48,21 +41,11 @@ struct SettingsRootView: View {
 
         dismiss()
     }
-
-    private func updateContentHeight(_ height: CGFloat) {
-        guard height > 0, abs(contentHeight - height) > SettingsWindowLayout.heightTolerance else {
-            return
-        }
-
-        contentHeight = height
-    }
 }
 
 private enum SettingsWindowLayout {
-    static let width: CGFloat = 560
-    static let minimumHeight: CGFloat = 380
-    static let maximumHeight: CGFloat = 680
-    static let heightTolerance: CGFloat = 1
+    static let width: CGFloat = 640
+    static let height: CGFloat = 560
 }
 
 @MainActor

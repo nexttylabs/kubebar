@@ -18,6 +18,7 @@ struct KubebarApp: App {
                 isEditingExistingConfig: viewModel.isEditingExistingConfiguration,
                 onPrepare: viewModel.prepareSettings,
                 onComplete: viewModel.completeSetup,
+                onSelectAppSettings: viewModel.selectAppSettingsTab,
                 onSelectContext: viewModel.selectSetupContext,
                 onRetryTargets: viewModel.retryWatchTargetLoad,
                 onToggleStartAtLogin: viewModel.setStartAtLoginEnabled,

@@ -33,34 +33,47 @@ struct MenuFooterView: View {
                 onSelectContext: onSelectContext
             )
 
-            Button(action: onRefresh) {
-                Image(systemName: "arrow.clockwise")
+            ControlGroup {
+                refreshButton
+                settingsButton
+                quitButton
             }
-            .buttonStyle(.borderless)
             .controlSize(.small)
-            .keyboardShortcut("r", modifiers: .command)
-            .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
-            .accessibilityLabel(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
-            .disabled(isRefreshing)
-
-            Button(action: onOpenSettings) {
-                Image(systemName: "gearshape")
-            }
-            .buttonStyle(.borderless)
-            .controlSize(.small)
-            .keyboardShortcut(",", modifiers: .command)
-            .help(Text("Open Settings"))
-            .accessibilityLabel(Text("Open Settings"))
-
-            Button(action: onQuit) {
-                Image(systemName: "power")
-            }
-            .buttonStyle(.borderless)
-            .controlSize(.small)
-            .keyboardShortcut("q", modifiers: .command)
-            .help(Text("Quit Kubebar"))
-            .accessibilityLabel(Text("Quit Kubebar"))
         }
+    }
+
+    private var refreshButton: some View {
+        Button(action: onRefresh) {
+            Label(
+                isRefreshing ? "Refresh in progress" : "Refresh now",
+                systemImage: "arrow.clockwise"
+            )
+            .labelStyle(.iconOnly)
+        }
+        .keyboardShortcut("r", modifiers: .command)
+        .help(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
+        .accessibilityLabel(Text(isRefreshing ? "Refresh in progress" : "Refresh now"))
+        .disabled(isRefreshing)
+    }
+
+    private var settingsButton: some View {
+        Button(action: onOpenSettings) {
+            Label("Open Settings", systemImage: "gearshape")
+                .labelStyle(.iconOnly)
+        }
+        .keyboardShortcut(",", modifiers: .command)
+        .help(Text("Open Settings"))
+        .accessibilityLabel(Text("Open Settings"))
+    }
+
+    private var quitButton: some View {
+        Button(action: onQuit) {
+            Label("Quit Kubebar", systemImage: "power")
+                .labelStyle(.iconOnly)
+        }
+        .keyboardShortcut("q", modifiers: .command)
+        .help(Text("Quit Kubebar"))
+        .accessibilityLabel(Text("Quit Kubebar"))
     }
 }
 
@@ -89,7 +102,8 @@ private struct QuickContextSelectorMenu: View {
                 }
             }
         } label: {
-            Image(systemName: "server.rack")
+            Label(accessibilityText, systemImage: "server.rack")
+                .labelStyle(.iconOnly)
         }
         .menuStyle(.button)
         .controlSize(.small)

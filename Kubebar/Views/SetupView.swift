@@ -5,49 +5,48 @@ struct SetupView: View {
     @Binding var state: SetupFlowState
     let primaryActionTitle: String
     let onComplete: () -> Void
+    let onSelectAppSettings: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
     let onToggleHealthShiftAlerts: (Bool) -> Void
-    let onContentHeightChange: (CGFloat) -> Void
 
     init(
         state: Binding<SetupFlowState>,
         primaryActionTitle: String = "Finish setup",
         onComplete: @escaping () -> Void = {},
+        onSelectAppSettings: @escaping () -> Void = {},
         onSelectContext: @escaping (String?) -> Void = { _ in },
         onRetryTargets: @escaping () -> Void = {},
         onToggleStartAtLogin: @escaping (Bool) -> Void = { _ in },
-        onToggleHealthShiftAlerts: @escaping (Bool) -> Void = { _ in },
-        onContentHeightChange: @escaping (CGFloat) -> Void = { _ in }
+        onToggleHealthShiftAlerts: @escaping (Bool) -> Void = { _ in }
     ) {
         _state = state
         self.primaryActionTitle = primaryActionTitle
         self.onComplete = onComplete
+        self.onSelectAppSettings = onSelectAppSettings
         self.onSelectContext = onSelectContext
         self.onRetryTargets = onRetryTargets
         self.onToggleStartAtLogin = onToggleStartAtLogin
         self.onToggleHealthShiftAlerts = onToggleHealthShiftAlerts
-        self.onContentHeightChange = onContentHeightChange
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-                settingsTabs
-                footer
-            }
-            .padding(20)
-            .frame(maxWidth: 560, alignment: .leading)
-            .background(ContentHeightReader(onChange: onContentHeightChange))
+        VStack(alignment: .leading, spacing: 16) {
+            header
+            settingsTabs
+            footer
         }
+        .padding(.horizontal, 24)
+        .padding(.top, 22)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(state.title)
-                .font(.largeTitle.weight(.semibold))
+                .font(.title2.weight(.semibold))
 
             Text(state.subtitle)
                 .font(.subheadline)
@@ -56,41 +55,23 @@ struct SetupView: View {
     }
 
     private var settingsTabs: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            settingsTabPicker
-            selectedSettingsTabContent
-        }
-    }
-
-    @ViewBuilder
-    private var settingsTabPicker: some View {
-        if state.settingsTabs.count > 4 {
-            settingsTabPickerContent
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            settingsTabPickerContent
-                .pickerStyle(.segmented)
-        }
-    }
-
-    private var settingsTabPickerContent: some View {
-        Picker("Settings tab", selection: selectedSettingsTabBinding) {
-            ForEach(state.settingsTabs, id: \.self) { tab in
-                Text(tab.title)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+        TabView(selection: selectedSettingsTabIDBinding) {
+            ForEach(state.settingsTabs, id: \.id) { tab in
+                settingsTabContent(for: tab)
+                    .padding(.top, 12)
+                    .tabItem {
+                        Label(tab.title, systemImage: tab.systemImageName)
+                    }
+                    .tag(tab.id)
                     .help(Text(tab.helpText))
-                    .accessibilityLabel(Text(tab.helpText))
-                    .tag(tab)
             }
         }
-        .labelsHidden()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder
-    private var selectedSettingsTabContent: some View {
-        switch state.selectedSettingsTab {
+    private func settingsTabContent(for tab: SettingsTabSelection) -> some View {
+        switch tab {
         case .appSettings:
             appSettingsContent
         case let .context(context):
@@ -99,45 +80,61 @@ struct SetupView: View {
     }
 
     private var appSettingsContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            refreshCadencePicker
-            startAtLoginToggle
-            healthShiftAlertsToggle
+        SettingsPanel {
+            SettingsSection(title: "General") {
+                SettingsRow(label: "Refresh cadence") {
+                    refreshCadencePicker
+                }
+            }
+
+            SettingsSection(title: "Launch") {
+                startAtLoginToggle
+            }
+
+            SettingsSection(title: "Alerts") {
+                healthShiftAlertsToggle
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func contextSettingsContent(for context: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Context watchlist")
-                    .font(.headline)
-
+        SettingsPanel {
+            SettingsSection(title: "Context") {
                 Text(context)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.body)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .help(Text(context))
                     .accessibilityLabel(Text(context))
             }
 
-            WatchlistPickerView(
-                state: watchlistBinding,
-                loadingState: state.targetLoadingState,
-                onRetryTargets: onRetryTargets
-            )
+            SettingsSection(title: "Watchlist") {
+                WatchlistPickerView(
+                    state: watchlistBinding,
+                    loadingState: state.targetLoadingState,
+                    onRetryTargets: onRetryTargets
+                )
+            }
         }
     }
 
-    private var selectedSettingsTabBinding: Binding<SettingsTabSelection> {
+    private var selectedSettingsTab: SettingsTabSelection {
+        state.settingsTab(for: state.selectedSettingsTabID) ?? .appSettings
+    }
+
+    private var selectedSettingsTabIDBinding: Binding<SettingsTabID> {
         Binding(
-            get: { state.selectedSettingsTab },
-            set: { tab in
+            get: { state.selectedSettingsTabID },
+            set: { tabID in
+                guard let tab = state.settingsTab(for: tabID) else {
+                    return
+                }
+
                 switch tab {
                 case .appSettings:
                     state.selectAppSettingsTab()
                     state.configurationMessage = nil
+                    onSelectAppSettings()
                 case let .context(context):
                     onSelectContext(context)
                 }
@@ -146,7 +143,7 @@ struct SetupView: View {
     }
 
     private var footerHelpText: String {
-        switch state.selectedSettingsTab {
+        switch selectedSettingsTab {
         case .appSettings:
             if state.contextTabs.isEmpty {
                 return "No contexts available."
@@ -163,21 +160,17 @@ struct SetupView: View {
     }
 
     private var refreshCadencePicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Refresh cadence")
-                .font(.headline)
-
-            Picker("Refresh cadence", selection: $state.refreshCadence) {
-                ForEach(RefreshCadence.allCases) { cadence in
-                    Text(cadence.label).tag(cadence)
-                }
+        Picker("Refresh cadence", selection: $state.refreshCadence) {
+            ForEach(RefreshCadence.allCases) { cadence in
+                Text(cadence.label).tag(cadence)
             }
-            .pickerStyle(.segmented)
         }
+        .pickerStyle(.segmented)
+        .labelsHidden()
     }
 
     private var startAtLoginToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Toggle("Start at Login", isOn: startAtLoginBinding)
                 .help(Text("Open Kubebar automatically after login."))
                 .accessibilityLabel(Text("Start at Login"))
@@ -191,7 +184,7 @@ struct SetupView: View {
     }
 
     private var healthShiftAlertsToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Toggle("Health State Shift Alerts", isOn: healthShiftAlertsBinding)
                 .help(Text("Notify when cluster health or watched items get worse."))
                 .accessibilityLabel(Text("Health State Shift Alerts"))
@@ -224,6 +217,7 @@ struct SetupView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(!state.isConfigured)
         }
+        .padding(.top, 2)
     }
 
     private var watchlistBinding: Binding<WatchlistSelectionState> {
@@ -248,22 +242,63 @@ struct SetupView: View {
     }
 }
 
-private struct ContentHeightReader: View {
-    let onChange: (CGFloat) -> Void
+private struct SettingsPanel<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
 
     var body: some View {
-        GeometryReader { proxy in
-            Color.clear
-                .preference(key: ContentHeightPreferenceKey.self, value: proxy.size.height)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                content
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .onPreferenceChange(ContentHeightPreferenceKey.self, perform: onChange)
+        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
-private struct ContentHeightPreferenceKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
+private struct SettingsSection<Content: View>: View {
+    let title: String
+    let content: Content
 
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+private struct SettingsRow<Content: View>: View {
+    let label: String
+    let content: Content
+
+    init(label: String, @ViewBuilder content: () -> Content) {
+        self.label = label
+        self.content = content()
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .foregroundStyle(.secondary)
+                .frame(width: 140, alignment: .leading)
+
+            content
+                .frame(maxWidth: 280, alignment: .leading)
+        }
     }
 }

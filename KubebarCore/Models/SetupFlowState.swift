@@ -10,6 +10,15 @@ public enum SettingsTabSelection: Equatable, Hashable, Sendable {
     case appSettings
     case context(String)
 
+    public var id: SettingsTabID {
+        switch self {
+        case .appSettings:
+            return .appSettings
+        case let .context(context):
+            return .context(context)
+        }
+    }
+
     public var title: String {
         switch self {
         case .appSettings:
@@ -26,6 +35,29 @@ public enum SettingsTabSelection: Equatable, Hashable, Sendable {
         case let .context(context):
             return context
         }
+    }
+
+    public var systemImageName: String {
+        switch self {
+        case .appSettings:
+            return "gearshape"
+        case .context:
+            return "server.rack"
+        }
+    }
+}
+
+public struct SettingsTabID: RawRepresentable, Equatable, Hashable, Sendable {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public static let appSettings = SettingsTabID(rawValue: "app-settings")
+
+    public static func context(_ context: String) -> SettingsTabID {
+        SettingsTabID(rawValue: "context:\(context)")
     }
 }
 
@@ -102,6 +134,14 @@ public struct SetupFlowState: Equatable, Sendable {
 
     public var settingsTabs: [SettingsTabSelection] {
         [.appSettings] + contextTabs.map { .context($0) }
+    }
+
+    public var selectedSettingsTabID: SettingsTabID {
+        selectedSettingsTab.id
+    }
+
+    public func settingsTab(for id: SettingsTabID) -> SettingsTabSelection? {
+        settingsTabs.first { $0.id == id }
     }
 
     public var selectedContextForCompletedConfig: String? {

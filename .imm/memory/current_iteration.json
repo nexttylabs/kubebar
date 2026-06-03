@@ -4,219 +4,64 @@
     "1": {
       "step_id": "U1",
       "state": "closed",
-      "result": "Settings uses an App/Context tab structure.",
-      "verification": "swift build && swift build --target KubebarCoreTests && rtk git diff --check",
+      "result": "Settings App Settings tab responds when selected from context tabs.",
+      "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check plus visible Settings smoke with 2 contexts",
       "test_scenarios": [
-        "App Settings is the first Settings tab",
-        "context tabs follow local context information",
-        "refresh cadence Start at Login and Health State Shift Alerts render only in App Settings",
-        "selecting context tabs preserves per-context watchlist edits",
-        "saving from App Settings preserves the current active context",
-        "saved watchlists survive when local context list changes"
+        "2-context segmented selector switches from a Context Settings tab to App Settings",
+        "switching to App Settings preserves the edited context watchlist",
+        "App Settings content shows refresh cadence Start at Login and Health State Shift Alerts",
+        "context tabs remain generated from local and saved context information",
+        "menu-style selector path still uses stable tab identity"
       ],
       "discovery_cache": [],
       "parallel_probes": [],
       "depends_on": [],
       "agent_hint": null,
-      "activated_at": "2026-06-03T07:40:51Z",
+      "activated_at": "2026-06-03T08:42:59Z",
       "execution_evidence": {
         "changed_files": [
-          "KubebarCore/Models/SetupFlowState.swift; KubebarCore/Models/MenuRuntimeState.swift; Kubebar/Views/SetupView.swift; KubebarTests/Models/SetupFlowStateTests.swift; KubebarTests/Models/MenuRuntimeStateTests.swift; docs/architecture/runtime-invariants.md; docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md; .imm/specs/2026-06-03-settings-tabs-context-submenu.md; HANDOFF.md; .imm/memory/current_iteration.json"
+          ".imm/specs/2026-06-03-settings-app-tab-selection.md",
+          "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift"
         ],
-        "verification_command": "swift build && swift build --target KubebarCoreTests && rtk git diff --check",
-        "verification_result": "passed. Sandbox attempts for swift build and swift build --target KubebarCoreTests failed because SwiftPM could not write /Users/derek/.cache/clang/ModuleCache; rerunning both commands outside the sandbox passed. rtk git diff --check passed inside the sandbox.",
-        "notes": "U1 is a test-backed recovery closure for already-implemented Settings App/Context tabs. No implementation edits were made during this autowork run; evidence closes the replanned fallback verification path.",
-        "recorded_at": "2026-06-03T07:41:51Z"
+        "verification_command": "kubectl config get-contexts -o name; first-use QA app Accessibility smoke: open status menu -> Open Settings -> Settings window tab group -> click prod -> click App Settings; swift test --filter SetupFlowStateTests; swift test --filter MenuRuntimeStateTests; rtk git diff --check",
+        "verification_result": "passed",
+        "notes": "Rework evidence completed. Local kubectl contexts are exactly dev and prod. Launched DerivedData Debug Kubebar.app with --kubebar-qa-state first-use, opened status menu through Accessibility, clicked the accessible Open Settings button, confirmed window 'Kubebar Settings'. Settings tab radio group exposed App Settings, default(saved), dev, prod. Clicked prod context tab: static text showed Context watchlist and prod. Clicked App Settings tab: tabValues showed App Settings:1 and prod:0, static text showed Refresh cadence and Active context: dev, checkboxes exposed help for Start at Login ('Open Kubebar automatically after login.') and Health State Shift Alerts ('Notify when cluster health or watched items get worse.'). Automated checks also passed: SetupFlowStateTests 14/14, MenuRuntimeStateTests 21/21, rtk git diff --check.",
+        "recorded_at": "2026-06-03T10:07:08Z"
       },
-      "closed_at": "2026-06-03T07:44:49Z"
-    },
-    "2": {
-      "step_id": "U2",
-      "state": "closed",
-      "result": "The menu Quick Context Selector moves into a nested submenu.",
-      "verification": "Preferred quality gate; fallback on pre-assertion test-bundle denial uses swift build, swift build --target KubebarCoreTests, rtk git diff --check, and visible menu smoke",
-      "test_scenarios": [
-        "top-level Context selector row is removed",
-        "a nested context submenu lists local context information",
-        "current context is marked accessibly",
-        "selecting a configured context preserves existing active-context switch behavior",
-        "selecting an unconfigured context shows configuration-required state",
-        "selected tab height uses the no-top-selector budget",
-        "long context names keep full help/accessibility text"
-      ],
-      "discovery_cache": [],
-      "parallel_probes": [],
-      "depends_on": [
-        1
-      ],
-      "agent_hint": null,
-      "activated_at": "2026-06-03T08:00:22Z",
-      "execution_evidence": {
-        "changed_files": [
-          "Kubebar/Views/MenuBarRootView.swift",
-          "Kubebar/Views/MenuFooterView.swift",
-          "KubebarCore/Services/MenuLayoutSizing.swift",
-          "KubebarTests/Services/MenuLayoutSizingTests.swift",
-          "docs/architecture/runtime-invariants.md",
-          ".imm/memory/current_iteration.json",
-          "HANDOFF.md",
-          "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
-          ".imm/specs/2026-06-03-settings-tabs-context-submenu.md"
-        ],
-        "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-        "verification_result": "passed. Full Swift quality gate completed successfully: changelog tooling checks passed; release build version checks passed; Xcode build passed; Xcode test passed with 242 tests in 27 suites; SwiftPM build passed; SwiftPM test passed with 244 tests in 28 suites; QA artifact generation check completed before command exit 0. Fallback was not used.",
-        "notes": "U2 implementation was already present after replan. This run repaired a same-plan Immune-Brain ledger inconsistency from old replanning to pending, reactivated U2, and verified the preferred quality gate now passes without pre-assertion test-bundle denial.",
-        "recorded_at": "2026-06-03T08:06:00Z"
-      },
-      "closed_at": "2026-06-03T08:06:37Z"
+      "closed_at": "2026-06-03T10:07:17Z"
     }
   },
   "last_review": {
     "decision": "pass",
-    "evidence": "U2 ready_for_review evidence matches the revised verification: preferred full Swift quality gate passed with Xcode build/test and SwiftPM build/test; source inspection confirms the top-level context selector row was removed, Quick Context Selector is a nested footer Menu, and layout sizing uses the no-top-selector budget.",
-    "artifacts": "Kubebar/Views/MenuBarRootView.swift; Kubebar/Views/MenuFooterView.swift; KubebarCore/Services/MenuLayoutSizing.swift; KubebarTests/Services/MenuLayoutSizingTests.swift; docs/architecture/runtime-invariants.md; DerivedData/Logs/Test/Test-Kubebar-2026.06.03_16-00-34-+0800.xcresult",
-    "notes": "No fallback was used. Origin coverage is complete in imm-plan --json. No YAGNI red-line violation observed for the active U2 scope.",
-    "step_number": 2,
-    "step_id": "U2"
+    "evidence": "U1 evidence satisfies automated and visible-smoke requirements. Local kubectl contexts are dev/prod. first-use QA Accessibility smoke opened Kubebar Settings, confirmed Settings tab group contained App Settings, dev, prod (plus saved default), switched prod context tab then App Settings, and observed App Settings selected with Refresh cadence, Start at Login help, Health State Shift Alerts help, and Active context text. SetupFlowStateTests 14/14, MenuRuntimeStateTests 21/21, rtk git diff --check passed; full swift-quality-gate local previously passed with 246 tests after the code change.",
+    "artifacts": "Immune-Brain execution evidence recorded at .imm/memory/current_iteration.json; terminal command outputs in this run",
+    "notes": "Visible smoke was completed via Accessibility without broad screenshots.",
+    "step_number": 1,
+    "step_id": "U1"
   },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
-    "plan_signature": "b77c02b8cf1754035a97f2a433267777ebfc3054b1e9fb0f5485924d730fa1ea",
+    "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+    "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "Settings uses an App/Context tab structure.",
-        "verification": "swift build && swift build --target KubebarCoreTests && rtk git diff --check",
+        "result": "Settings App Settings tab responds when selected from context tabs.",
+        "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check plus visible Settings smoke with 2 contexts",
         "depends_on": [],
-        "discovery_cache": [],
-        "parallel_probes": []
-      },
-      {
-        "number": 2,
-        "step_id": "U2",
-        "result": "The menu Quick Context Selector moves into a nested submenu.",
-        "verification": "Preferred quality gate; fallback on pre-assertion test-bundle denial uses swift build, swift build --target KubebarCoreTests, rtk git diff --check, and visible menu smoke",
-        "depends_on": [
-          1
-        ],
         "discovery_cache": [],
         "parallel_probes": []
       }
     ]
   },
   "history": [
-    {
-      "at": "2026-05-27T10:25:38Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "changed_files": [
-          ".github/workflows/changelog-candidates.yml",
-          "docs/RELEASING.md",
-          "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "docs/specs/2026-05-27-github-first-release-flow.md",
-          ".imm/memory/current_iteration.json"
-        ]
-      }
-    },
-    {
-      "at": "2026-05-27T10:26:22Z",
-      "action": "review_step",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "decision": "pass"
-      }
-    },
-    {
-      "at": "2026-05-27T10:26:41Z",
-      "action": "activate_step",
-      "details": {
-        "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-        "step_number": 2,
-        "step_id": "U2",
-        "role_constraints": {
-          "imm-work": {
-            "role": "execute",
-            "role_class": "coordinator",
-            "boundary": "Drive only the active step or pending follow-up to the next boundary."
-          },
-          "imm-executor": {
-            "role": "execute",
-            "role_class": "authority",
-            "boundary": "Implement only the activated step or follow-up scope."
-          },
-          "imm-qa": {
-            "role": "qa",
-            "role_class": "authority",
-            "boundary": "Close, rework, or replan based on recorded evidence only."
-          }
-        }
-      }
-    },
-    {
-      "at": "2026-05-27T10:30:38Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 2,
-        "step_id": "U2",
-        "changed_files": [
-          ".github/workflows/release.yml",
-          "docs/RELEASING.md",
-          ".imm/memory/current_iteration.json"
-        ]
-      }
-    },
-    {
-      "at": "2026-05-27T10:30:48Z",
-      "action": "review_step",
-      "details": {
-        "step_number": 2,
-        "step_id": "U2",
-        "decision": "pass"
-      }
-    },
-    {
-      "at": "2026-05-27T10:31:11Z",
-      "action": "activate_step",
-      "details": {
-        "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-        "step_number": 3,
-        "step_id": "U3",
-        "role_constraints": {
-          "imm-work": {
-            "role": "execute",
-            "role_class": "coordinator",
-            "boundary": "Drive only the active step or pending follow-up to the next boundary."
-          },
-          "imm-executor": {
-            "role": "execute",
-            "role_class": "authority",
-            "boundary": "Implement only the activated step or follow-up scope."
-          },
-          "imm-qa": {
-            "role": "qa",
-            "role_class": "authority",
-            "boundary": "Close, rework, or replan based on recorded evidence only."
-          }
-        }
-      }
-    },
-    {
-      "at": "2026-05-27T10:35:23Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 3,
-        "step_id": "U3",
-        "changed_files": [
-          ".github/workflows/release.yml",
-          "docs/RELEASING.md",
-          ".imm/memory/current_iteration.json"
-        ]
-      }
-    },
     {
       "at": "2026-05-27T10:35:34Z",
       "action": "review_step",
@@ -837,12 +682,115 @@
         "decision": "pass",
         "target_kind": "plan_step"
       }
+    },
+    {
+      "at": "2026-06-03T08:41:27Z",
+      "action": "sync_plan_reset_completed_steps",
+      "details": {
+        "from_plan": "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
+        "to_plan": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+        "reason": "Plan switched; reset completion state."
+      }
+    },
+    {
+      "at": "2026-06-03T08:41:27Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+        "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
+        "plan_summary": "Fix Settings so selecting the fixed `App Settings` tab responds",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-06-03T08:42:59Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+        "step_number": 1,
+        "step_id": "U1",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-03T08:57:28Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          ".imm/specs/2026-06-03-settings-app-tab-selection.md",
+          "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-03T08:58:55Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "rework",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-06-03T10:07:08Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          ".imm/specs/2026-06-03-settings-app-tab-selection.md",
+          "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-03T10:07:17Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
     }
   ],
   "requires_replan": false,
-  "plan_path": "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
-  "plan_summary": "Settings separates global app settings from context watchlist tabs,",
-  "plan_signature": "b77c02b8cf1754035a97f2a433267777ebfc3054b1e9fb0f5485924d730fa1ea",
-  "plan_last_validated_at": "2026-06-03T07:57:09Z",
+  "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+  "plan_summary": "Fix Settings so selecting the fixed `App Settings` tab responds",
+  "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
+  "plan_last_validated_at": "2026-06-03T08:41:27Z",
   "pending_follow_up": null
 }
