@@ -42,9 +42,10 @@ keyed map.
 
 - `AppConfig` stores `watchlistsByContext` and exposes `watchTargets` as the
   active selected context's watchlist only.
-- Settings uses context tabs built from the union of kubectl contexts and saved
-  context keys, so local watchlists do not disappear when kubectl is
-  temporarily incomplete.
+- Settings and the menu context selector use context entries reported by the
+  local kubeconfig context list. Saved watchlists for missing contexts remain in
+  local config, but those missing contexts are not displayed as selectable
+  context entries.
 - `SetupFlowState` preserves each context's watchlist independently while the
   user edits a different tab.
 - `MenuBarViewModel` owns the menu selector flow: save the new active context,
@@ -83,4 +84,3 @@ refresh so old data never looks current.
 - Architecture entropy resistance: this belongs in `docs/solutions/` because
   it captures a reusable ownership pattern, not a permanent architecture
   decision or a rejected alternative that needs ADR treatment.
-

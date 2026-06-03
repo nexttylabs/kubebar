@@ -17,11 +17,10 @@ struct WatchlistPickerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
+        VStack(alignment: .leading, spacing: 10) {
             content
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder
@@ -40,23 +39,6 @@ struct WatchlistPickerView: View {
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Watching")
-                .font(.headline)
-
-            Text(state.isNamespaceSelectionEmpty ? state.emptyStateTitle : state.namespaceSelectionSummary)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            if state.isNamespaceSelectionEmpty {
-                Text(state.emptyStateMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
     private var namespaceSection: some View {
         SectionCard(
             title: "Namespaces",
@@ -64,19 +46,24 @@ struct WatchlistPickerView: View {
             emptyMessage: "Choose a cluster context or retry loading namespaces.",
             hasItems: !state.availableNamespaces.isEmpty
         ) {
-            LazyVStack(alignment: .leading, spacing: 6) {
-                ForEach(state.availableNamespaces, id: \.self) { namespace in
-                    Toggle(isOn: binding(for: .namespace(namespace))) {
-                        Text(namespace)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .help(Text(namespace))
-                            .accessibilityLabel(namespace)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 6) {
+                    ForEach(state.availableNamespaces, id: \.self) { namespace in
+                        Toggle(isOn: binding(for: .namespace(namespace))) {
+                            Text(namespace)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .help(Text(namespace))
+                                .accessibilityLabel(namespace)
+                        }
+                        .toggleStyle(.checkbox)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .toggleStyle(.checkbox)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
@@ -145,9 +132,9 @@ private struct StateCard<Content: View>: View {
     var body: some View {
         GroupBox {
             content
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }
 
@@ -181,7 +168,7 @@ private struct SectionCard<Content: View>: View {
             GroupBox {
                 if hasItems {
                     content
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(emptyTitle)
@@ -193,8 +180,8 @@ private struct SectionCard<Content: View>: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }

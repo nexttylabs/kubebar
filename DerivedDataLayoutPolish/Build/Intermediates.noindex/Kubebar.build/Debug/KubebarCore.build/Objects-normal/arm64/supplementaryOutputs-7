@@ -1,0 +1,23 @@
+{
+  "/Users/derek/.codex/worktrees/2515/kubebar/KubebarCore/Models/SetupFlowState.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/SetupFlowState.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/SetupFlowState.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/SetupFlowState.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/SetupFlowState.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/SetupFlowState.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/KubebarCore/Models/StartAtLoginState.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/KubebarCore/Services/StartAtLoginSettingsCoordinator.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginSettingsCoordinator.swiftdeps"
+  }
+}

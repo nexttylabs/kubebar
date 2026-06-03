@@ -114,7 +114,9 @@ Alerts remain global settings.
 - Decode old top-level `watchTargets` into `watchlistsByContext[selectedContext]`
   when the new map is absent.
 - Encode new configs with per-context watchlists as the durable shape.
-- Settings tabs use the union of kubectl contexts and saved context keys.
+- Settings tabs use only contexts returned by the local kubeconfig context
+  list. Saved watchlist keys for missing contexts remain preserved in config but
+  do not create visible tabs.
 - Selecting a Settings tab selects the context being edited and, after save, the
   active selected context.
 - A context without a watchlist can still be selected, but it is incomplete and
@@ -125,12 +127,11 @@ Alerts remain global settings.
 ## Assumptions
 
 - Context names are stable enough to be dictionary keys; if a context is
-  renamed in kubeconfig, the old saved watchlist remains visible as a saved tab
-  until the user removes or overwrites it in a later feature.
+  renamed in kubeconfig, the old saved watchlist remains preserved in config but
+  is not displayed as a selectable context tab.
 - Saving Settings from a context tab makes that tab the active selected context.
-- It is acceptable for the menu selector to list saved contexts even if kubectl
-  does not currently return them, because local config should not disappear when
-  kubeconfig is temporarily unavailable.
+- Saved watchlists for contexts not returned by kubectl are preserved in config
+  but omitted from the menu selector and Settings tabs.
 - Per-context watchlists may initially include only namespaces through the
   existing Settings picker, while old workload targets remain decodable and can
   continue to refresh if already stored.
@@ -245,7 +246,7 @@ command transcripts, credentials, or new Kubernetes reads are introduced.
 - Result: Settings edits separate watchlists through context tabs.
 - Verification: /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local
 - Depends on: 1
-- Test scenarios: Settings opens with tabs for available contexts and saved contexts; selecting a tab loads candidates for that context; each tab preserves its own namespace selections; failed candidate loading preserves the selected context watchlist and other context watchlists; saving Settings writes all per-context watchlists and makes the active tab the selected context; existing global Settings toggles and cadence remain unchanged
+- Test scenarios: Settings opens with tabs for available local kubeconfig contexts only; selecting a tab loads candidates for that context; each tab preserves its own namespace selections; failed candidate loading preserves the selected context watchlist and other context watchlists; saving Settings writes all per-context watchlists and makes the active tab the selected context; existing global Settings toggles and cadence remain unchanged
 
 **Goal:** Let users configure per-context watchlists in Settings without losing
 saved watchlists for other contexts.
@@ -280,11 +281,12 @@ saved watchlists for other contexts.
 - Modify: `KubebarTests/Models/MenuRuntimeStateTests.swift`
 
 **Approach:**
-- Add tests first for tab union, per-context preservation, candidate loading
-  success/failure, and completed config output.
+- Add tests first for local-only context tab display, per-context preservation,
+  candidate loading success/failure, and completed config output.
 - Extend setup runtime state with an editing context and per-context watchlist
   map.
-- Make context list loading merge kubectl contexts with saved context keys.
+- Make context list loading use local kubeconfig contexts for visible tabs while
+  preserving saved watchlist keys in config.
 - Replace the single Settings context picker with native context tabs or a
   tab-equivalent SwiftUI control that is keyboard reachable.
 - Reuse `WatchlistPickerView` for the active tab's namespace selection.
@@ -308,7 +310,7 @@ credentials.
 - Result: The menu Quick Context Selector switches active context safely with the matching watchlist.
 - Verification: /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local
 - Depends on: 2
-- Test scenarios: menu selector lists available and saved contexts; current context is visually identifiable and accessible; selecting another configured context saves it, clears previous snapshot/freshness/handoff/alert state, rejects old in-flight refresh results, and refreshes with that context's watchlist; selecting a context without a watchlist shows configuration-required state; selector does not mutate terminal current context; long context names truncate in the menu with full help/accessibility text
+- Test scenarios: menu selector lists available local kubeconfig contexts only; current context is visually identifiable and accessible; selecting another configured context saves it, clears previous snapshot/freshness/handoff/alert state, rejects old in-flight refresh results, and refreshes with that context's watchlist; selecting a context without a watchlist shows configuration-required state; selector does not mutate terminal current context; long context names truncate in the menu with full help/accessibility text
 
 **Goal:** Complete the user-facing quick switch flow from menu action to fresh
 active-context monitoring.

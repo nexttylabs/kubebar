@@ -125,11 +125,7 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public var contextTabs: [String] {
-        let contexts = Set(availableContexts)
-            .union(watchlistsByContext.keys)
-            .union(selectedContext.map { [$0] } ?? [])
-
-        return contexts.sorted()
+        Set(availableContexts).sorted()
     }
 
     public var settingsTabs: [SettingsTabSelection] {

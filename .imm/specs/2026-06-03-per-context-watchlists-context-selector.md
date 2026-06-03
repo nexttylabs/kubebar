@@ -26,8 +26,8 @@ watchlist ownership model, Settings editing surface, and menu context selector.
 - Load old single-watchlist config files without losing the saved watchlist.
 - Settings shows context tabs so each context's watchlist can be edited
   separately.
-- Settings tabs include contexts returned by kubectl and contexts already saved
-  in local config.
+- Settings tabs include only contexts returned by the local kubeconfig context
+  list. Saved watchlists for missing contexts remain preserved in local config.
 - Saving Settings preserves watchlists for contexts that are not currently
   active.
 - The menu shows the active context as an independent Quick Context Selector.
@@ -61,8 +61,8 @@ watchlist ownership model, Settings editing surface, and menu context selector.
   the active context's saved watchlist.
 - R5. Saving Settings must preserve watchlists for contexts other than the
   currently edited tab.
-- R6. Settings must expose context tabs using the union of available kubectl
-  contexts and saved per-context watchlist keys.
+- R6. Settings must expose context tabs using only the available local
+  kubeconfig contexts.
 - R7. Selecting a Settings context tab must load setup candidates for that
   context through the existing app-owned context boundary.
 - R8. Candidate loading failure for one context must preserve that context's
@@ -70,8 +70,8 @@ watchlist ownership model, Settings editing surface, and menu context selector.
 - R9. Settings remains keyboard reachable through native SwiftUI controls.
 - R10. The menu must show the active context as a separate Quick Context
   Selector near the top status surface.
-- R11. The Quick Context Selector must list available kubectl contexts plus
-  saved contexts that have local watchlist config.
+- R11. The Quick Context Selector must list only available local kubeconfig
+  contexts.
 - R12. Selecting a different menu context must save the new active selected
   context without changing the terminal's current context.
 - R13. Context switching from the menu must invalidate in-flight refreshes,
@@ -91,9 +91,10 @@ watchlist ownership model, Settings editing surface, and menu context selector.
 - Config tests cover missing config, old single-watchlist decoding, new
   per-context round trip, active watch target lookup, incomplete active context
   with no watchlist, and preservation of global settings.
-- Runtime state tests cover opening Settings with multiple saved contexts,
-  switching Settings tabs, preserving per-context watchlists, candidate success
-  and failure per context, and completing config from the active tab.
+- Runtime state tests cover opening Settings with multiple local contexts,
+  omitting saved missing contexts from visible tabs, switching Settings tabs,
+  preserving per-context watchlists, candidate success and failure per context,
+  and completing config from the active tab.
 - Refresh or view-model tests cover menu context switching clearing old
   snapshots, rejecting old in-flight refresh results, using the target
   context's watchlist, and showing configuration-required state when no
@@ -101,4 +102,3 @@ watchlist ownership model, Settings editing surface, and menu context selector.
 - View tests or visible smoke cover Settings context tabs and the menu Quick
   Context Selector for reachability and label behavior.
 - `./scripts/swift-quality-gate.sh local` passes.
-

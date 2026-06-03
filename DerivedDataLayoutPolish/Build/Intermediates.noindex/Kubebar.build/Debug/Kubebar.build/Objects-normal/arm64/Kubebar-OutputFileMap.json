@@ -1,0 +1,259 @@
+{
+  "" : {
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/Kubebar-primary.dia",
+    "emit-module-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/Kubebar-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/Kubebar-primary-emit-module.dia",
+    "pch" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/Kubebar-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/Kubebar-primary.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/KubebarApp.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/KubebarApp~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/MenuBarViewModel.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarViewModel~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/QA/QALaunchMode.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Services/LoginItemController.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/LoginItemController~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Services/NetworkReachabilityMonitor.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NetworkReachabilityMonitor~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/CompactCountersView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/CompactCountersView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/ConfigurationRequiredView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ConfigurationRequiredView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/EventsTabView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/EventsTabView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/InlineProgressBar.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/InlineProgressBar~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/MenuBarRootView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuBarRootView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/MenuFooterView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/MenuTab.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/NodeDetailsView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/NodesTabView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodesTabView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/OverviewTabView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/OverviewTabView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/PodsTabView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/SettingsRootView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/SetupView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/StaleBannerView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/StatusSummaryView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StatusSummaryView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/TrackedItemDetailView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/TrackedItemDetailView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/WarningEventsView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WarningEventsView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/WatchlistPickerView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistPickerView~partial.swiftmodule"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/WatchlistSectionView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.dia",
+    "index-unit-output-path" : "/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.o",
+    "llvm-bc" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.bc",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView.swiftdeps",
+    "swiftmodule" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/WatchlistSectionView~partial.swiftmodule"
+  }
+}

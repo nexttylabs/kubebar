@@ -32,26 +32,14 @@ struct SetupView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
+        VStack(alignment: .leading, spacing: 14) {
             settingsTabs
             footer
         }
         .padding(.horizontal, 24)
-        .padding(.top, 22)
+        .padding(.top, 18)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(state.title)
-                .font(.title2.weight(.semibold))
-
-            Text(state.subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
     }
 
     private var settingsTabs: some View {
@@ -80,7 +68,12 @@ struct SetupView: View {
     }
 
     private var appSettingsContent: some View {
-        SettingsPanel {
+        SettingsContentPane {
+            SettingsPaneHeader(
+                title: "App Settings",
+                subtitle: appSettingsSubtitle
+            )
+
             SettingsSection(title: "General") {
                 SettingsRow(label: "Refresh cadence") {
                     refreshCadencePicker
@@ -98,23 +91,20 @@ struct SetupView: View {
     }
 
     private func contextSettingsContent(for context: String) -> some View {
-        SettingsPanel {
-            SettingsSection(title: "Context") {
-                Text(context)
-                    .font(.body)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .help(Text(context))
-                    .accessibilityLabel(Text(context))
-            }
+        SettingsContentPane {
+            SettingsPaneHeader(
+                title: "\(context) Watchlist",
+                subtitle: state.watchlist.isNamespaceSelectionEmpty
+                    ? state.watchlist.emptyStateTitle
+                    : state.watchlist.namespaceSelectionSummary
+            )
+            .help(Text(context))
 
-            SettingsSection(title: "Watchlist") {
-                WatchlistPickerView(
-                    state: watchlistBinding,
-                    loadingState: state.targetLoadingState,
-                    onRetryTargets: onRetryTargets
-                )
-            }
+            WatchlistPickerView(
+                state: watchlistBinding,
+                loadingState: state.targetLoadingState,
+                onRetryTargets: onRetryTargets
+            )
         }
     }
 
@@ -145,6 +135,10 @@ struct SetupView: View {
     private var footerHelpText: String {
         switch selectedSettingsTab {
         case .appSettings:
+            if let configurationMessage = state.configurationMessage, !configurationMessage.isEmpty {
+                return configurationMessage
+            }
+
             if state.contextTabs.isEmpty {
                 return "No contexts available."
             }
@@ -155,8 +149,20 @@ struct SetupView: View {
 
             return "Choose a context tab to finish setup."
         case .context:
-            return state.watchlistHelpText
+            return state.configurationMessage ?? ""
         }
+    }
+
+    private var appSettingsSubtitle: String {
+        if let context = state.selectedContextForCompletedConfig {
+            return "Active context: \(context)"
+        }
+
+        if state.contextTabs.isEmpty {
+            return "No local contexts available."
+        }
+
+        return "Choose a context tab to finish setup."
     }
 
     private var refreshCadencePicker: some View {
@@ -199,11 +205,7 @@ struct SetupView: View {
 
     private var footer: some View {
         HStack {
-            if let configurationMessage = state.configurationMessage, !configurationMessage.isEmpty {
-                Text(configurationMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
+            if !footerHelpText.isEmpty {
                 Text(footerHelpText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -242,7 +244,7 @@ struct SetupView: View {
     }
 }
 
-private struct SettingsPanel<Content: View>: View {
+private struct SettingsContentPane<Content: View>: View {
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -250,15 +252,33 @@ private struct SettingsPanel<Content: View>: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                content
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+        VStack(alignment: .leading, spacing: 16) {
+            content
         }
-        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
+        .padding(.top, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct SettingsPaneHeader: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            if !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

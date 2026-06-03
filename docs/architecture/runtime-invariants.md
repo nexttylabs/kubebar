@@ -178,9 +178,10 @@ These are the rules Kubebar must keep true at runtime.
   not `OK`.
 - Settings keeps `App Settings` as the fixed first tab. Refresh cadence, Start
   at Login, and Health State Shift Alerts remain app-wide settings in that tab.
-- Settings context tabs must include both available kubectl contexts and locally
-  saved contexts with watchlists, so local config does not disappear when
-  kubeconfig is temporarily unavailable.
+- Settings context tabs and the menu context selector must list only contexts
+  reported by the local kubeconfig context list. Saved watchlists for missing
+  contexts stay preserved in config, but missing contexts are not displayed as
+  selectable context entries.
 - Switching Settings tabs must preserve each context's watchlist independently.
 - Setup candidate discovery must use the app-owned selected context.
 - Watchlist setup candidates include namespaces plus Deployment, StatefulSet,

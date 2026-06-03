@@ -71,7 +71,8 @@ assertions, the fallback is invalid and U2 must return to implementation.
 - `BR-OUT-001`: Do not add remote Kubernetes reads to list contexts.
 - `BR-OUT-002`: Do not change `HealthEvaluator` rules.
 - `BR-DEFER-001`: Removal/cleanup of saved watchlists for missing local
-  contexts is deferred.
+  contexts is deferred; missing contexts are preserved in config but not shown
+  as selectable entries.
 - `BR-Q-001`: Settings structure uses tabs: fixed `App Settings` first, then
   dynamic context tabs.
 
@@ -87,7 +88,7 @@ assertions, the fallback is invalid and U2 must return to implementation.
 | BR-DEC-002 | captured_as_decision | Decisions | Global settings stay in the fixed `App Settings` tab. |
 | BR-OUT-001 | out_of_scope | Scope Boundaries | Context discovery remains local; no cluster API reads are added. |
 | BR-OUT-002 | out_of_scope | Scope Boundaries | Health category ownership remains unchanged. |
-| BR-DEFER-001 | deferred | Scope Boundaries | Missing-context watchlist cleanup needs separate product behavior and deletion UX. |
+| BR-DEFER-001 | deferred | Scope Boundaries | Missing-context watchlist cleanup needs separate product behavior and deletion UX; display is still limited to local kubeconfig contexts. |
 | BR-Q-001 | resolved_as_assumption | Assumptions | The user confirmed Settings uses tabs with fixed general tab first and dynamic context tabs after it. |
 
 ## Research
@@ -132,8 +133,8 @@ assertions, the fallback is invalid and U2 must return to implementation.
 - Context tabs appear after `App Settings` and are generated from local context
   information.
 - "Local context information" means the existing local `ContextCatalog`
-  boundary plus Kubebar's local saved context keys where needed to preserve
-  existing watchlists; no remote Kubernetes API reads are introduced.
+  boundary. Saved watchlist keys are preserved in config but do not create
+  Settings tabs or menu selector entries.
 - Context tabs edit per-context watchlists only.
 - Saving from Settings keeps the existing behavior that the selected context tab
   can become the active selected context; saving while on `App Settings` keeps

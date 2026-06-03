@@ -37,13 +37,13 @@ struct SetupFlowStateTests {
         #expect(state.watchlistHelpText == "1 namespace selected")
     }
 
-    @Test("context tabs include available and saved contexts")
-    func contextTabsIncludeAvailableAndSavedContexts() {
+    @Test("context tabs include only local available contexts")
+    func contextTabsIncludeOnlyLocalAvailableContexts() {
         let state = SetupFlowState(
-            selectedContext: "prod",
-            availableContexts: ["stage"],
+            selectedContext: "default",
+            availableContexts: ["prod", "stage"],
             watchlistsByContext: [
-                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
+                "default": WatchlistSelectionState(selectedTargets: [.namespace("api")])
             ]
         )
 
@@ -55,7 +55,7 @@ struct SetupFlowStateTests {
     func settingsTabsStartWithAppSettingsAndThenContexts() {
         let state = SetupFlowState(
             selectedContext: "prod",
-            availableContexts: ["stage"],
+            availableContexts: ["prod", "stage"],
             watchlistsByContext: [
                 "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
             ]
@@ -69,7 +69,7 @@ struct SetupFlowStateTests {
     func settingsTabIDsStayStableWithTwoContexts() {
         let state = SetupFlowState(
             selectedContext: "prod",
-            availableContexts: ["stage"],
+            availableContexts: ["prod", "stage"],
             watchlistsByContext: [
                 "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
             ]

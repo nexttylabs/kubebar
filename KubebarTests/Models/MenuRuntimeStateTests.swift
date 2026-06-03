@@ -38,18 +38,18 @@ struct MenuRuntimeStateTests {
         #expect(state.targetContextToLoad == nil)
     }
 
-    @Test("menu selector contexts include available and saved contexts")
-    func menuSelectorContextsIncludeAvailableAndSavedContexts() {
+    @Test("menu selector contexts include only local available contexts")
+    func menuSelectorContextsIncludeOnlyLocalAvailableContexts() {
         var state = MenuRuntimeState(
             config: AppConfig(
-                selectedContext: "prod",
+                selectedContext: "default",
                 watchlistsByContext: [
-                    "prod": [.namespace("api")]
+                    "default": [.namespace("api")]
                 ]
             )
         )
 
-        state.setupState.availableContexts = ["stage"]
+        state.setupState.availableContexts = ["prod", "stage"]
 
         #expect(state.contextSelectorContexts == ["prod", "stage"])
     }
@@ -71,6 +71,7 @@ struct MenuRuntimeStateTests {
             AppConfig(
                 selectedContext: "stage",
                 watchlistsByContext: [
+                    "default": [.namespace("old")],
                     "prod": [.namespace("api")],
                     "stage": [.namespace("web")]
                 ]
@@ -99,6 +100,7 @@ struct MenuRuntimeStateTests {
             AppConfig(
                 selectedContext: "stage",
                 watchlistsByContext: [
+                    "default": [.namespace("old")],
                     "prod": [.namespace("api")]
                 ]
             )

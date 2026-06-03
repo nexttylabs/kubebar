@@ -30,7 +30,7 @@ struct SettingsRootView: View {
             height: SettingsWindowLayout.height,
             alignment: .topLeading
         )
-        .background(SettingsWindowFocusBridge())
+        .background(SettingsWindowFocusBridge(title: "Kubebar Settings"))
         .onAppear(perform: onPrepare)
     }
 
@@ -82,17 +82,35 @@ enum SettingsWindowPresenter {
 }
 
 private struct SettingsWindowFocusBridge: NSViewRepresentable {
+    let title: String
+
     func makeNSView(context: Context) -> SettingsWindowProbeView {
-        SettingsWindowProbeView()
+        SettingsWindowProbeView(title: title)
     }
 
     func updateNSView(_ nsView: SettingsWindowProbeView, context: Context) {
+        nsView.title = title
         nsView.registerWindowIfAvailable()
     }
 }
 
 private final class SettingsWindowProbeView: NSView {
     private var didBringWindowToFront = false
+    var title: String {
+        didSet {
+            applyWindowTitle()
+        }
+    }
+
+    init(title: String) {
+        self.title = title
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) {
+        self.title = "Kubebar Settings"
+        super.init(coder: coder)
+    }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -105,6 +123,11 @@ private final class SettingsWindowProbeView: NSView {
         }
 
         SettingsWindowPresenter.register(window)
+        applyWindowTitle()
+
+        Task { @MainActor [weak self] in
+            self?.applyWindowTitle()
+        }
 
         guard !didBringWindowToFront else {
             return
@@ -112,5 +135,9 @@ private final class SettingsWindowProbeView: NSView {
 
         didBringWindowToFront = true
         SettingsWindowPresenter.bringToFront()
+    }
+
+    private func applyWindowTitle() {
+        window?.title = title
     }
 }
