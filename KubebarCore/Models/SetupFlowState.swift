@@ -12,6 +12,7 @@ public struct SetupFlowState: Equatable, Sendable {
     public var selectedContext: String?
     public var availableContexts: [String]
     public var watchlist: WatchlistSelectionState
+    public var watchlistsByContext: [String: WatchlistSelectionState]
     public var targetLoadingState: WatchTargetLoadingState
     public var configurationMessage: String?
     public var refreshCadence: RefreshCadence
@@ -22,6 +23,7 @@ public struct SetupFlowState: Equatable, Sendable {
         selectedContext: String? = nil,
         availableContexts: [String] = [],
         watchlist: WatchlistSelectionState = WatchlistSelectionState(),
+        watchlistsByContext: [String: WatchlistSelectionState] = [:],
         targetLoadingState: WatchTargetLoadingState = .idle,
         configurationMessage: String? = nil,
         refreshCadence: RefreshCadence = .default,
@@ -30,7 +32,22 @@ public struct SetupFlowState: Equatable, Sendable {
     ) {
         self.selectedContext = selectedContext
         self.availableContexts = availableContexts
-        self.watchlist = watchlist
+        let defaultWatchlist = WatchlistSelectionState()
+        let hasExplicitWatchlist = watchlist != defaultWatchlist
+        var nextWatchlistsByContext = watchlistsByContext
+
+        if let selectedContext, hasExplicitWatchlist {
+            nextWatchlistsByContext[selectedContext] = watchlist
+        }
+
+        self.watchlist = if let selectedContext,
+                            !hasExplicitWatchlist,
+                            let savedWatchlist = nextWatchlistsByContext[selectedContext] {
+            savedWatchlist
+        } else {
+            watchlist
+        }
+        self.watchlistsByContext = nextWatchlistsByContext
         self.targetLoadingState = targetLoadingState
         self.configurationMessage = configurationMessage
         self.refreshCadence = refreshCadence
@@ -40,6 +57,14 @@ public struct SetupFlowState: Equatable, Sendable {
 
     public var isConfigured: Bool {
         selectedContext != nil && !watchlist.isNamespaceSelectionEmpty
+    }
+
+    public var contextTabs: [String] {
+        let contexts = Set(availableContexts)
+            .union(watchlistsByContext.keys)
+            .union(selectedContext.map { [$0] } ?? [])
+
+        return contexts.sorted()
     }
 
     public var needsSetup: Bool {
@@ -104,6 +129,26 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public mutating func selectContext(_ context: String?) {
+        preserveCurrentWatchlist()
         selectedContext = context
+        watchlist = context.flatMap { watchlistsByContext[$0] } ?? WatchlistSelectionState()
+    }
+
+    public func currentWatchlistsByContext() -> [String: WatchlistSelectionState] {
+        var current = watchlistsByContext
+
+        if let selectedContext {
+            current[selectedContext] = watchlist
+        }
+
+        return current
+    }
+
+    private mutating func preserveCurrentWatchlist() {
+        guard let selectedContext else {
+            return
+        }
+
+        watchlistsByContext[selectedContext] = watchlist
     }
 }

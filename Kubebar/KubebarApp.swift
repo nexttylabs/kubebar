@@ -68,9 +68,13 @@ struct KubebarApp: App {
     private var liveMenuRootView: some View {
         MenuBarRootView(
             display: viewModel.display,
+            activeContextName: viewModel.activeContextName,
+            contextSelectorContexts: viewModel.contextSelectorContexts,
             isShowingSetup: viewModel.isShowingSetup,
             isRefreshing: viewModel.isRefreshing,
             onRefresh: viewModel.refreshNow,
+            onRefreshContextList: viewModel.refreshContextSelectorContexts,
+            onSelectContext: viewModel.selectMenuContext,
             onPrepareSettings: viewModel.prepareSettings,
             k9sHandoffState: viewModel.k9sHandoffState,
             onOpenK9sHandoff: viewModel.openK9sHandoff,
@@ -90,9 +94,13 @@ private struct QAFixtureMenuRootView: View {
     var body: some View {
         MenuBarRootView(
             display: fixture.display,
+            activeContextName: fixture.display.contextName,
+            contextSelectorContexts: [fixture.display.contextName],
             isShowingSetup: fixture.isShowingSetup,
             isRefreshing: false,
             onRefresh: {},
+            onRefreshContextList: {},
+            onSelectContext: { _ in },
             onPrepareSettings: {},
             k9sHandoffState: .idle,
             onOpenK9sHandoff: { _ in },

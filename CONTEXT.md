@@ -19,6 +19,12 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **Per-context watchlist**: a saved set of watch targets keyed by Kubernetes
+  context name. Kubebar still has one active selected context at a time, but
+  each context may keep its own watchlist for refreshes and Settings editing.
+- **Quick Context Selector**: the menu-surface control that switches Kubebar's
+  active app-owned selected context. It must use the active context's
+  per-context watchlist and must not change the terminal's current context.
 - **Release build version**: the app bundle build number (`CFBundleVersion` /
   `CURRENT_PROJECT_VERSION`) used for release artifacts. It must move in sync
   with release publishing and stay distinct from the user-facing marketing

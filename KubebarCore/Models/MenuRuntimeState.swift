@@ -11,12 +11,7 @@ public struct MenuRuntimeState: Equatable, Sendable {
 
     public init(config: AppConfig) {
         self.surface = config.needsSetup ? .setup : .menu
-        self.setupState = SetupFlowState(
-            selectedContext: config.selectedContext,
-            watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
-            refreshCadence: config.refreshCadence,
-            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
-        )
+        self.setupState = Self.setupState(from: config)
     }
 
     public var isShowingSetup: Bool {
@@ -35,6 +30,18 @@ public struct MenuRuntimeState: Equatable, Sendable {
         return setupState.selectedContext
     }
 
+    public var contextSelectorContexts: [String] {
+        setupState.contextTabs
+    }
+
+    public mutating func applyActiveConfig(_ config: AppConfig) {
+        let availableContexts = setupState.availableContexts
+
+        surface = config.needsSetup ? .setup : .menu
+        setupState = Self.setupState(from: config)
+        setupState.availableContexts = availableContexts
+    }
+
     public mutating func openSetup() {
         surface = .setup
         setupState.configurationMessage = nil
@@ -45,12 +52,7 @@ public struct MenuRuntimeState: Equatable, Sendable {
             return
         }
 
-        setupState = SetupFlowState(
-            selectedContext: config.selectedContext,
-            watchlist: WatchlistSelectionState(selectedTargets: Self.namespaceTargets(from: config.watchTargets)),
-            refreshCadence: config.refreshCadence,
-            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
-        )
+        setupState = Self.setupState(from: config)
         setupState.configurationMessage = nil
     }
 
@@ -118,14 +120,15 @@ public struct MenuRuntimeState: Equatable, Sendable {
     }
 
     public func completedConfig() -> AppConfig? {
-        let watchTargets = setupState.watchlist.selectedNamespaceTargets.sorted { $0.displayTitle < $1.displayTitle }
-        guard let selectedContext = setupState.selectedContext, !watchTargets.isEmpty else {
+        let watchlistsByContext = completedWatchlistsByContext()
+        guard let selectedContext = setupState.selectedContext,
+              !(watchlistsByContext[selectedContext] ?? []).isEmpty else {
             return nil
         }
 
         return AppConfig(
             selectedContext: selectedContext,
-            watchTargets: watchTargets,
+            watchlistsByContext: watchlistsByContext,
             refreshIntervalSeconds: setupState.refreshCadence.seconds,
             healthShiftAlertsEnabled: setupState.healthShiftAlerts.isEnabled
         )
@@ -133,9 +136,40 @@ public struct MenuRuntimeState: Equatable, Sendable {
 
     private func hasUnsavedSettingsChanges(comparedTo config: AppConfig) -> Bool {
         setupState.selectedContext != config.selectedContext ||
-            setupState.watchlist.selectedNamespaceTargets != Self.namespaceTargets(from: config.watchTargets) ||
+            completedWatchlistsByContext() != Self.namespaceWatchlists(from: config.watchlistsByContext) ||
             setupState.refreshCadence.seconds != config.refreshIntervalSeconds ||
             setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled
+    }
+
+    private func completedWatchlistsByContext() -> [String: [WatchTarget]] {
+        Self.namespaceWatchlists(
+            from: setupState.currentWatchlistsByContext().mapValues { Array($0.selectedNamespaceTargets) }
+        )
+    }
+
+    private static func watchlistStates(from watchlistsByContext: [String: [WatchTarget]]) -> [String: WatchlistSelectionState] {
+        watchlistsByContext.mapValues { targets in
+            WatchlistSelectionState(selectedTargets: namespaceTargets(from: targets))
+        }
+    }
+
+    private static func setupState(from config: AppConfig) -> SetupFlowState {
+        SetupFlowState(
+            selectedContext: config.selectedContext,
+            watchlistsByContext: watchlistStates(from: config.watchlistsByContext),
+            refreshCadence: config.refreshCadence,
+            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
+        )
+    }
+
+    private static func namespaceWatchlists(from watchlistsByContext: [String: [WatchTarget]]) -> [String: [WatchTarget]] {
+        watchlistsByContext.reduce(into: [:]) { result, item in
+            let targets = namespaceTargets(from: item.value).sorted { $0.displayTitle < $1.displayTitle }
+
+            if !targets.isEmpty {
+                result[item.key] = targets
+            }
+        }
     }
 
     private static func namespaceTargets(from targets: [WatchTarget]) -> Set<WatchTarget> {

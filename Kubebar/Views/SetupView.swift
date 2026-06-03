@@ -35,8 +35,7 @@ struct SetupView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                contextPicker
-                watchlistPicker
+                contextWatchlistTabs
                 refreshCadencePicker
                 startAtLoginToggle
                 healthShiftAlertsToggle
@@ -59,16 +58,16 @@ struct SetupView: View {
         }
     }
 
-    private var contextPicker: some View {
+    private var contextWatchlistTabs: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Cluster context")
+            Text("Cluster contexts")
                 .font(.headline)
 
             Text(state.contextHelpText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            if state.availableContexts.isEmpty {
+            if state.contextTabs.isEmpty {
                 Text("No contexts available.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -77,8 +76,7 @@ struct SetupView: View {
                     .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
             } else {
                 Picker("Cluster context", selection: selectedContextBinding) {
-                    Text("Select a context").tag(Optional<String>.none)
-                    ForEach(state.availableContexts, id: \.self) { context in
+                    ForEach(state.contextTabs, id: \.self) { context in
                         Text(context)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -87,17 +85,15 @@ struct SetupView: View {
                             .tag(Optional(context))
                     }
                 }
-                .pickerStyle(.menu)
+                .pickerStyle(.segmented)
+
+                WatchlistPickerView(
+                    state: watchlistBinding,
+                    loadingState: state.targetLoadingState,
+                    onRetryTargets: onRetryTargets
+                )
             }
         }
-    }
-
-    private var watchlistPicker: some View {
-        WatchlistPickerView(
-            state: watchlistBinding,
-            loadingState: state.targetLoadingState,
-            onRetryTargets: onRetryTargets
-        )
     }
 
     private var refreshCadencePicker: some View {

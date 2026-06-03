@@ -12,6 +12,7 @@ struct AppConfigStoreTests {
 
         #expect(config.selectedContext == nil)
         #expect(config.watchTargets.isEmpty)
+        #expect(config.watchlistsByContext.isEmpty)
         #expect(config.needsSetup)
         #expect(config.refreshIntervalSeconds == 60)
         #expect(config.refreshCadence == .oneMinute)
@@ -49,6 +50,8 @@ struct AppConfigStoreTests {
 
         let config = try store.load()
 
+        #expect(config.watchlistsByContext["prod"] == [.namespace("api")])
+        #expect(config.watchTargets == [.namespace("api")])
         #expect(!config.healthShiftAlertsEnabled)
     }
 
@@ -90,6 +93,47 @@ struct AppConfigStoreTests {
         try store.save(config)
 
         #expect(try store.load() == config)
+        #expect(try store.load().watchlistsByContext["prod"] == [
+            .workload(namespace: "api", name: "checkout", kind: .deployment),
+            .namespace("monitoring")
+        ])
+    }
+
+    @Test("per-context watchlists round trip")
+    func perContextWatchlistsRoundTrip() throws {
+        let store = AppConfigStore(directory: makeTemporaryDirectory())
+        let config = AppConfig(
+            selectedContext: "stage",
+            watchlistsByContext: [
+                "prod": [.namespace("api")],
+                "stage": [.namespace("web"), .namespace("ops")]
+            ],
+            refreshIntervalSeconds: 120,
+            healthShiftAlertsEnabled: true
+        )
+
+        try store.save(config)
+        let loaded = try store.load()
+
+        #expect(loaded == config)
+        #expect(loaded.watchTargets == [.namespace("web"), .namespace("ops")])
+        #expect(loaded.watchlistsByContext["prod"] == [.namespace("api")])
+        #expect(loaded.watchlistsByContext["stage"] == [.namespace("web"), .namespace("ops")])
+        #expect(loaded.refreshIntervalSeconds == 120)
+        #expect(loaded.healthShiftAlertsEnabled)
+    }
+
+    @Test("selected context without watchlist needs setup")
+    func selectedContextWithoutWatchlistNeedsSetup() {
+        let config = AppConfig(
+            selectedContext: "stage",
+            watchlistsByContext: [
+                "prod": [.namespace("api")]
+            ]
+        )
+
+        #expect(config.watchTargets.isEmpty)
+        #expect(config.needsSetup)
     }
 
     @Test("corrupt config reports a recoverable error")

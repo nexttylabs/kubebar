@@ -4,9 +4,13 @@ import KubebarCore
 
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
+    let activeContextName: String?
+    let contextSelectorContexts: [String]
     let isShowingSetup: Bool
     let isRefreshing: Bool
     let onRefresh: () -> Void
+    let onRefreshContextList: () -> Void
+    let onSelectContext: (String) -> Void
     let onPrepareSettings: () -> Void
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
@@ -22,6 +26,12 @@ struct MenuBarRootView: View {
 
     private var menuContent: some View {
         VStack(alignment: .leading, spacing: 16) {
+            ContextSelectorView(
+                activeContextName: activeContextName,
+                contexts: contextSelectorContexts,
+                onSelectContext: onSelectContext
+            )
+
             mainContent
                 .frame(maxWidth: .infinity, alignment: .topLeading)
 
@@ -39,6 +49,7 @@ struct MenuBarRootView: View {
         .background(VisibleScreenHeightReader(onChange: updateScreenVisibleHeight))
         .onAppear {
             selectedTab = .overview
+            onRefreshContextList()
         }
     }
 
@@ -192,7 +203,6 @@ struct MenuBarRootView: View {
         static let minimumMainContentHeight: CGFloat = 280
         static let defaultScreenVisibleHeight: CGFloat = 900
         static let screenEdgeInset: CGFloat = 48
-        static let nonTabContentHeightBudget: CGFloat = 170
         static let podTabNonItemContentHeightBudget: CGFloat = 110
         static let minimumPodItemsHeight: CGFloat = 160
         static let heightTolerance: CGFloat = 1
@@ -208,7 +218,7 @@ struct MenuBarRootView: View {
         static func selectedTabMaxContentHeight(forMenuMaxHeight menuMaxHeight: CGFloat) -> CGFloat {
             MenuLayoutSizing.contentHeight(
                 forMenuHeight: menuMaxHeight,
-                reservedHeight: nonTabContentHeightBudget,
+                reservedHeight: MenuLayoutSizing.selectedTabReservedHeightWithContextSelector,
                 preferredHeight: maximumSelectedTabContentHeight
             )
         }
@@ -223,6 +233,66 @@ struct MenuBarRootView: View {
                 minimumHeight: minimumMainContentHeight
             )
         }
+    }
+}
+
+private struct ContextSelectorView: View {
+    let activeContextName: String?
+    let contexts: [String]
+    let onSelectContext: (String) -> Void
+
+    var body: some View {
+        Menu {
+            if contexts.isEmpty {
+                Text("No contexts available")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(contexts, id: \.self) { context in
+                    Button {
+                        onSelectContext(context)
+                    } label: {
+                        Label {
+                            Text(context)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        } icon: {
+                            Image(systemName: context == activeContextName ? "checkmark" : "circle")
+                        }
+                    }
+                    .help(Text(context))
+                    .accessibilityLabel(Text(accessibilityLabel(for: context)))
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "server.rack")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16)
+
+                Text("Context")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                Text(activeContextName ?? "Not configured")
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .menuStyle(.button)
+        .help(Text(activeContextName ?? "No context selected"))
+        .accessibilityLabel(Text("Current context, \(activeContextName ?? "not configured")"))
+    }
+
+    private func accessibilityLabel(for context: String) -> String {
+        if context == activeContextName {
+            return "Current context, \(context)"
+        }
+
+        return "Switch to context \(context)"
     }
 }
 

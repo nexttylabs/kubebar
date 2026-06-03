@@ -26,6 +26,35 @@ struct RefreshCoordinatorTests {
         #expect(result.display.state == .ok)
     }
 
+    @Test("refresh uses active context watchlist")
+    func refreshUsesActiveContextWatchlist() {
+        let snapshot = ClusterSnapshot(
+            contextName: "stage",
+            nodeSummary: NodeSummary(ready: 1, total: 1),
+            podSummary: PodSummary(running: 1, total: 1),
+            warningEventCount: 0,
+            trackedItems: [.init(target: .namespace("web"), state: .ok, reason: "1/1 pods running")],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let reader = RecordingClusterReader(result: .success(snapshot))
+        let coordinator = RefreshCoordinator(reader: reader)
+
+        _ = coordinator.refresh(
+            config: AppConfig(
+                selectedContext: "stage",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            ),
+            previousSnapshot: nil,
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(reader.lastContextName == "stage")
+        #expect(reader.lastWatchTargets == [.namespace("web")])
+    }
+
     @Test("failed refresh keeps previous snapshot as stale display")
     func failedRefreshKeepsPreviousSnapshotAsStaleDisplay() {
         let previous = ClusterSnapshot(
@@ -169,5 +198,21 @@ private struct FakeClusterReader: ClusterReading {
 
     func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
         try result.get()
+    }
+}
+
+private final class RecordingClusterReader: ClusterReading, @unchecked Sendable {
+    private let result: Result<ClusterSnapshot, Error>
+    private(set) var lastContextName: String?
+    private(set) var lastWatchTargets: [WatchTarget] = []
+
+    init(result: Result<ClusterSnapshot, Error>) {
+        self.result = result
+    }
+
+    func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+        lastContextName = contextName
+        lastWatchTargets = watchTargets
+        return try result.get()
     }
 }

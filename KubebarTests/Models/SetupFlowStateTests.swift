@@ -37,6 +37,20 @@ struct SetupFlowStateTests {
         #expect(state.watchlistHelpText == "1 namespace selected")
     }
 
+    @Test("context tabs include available and saved contexts")
+    func contextTabsIncludeAvailableAndSavedContexts() {
+        let state = SetupFlowState(
+            selectedContext: "prod",
+            availableContexts: ["stage"],
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")])
+            ]
+        )
+
+        #expect(state.contextTabs == ["prod", "stage"])
+        #expect(state.watchlist.isSelected(.namespace("api")))
+    }
+
     @Test("configured setup can use settings save primary action")
     func configuredSetupCanUseSettingsSavePrimaryAction() {
         let state = SetupFlowState(

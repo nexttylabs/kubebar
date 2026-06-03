@@ -2,12 +2,13 @@ import Foundation
 
 public struct AppConfig: Codable, Equatable, Sendable {
     public let selectedContext: String?
-    public let watchTargets: [WatchTarget]
+    public let watchlistsByContext: [String: [WatchTarget]]
     public let refreshIntervalSeconds: Int
     public let healthShiftAlertsEnabled: Bool
 
     private enum CodingKeys: String, CodingKey {
         case selectedContext
+        case watchlistsByContext
         case watchTargets
         case refreshIntervalSeconds
         case healthShiftAlertsEnabled
@@ -16,13 +17,28 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public init(
         selectedContext: String? = nil,
         watchTargets: [WatchTarget] = [],
+        watchlistsByContext: [String: [WatchTarget]]? = nil,
         refreshIntervalSeconds: Int = RefreshCadence.default.seconds,
         healthShiftAlertsEnabled: Bool = false
     ) {
         self.selectedContext = selectedContext
-        self.watchTargets = watchTargets
+        if let watchlistsByContext {
+            self.watchlistsByContext = watchlistsByContext
+        } else if let selectedContext, !watchTargets.isEmpty {
+            self.watchlistsByContext = [selectedContext: watchTargets]
+        } else {
+            self.watchlistsByContext = [:]
+        }
         self.refreshIntervalSeconds = RefreshCadence.from(seconds: refreshIntervalSeconds).seconds
         self.healthShiftAlertsEnabled = healthShiftAlertsEnabled
+    }
+
+    public var watchTargets: [WatchTarget] {
+        guard let selectedContext else {
+            return []
+        }
+
+        return watchlistsByContext[selectedContext] ?? []
     }
 
     public var needsSetup: Bool {
@@ -33,12 +49,22 @@ public struct AppConfig: Codable, Equatable, Sendable {
         RefreshCadence.from(seconds: refreshIntervalSeconds)
     }
 
+    public func selectingContext(_ context: String) -> AppConfig {
+        AppConfig(
+            selectedContext: context,
+            watchlistsByContext: watchlistsByContext,
+            refreshIntervalSeconds: refreshIntervalSeconds,
+            healthShiftAlertsEnabled: healthShiftAlertsEnabled
+        )
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.init(
             selectedContext: try container.decodeIfPresent(String.self, forKey: .selectedContext),
             watchTargets: try container.decodeIfPresent([WatchTarget].self, forKey: .watchTargets) ?? [],
+            watchlistsByContext: try Self.decodedWatchlists(from: container),
             refreshIntervalSeconds: try container.decodeIfPresent(Int.self, forKey: .refreshIntervalSeconds) ?? RefreshCadence.default.seconds,
             healthShiftAlertsEnabled: try container.decodeIfPresent(Bool.self, forKey: .healthShiftAlertsEnabled) ?? false
         )
@@ -48,9 +74,23 @@ public struct AppConfig: Codable, Equatable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(selectedContext, forKey: .selectedContext)
-        try container.encode(watchTargets, forKey: .watchTargets)
+        try container.encode(watchlistsByContext, forKey: .watchlistsByContext)
         try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
         try container.encode(healthShiftAlertsEnabled, forKey: .healthShiftAlertsEnabled)
+    }
+
+    private static func decodedWatchlists(from container: KeyedDecodingContainer<CodingKeys>) throws -> [String: [WatchTarget]]? {
+        if let watchlistsByContext = try container.decodeIfPresent([String: [WatchTarget]].self, forKey: .watchlistsByContext) {
+            return watchlistsByContext
+        }
+
+        guard let selectedContext = try container.decodeIfPresent(String.self, forKey: .selectedContext),
+              let legacyWatchTargets = try container.decodeIfPresent([WatchTarget].self, forKey: .watchTargets),
+              !legacyWatchTargets.isEmpty else {
+            return nil
+        }
+
+        return [selectedContext: legacyWatchTargets]
     }
 }
 
