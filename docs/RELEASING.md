@@ -15,9 +15,12 @@ This document outlines the release process for Kubebar. Since the project curren
 - [ ] **Prepare Changelog**: In GitHub Actions, run `Release` with
   `mode=prepare`, the target `version`, and `dry_run=false`. Review and merge
   the generated PR containing the finalized `CHANGELOG.md` section.
-- [ ] **Publish**: Merge the generated release notes PR. GitHub Actions reads
-  the latest finalized `CHANGELOG.md` section, creates the tag, builds
-  `Kubebar.zip`, and creates the GitHub Release.
+- [ ] **Dry-run Publish**: In GitHub Actions, run `Release` with
+  `mode=publish`, the target `version`, and `dry_run=true` to validate release
+  notes, quality gates, and packaging without creating a tag or GitHub Release.
+- [ ] **Publish**: Run `Release` again with `mode=publish` and `dry_run=false`.
+  GitHub Actions creates the tag, builds `Kubebar.zip`, uploads the artifact,
+  and creates the GitHub Release.
 
 ## Changelog Workflow
 
@@ -90,10 +93,25 @@ request is the normal review path; the artifact is only a fallback.
 
 ### Publishing from GitHub
 
-After the release notes PR lands on `main`, publishing is automatic. The
-`Release` workflow reads the latest finalized `CHANGELOG.md` section, validates
-the notes, checks that the matching tag does not already exist, builds
-`Kubebar.zip`, creates the tag, and publishes the GitHub Release.
+After the release notes PR lands on `main`, publishing is explicit rather than
+automatic:
+
+1. Open GitHub Actions and run `Release`.
+2. Set `mode` to `publish`.
+3. Set `version` to the target version, such as `0.3.2`.
+4. Set `dry_run=true` first to validate the finalized notes, run the quality
+   gate, build `Kubebar.zip`, and upload the artifact without creating a tag or
+   GitHub Release.
+5. Set `dry_run=false` when ready to publish.
+
+The publish job reads the finalized `CHANGELOG.md` section, validates the
+notes, checks that the matching tag does not already exist, runs the quality
+gate, builds `Kubebar.zip`, uploads the artifact, creates the tag, and publishes
+the GitHub Release.
+
+The workflow uses the `release` environment. If GitHub environment protection is
+enabled for the repository, the publish job will wait for the configured
+reviewer approval before it can create tags or releases.
 
 The tag-push path still works as a fallback for maintainers who need to replay
 an existing tag.

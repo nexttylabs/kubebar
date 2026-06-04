@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - prepare
+          - publish
       version:
         description: Version without v, e.g. 0.3.2.
         required: true
@@ -25,16 +26,16 @@ on:
         default: true
         type: boolean
   push:
-    branches:
-      - main
-    paths:
-      - CHANGELOG.md
     tags:
       - 'v*'
 
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   prepare-release-notes:
-    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare'
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare' }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -71,7 +72,7 @@ jobs:
         run: chmod +x scripts/*.sh
 
       - name: Add dry-run fragment
-        if: inputs.dry_run && endsWith(steps.release.outputs.version, '-test')
+        if: ${{ inputs.dry_run && endsWith(steps.release.outputs.version, '-test') }}
         run: |
           if ! find changelog.d -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | grep -q .; then
             printf -- '- Exercise release preparation dry-run.\n' > changelog.d/dry-run.changed.md
@@ -84,7 +85,7 @@ jobs:
         run: ./scripts/extract-release-notes.sh "${{ steps.release.outputs.version }}"
 
       - name: Show dry-run diff
-        if: inputs.dry_run
+        if: ${{ inputs.dry_run }}
         run: git diff -- CHANGELOG.md changelog.d
 
       - name: Open release notes PR
@@ -104,9 +105,10 @@ jobs:
 
             Review the release notes before merging. Publishing should happen only after this PR lands on `main`.
 
-  build-and-release:
-    if: github.event_name == 'push'
+  publish-release:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish') || startsWith(github.ref, 'refs/tags/v') }}
     runs-on: macos-latest
+    environment: release
     permissions:
       contents: write
     steps:
@@ -129,19 +131,12 @@ jobs:
           if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
             version="${GITHUB_REF#refs/tags/v}"
             create_tag="false"
+            dry_run="false"
           else
-            version="$(
-              awk '
-                /^## \[[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?\] - [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
-                  line = $0
-                  sub(/^## \[/, "", line)
-                  sub(/\] - .*/, "", line)
-                  print line
-                  exit
-                }
-              ' CHANGELOG.md
-            )"
+            version="${{ inputs.version }}"
+            version="${version#v}"
             create_tag="true"
+            dry_run="${{ inputs.dry_run }}"
           fi
 
           if [ -z "$version" ]; then
@@ -159,28 +154,36 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
           echo "create_tag=$create_tag" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
 
       - name: Make Scripts Executable
         run: chmod +x scripts/*.sh
 
       - name: Check Tag Availability
         id: tag_check
-        if: steps.release.outputs.create_tag == 'true'
+        if: ${{ steps.release.outputs.create_tag == 'true' }}
         run: |
           git fetch --tags --force
           if git rev-parse -q --verify "refs/tags/${{ steps.release.outputs.tag }}" >/dev/null; then
-            echo "Tag already exists: ${{ steps.release.outputs.tag }}. Nothing to publish."
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "Tag already exists: ${{ steps.release.outputs.tag }}." >&2
+            exit 1
           fi
           echo "publish=true" >> "$GITHUB_OUTPUT"
 
+      - name: Validate Release Notes
+        if: ${{ steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true' }}
+        run: ./scripts/extract-release-notes.sh "${{ steps.release.outputs.version }}" >/dev/null
+
+      - name: Run Quality Gate
+        if: ${{ steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true' }}
+        run: ./scripts/swift-quality-gate.sh local
+
       - name: Build and Package
-        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
+        if: ${{ steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true' }}
         run: ./scripts/build-release.sh ${{ steps.release.outputs.version }}
 
       - name: Extract Release Notes
-        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
+        if: ${{ steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true' }}
         id: extract_notes
         run: |
           VERSION="${{ steps.release.outputs.version }}"
@@ -190,8 +193,15 @@ jobs:
           cat "$NOTES_FILE" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Upload Release Artifact
+        if: ${{ steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kubebar-${{ steps.release.outputs.tag }}
+          path: Kubebar.zip
+
       - name: Create Tag
-        if: steps.release.outputs.create_tag == 'true' && steps.tag_check.outputs.publish == 'true'
+        if: ${{ steps.release.outputs.dry_run != 'true' && steps.release.outputs.create_tag == 'true' && steps.tag_check.outputs.publish == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -199,7 +209,7 @@ jobs:
           git push origin "${{ steps.release.outputs.tag }}"
 
       - name: Create GitHub Release
-        if: steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true'
+        if: ${{ steps.release.outputs.dry_run != 'true' && (steps.release.outputs.create_tag != 'true' || steps.tag_check.outputs.publish == 'true') }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
