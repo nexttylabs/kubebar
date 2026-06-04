@@ -5,6 +5,7 @@ import KubebarCore
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     @Published private(set) var display: MenuDisplayModel
+    @Published private(set) var activeContextName: String?
     @Published var setupState: SetupFlowState {
         didSet {
             guard !isPublishingRuntimeState else {
@@ -84,6 +85,7 @@ final class MenuBarViewModel: ObservableObject {
         self.refreshGate = RefreshGate()
         self.staleReason = nil
         self.display = Self.initialDisplay(for: config, now: now)
+        self.activeContextName = config.selectedContext
         self.k9sHandoffState = .idle
         self.healthShiftAlertTracker = HealthShiftAlertTracker()
         self.healthShiftAlertSettingsRequestGate = HealthShiftAlertSettingsRequestGate()
@@ -117,6 +119,10 @@ final class MenuBarViewModel: ObservableObject {
 
     var isEditingExistingConfiguration: Bool {
         !config.needsSetup
+    }
+
+    var contextSelectorContexts: [String] {
+        runtimeState.contextSelectorContexts
     }
 
     func refreshNow() {
@@ -196,6 +202,7 @@ final class MenuBarViewModel: ObservableObject {
         do {
             try configStore.save(completedConfig)
             config = completedConfig
+            activeContextName = completedConfig.selectedContext
             healthShiftAlertSettingsRequestGate.invalidate()
             invalidateRefreshState(clearSnapshot: true)
             display = Self.initialDisplay(for: config, now: Date())
@@ -255,6 +262,57 @@ final class MenuBarViewModel: ObservableObject {
         publishRuntimeState()
 
         contextToLoad.map(loadWatchTargets)
+    }
+
+    func selectAppSettingsTab() {
+        k9sHandoffCoordinator.clear()
+        runtimeState.selectAppSettingsTab()
+        publishRuntimeState()
+    }
+
+    func refreshContextSelectorContexts() {
+        loadContexts()
+    }
+
+    func selectMenuContext(_ context: String) {
+        guard context != config.selectedContext else {
+            return
+        }
+
+        k9sHandoffCoordinator.clear()
+        watchTargetLoadTask?.cancel()
+        watchTargetLoadTask = nil
+
+        let updatedConfig = config.selectingContext(context)
+
+        do {
+            try configStore.save(updatedConfig)
+        } catch {
+            display = HealthEvaluator().evaluate(
+                snapshot: nil,
+                previousSnapshot: snapshot,
+                failure: RefreshFailure(reason: SetupFlowState.settingsSaveFailureMessage),
+                now: Date(),
+                staleAfterSeconds: config.refreshIntervalSeconds * 2
+            )
+            staleReason = display.staleBanner?.reason
+            return
+        }
+
+        config = updatedConfig
+        activeContextName = updatedConfig.selectedContext
+        healthShiftAlertSettingsRequestGate.invalidate()
+        invalidateRefreshState(clearSnapshot: true)
+        display = Self.initialDisplay(for: updatedConfig, now: Date())
+        runtimeState.applyActiveConfig(updatedConfig)
+        publishRuntimeState()
+        startRefreshLoopIfConfigured()
+
+        if let selectedContext = runtimeState.targetContextToLoad {
+            loadWatchTargets(for: selectedContext)
+        } else if isNetworkAvailable {
+            performRefresh(queueIfBusy: true)
+        }
     }
 
     func retryWatchTargetLoad() {

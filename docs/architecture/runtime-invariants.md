@@ -29,9 +29,16 @@ These are the rules Kubebar must keep true at runtime.
 
 - `MenuDisplayModel` is the only input the menu uses for rendering.
 - `HealthEvaluator` is the single source of truth for severity.
-- `AppConfigStore` owns the saved context and watchlist.
+- `AppConfigStore` owns the saved active context and the per-context watchlists.
+- The active watchlist is the watchlist for the app-owned selected context only;
+  saved watchlists for other contexts must not affect the current refresh.
 - `KubectlClusterReader` always uses the app-owned selected context, not the
   shell context.
+- The Quick Context Selector changes only Kubebar's app-owned selected context.
+  It must not call `kubectl config use-context`, mutate kubeconfig's current
+  context, or depend on the terminal's current context.
+- The Quick Context Selector lives in a nested menu control on the menu surface,
+  not as a standalone top-level row above the menu tabs.
 - `CommandRunner` remains an injectable boundary so reads can be tested without
   shelling out.
 - Kubebar uses `kubectl` only for the saved context and the status/setup reads
@@ -113,6 +120,11 @@ These are the rules Kubebar must keep true at runtime.
 ## Freshness Rules
 
 - Old data never looks current.
+- Switching the active context from the menu must clear previous-context
+  snapshot, freshness, k9s handoff, and Health State Shift Alert baseline state
+  before the new context can look current.
+- In-flight refreshes from an old context must be rejected after the active
+  context changes.
 - A successful snapshot older than `2x` the saved refresh cadence must be shown
   as `Stale`, even when its counters and watchlist rows were healthy when
   captured.
@@ -162,6 +174,15 @@ These are the rules Kubebar must keep true at runtime.
   `Recent Warnings` ordering.
 - An empty watchlist is a real state and must not be treated as a healthy
   cluster.
+- A selected context with no saved active watchlist is configuration-required,
+  not `OK`.
+- Settings keeps `App Settings` as the fixed first tab. Refresh cadence, Start
+  at Login, and Health State Shift Alerts remain app-wide settings in that tab.
+- Settings context tabs and the menu context selector must list only contexts
+  reported by the local kubeconfig context list. Saved watchlists for missing
+  contexts stay preserved in config, but missing contexts are not displayed as
+  selectable context entries.
+- Switching Settings tabs must preserve each context's watchlist independently.
 - Setup candidate discovery must use the app-owned selected context.
 - Watchlist setup candidates include namespaces plus Deployment, StatefulSet,
   DaemonSet, and CronJob workloads.

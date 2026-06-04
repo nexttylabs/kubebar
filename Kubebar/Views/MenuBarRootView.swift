@@ -4,9 +4,13 @@ import KubebarCore
 
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
+    let activeContextName: String?
+    let contextSelectorContexts: [String]
     let isShowingSetup: Bool
     let isRefreshing: Bool
     let onRefresh: () -> Void
+    let onRefreshContextList: () -> Void
+    let onSelectContext: (String) -> Void
     let onPrepareSettings: () -> Void
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
@@ -29,7 +33,10 @@ struct MenuBarRootView: View {
             MenuFooterView(
                 lastUpdated: display.lastUpdated,
                 isRefreshing: isRefreshing,
+                activeContextName: activeContextName,
+                contextSelectorContexts: contextSelectorContexts,
                 onRefresh: onRefresh,
+                onSelectContext: onSelectContext,
                 onOpenSettings: openSettingsFromMenu,
                 onQuit: onQuit
             )
@@ -39,6 +46,7 @@ struct MenuBarRootView: View {
         .background(VisibleScreenHeightReader(onChange: updateScreenVisibleHeight))
         .onAppear {
             selectedTab = .overview
+            onRefreshContextList()
         }
     }
 
@@ -192,7 +200,6 @@ struct MenuBarRootView: View {
         static let minimumMainContentHeight: CGFloat = 280
         static let defaultScreenVisibleHeight: CGFloat = 900
         static let screenEdgeInset: CGFloat = 48
-        static let nonTabContentHeightBudget: CGFloat = 170
         static let podTabNonItemContentHeightBudget: CGFloat = 110
         static let minimumPodItemsHeight: CGFloat = 160
         static let heightTolerance: CGFloat = 1
@@ -208,7 +215,7 @@ struct MenuBarRootView: View {
         static func selectedTabMaxContentHeight(forMenuMaxHeight menuMaxHeight: CGFloat) -> CGFloat {
             MenuLayoutSizing.contentHeight(
                 forMenuHeight: menuMaxHeight,
-                reservedHeight: nonTabContentHeightBudget,
+                reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
                 preferredHeight: maximumSelectedTabContentHeight
             )
         }

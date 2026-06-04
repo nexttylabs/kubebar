@@ -40,17 +40,34 @@ struct MenuLayoutSizingTests {
         #expect(
             MenuLayoutSizing.contentHeight(
                 forMenuHeight: 560,
-                reservedHeight: 170,
+                reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
                 preferredHeight: 560
             ) == 390
         )
         #expect(
             MenuLayoutSizing.contentHeight(
                 forMenuHeight: 820,
-                reservedHeight: 170,
+                reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
                 preferredHeight: 560
             ) == 560
         )
+    }
+
+    @Test("content height uses the no top context selector budget")
+    func contentHeightUsesTheNoTopContextSelectorBudget() {
+        let menuHeight = MenuLayoutSizing.maximumMenuHeight(
+            forScreenVisibleHeight: 500,
+            minimumHeight: 220,
+            screenEdgeInset: 48
+        )
+        let contentHeight = MenuLayoutSizing.contentHeight(
+            forMenuHeight: menuHeight,
+            reservedHeight: MenuLayoutSizing.selectedTabReservedHeight,
+            preferredHeight: 560
+        )
+
+        #expect(contentHeight == 282)
+        #expect(contentHeight + MenuLayoutSizing.selectedTabReservedHeight <= menuHeight)
     }
 
     @Test("short content filler only fills missing height")

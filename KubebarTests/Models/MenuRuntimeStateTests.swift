@@ -38,6 +38,81 @@ struct MenuRuntimeStateTests {
         #expect(state.targetContextToLoad == nil)
     }
 
+    @Test("menu selector contexts include only local available contexts")
+    func menuSelectorContextsIncludeOnlyLocalAvailableContexts() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "default",
+                watchlistsByContext: [
+                    "default": [.namespace("api")]
+                ]
+            )
+        )
+
+        state.setupState.availableContexts = ["prod", "stage"]
+
+        #expect(state.contextSelectorContexts == ["prod", "stage"])
+    }
+
+    @Test("applying configured context returns menu surface and matching watchlist")
+    func applyingConfiguredContextReturnsMenuSurfaceAndMatchingWatchlist() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+        state.setupState.availableContexts = ["prod", "stage"]
+
+        state.applyActiveConfig(
+            AppConfig(
+                selectedContext: "stage",
+                watchlistsByContext: [
+                    "default": [.namespace("old")],
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        #expect(!state.isShowingSetup)
+        #expect(state.setupState.selectedContext == "stage")
+        #expect(state.setupState.watchlist.isSelected(.namespace("web")))
+        #expect(state.contextSelectorContexts == ["prod", "stage"])
+    }
+
+    @Test("applying context without watchlist shows configuration required")
+    func applyingContextWithoutWatchlistShowsConfigurationRequired() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")]
+                ]
+            )
+        )
+        state.setupState.availableContexts = ["prod", "stage"]
+
+        state.applyActiveConfig(
+            AppConfig(
+                selectedContext: "stage",
+                watchlistsByContext: [
+                    "default": [.namespace("old")],
+                    "prod": [.namespace("api")]
+                ]
+            )
+        )
+
+        #expect(state.isShowingSetup)
+        #expect(state.shouldLoadContexts)
+        #expect(state.targetContextToLoad == "stage")
+        #expect(state.setupState.watchlist.selectedTargets.isEmpty)
+        #expect(state.contextSelectorContexts == ["prod", "stage"])
+    }
+
     @Test("opening setup from configured state requests saved context targets")
     func openingSetupFromConfiguredStateRequestsSavedContextTargets() {
         var state = MenuRuntimeState(
@@ -132,6 +207,96 @@ struct MenuRuntimeStateTests {
         #expect(state.setupState.targetLoadingState == .loading)
     }
 
+    @Test("selecting settings context switches to that context watchlist")
+    func selectingSettingsContextSwitchesToThatContextWatchlist() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        let contextToLoad = state.selectContext("stage")
+
+        #expect(contextToLoad == "stage")
+        #expect(state.setupState.selectedContext == "stage")
+        #expect(state.setupState.watchlist.isSelected(.namespace("web")))
+        #expect(!state.setupState.watchlist.isSelected(.namespace("api")))
+    }
+
+    @Test("settings context selections are preserved across tabs")
+    func settingsContextSelectionsArePreservedAcrossTabs() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+        _ = state.selectContext("prod")
+
+        #expect(state.setupState.watchlist.isSelected(.namespace("api")))
+
+        _ = state.selectContext("stage")
+
+        #expect(state.setupState.watchlist.isSelected(.namespace("web")))
+        #expect(state.setupState.watchlist.isSelected(.namespace("ops")))
+    }
+
+    @Test("selecting app settings tab preserves edits and clears message")
+    func selectingAppSettingsTabPreservesEditsAndClearsMessage() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+        state.setupState.configurationMessage = "Could not save settings."
+        state.selectAppSettingsTab()
+
+        #expect(state.setupState.selectedSettingsTab == .appSettings)
+        #expect(state.setupState.configurationMessage == nil)
+        #expect(state.setupState.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("web")) == true)
+        #expect(state.setupState.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("ops")) == true)
+    }
+
+    @Test("failed target load preserves per-context selections")
+    func failedTargetLoadPreservesPerContextSelections() {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.applyTargetLoadFailure("forbidden", for: "stage")
+
+        #expect(state.setupState.watchlist.isSelected(.namespace("web")))
+        #expect(state.setupState.targetLoadingState == .failed("forbidden"))
+
+        _ = state.selectContext("prod")
+
+        #expect(state.setupState.watchlist.isSelected(.namespace("api")))
+    }
+
     @Test("failed target load preserves selection")
     func failedTargetLoadPreservesSelection() {
         var state = MenuRuntimeState(
@@ -162,7 +327,55 @@ struct MenuRuntimeStateTests {
 
         #expect(config.selectedContext == "prod")
         #expect(config.watchTargets.map(\.displayTitle) == ["api"])
+        #expect(config.watchlistsByContext["prod"]?.map(\.displayTitle) == ["api"])
         #expect(config.refreshIntervalSeconds == 120)
+    }
+
+    @Test("completed config saves per-context namespace watchlists")
+    func completedConfigSavesPerContextNamespaceWatchlists() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.selectedContext == "stage")
+        #expect(config.watchlistsByContext["prod"]?.map(\.displayTitle) == ["api"])
+        #expect(config.watchlistsByContext["stage"]?.map(\.displayTitle) == ["ops", "web"])
+        #expect(config.watchTargets.map(\.displayTitle) == ["ops", "web"])
+    }
+
+    @Test("completed config from app settings preserves active context")
+    func completedConfigFromAppSettingsPreservesActiveContext() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.setupState.watchlist.toggle(.namespace("ops"))
+        state.selectAppSettingsTab()
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.selectedContext == "prod")
+        #expect(config.watchlistsByContext["prod"]?.map(\.displayTitle) == ["api"])
+        #expect(config.watchlistsByContext["stage"]?.map(\.displayTitle) == ["ops", "web"])
+        #expect(config.watchTargets.map(\.displayTitle) == ["api"])
     }
 
     @Test("start at login state does not affect completed config")

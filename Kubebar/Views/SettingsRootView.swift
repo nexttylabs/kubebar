@@ -7,38 +7,31 @@ struct SettingsRootView: View {
     let isEditingExistingConfig: Bool
     let onPrepare: () -> Void
     let onComplete: () -> Bool
+    let onSelectAppSettings: () -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
     let onToggleHealthShiftAlerts: (Bool) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var contentHeight = SettingsWindowLayout.minimumHeight
 
     var body: some View {
         SetupView(
             state: $state,
             primaryActionTitle: state.primaryActionTitle(isEditingExistingConfig: isEditingExistingConfig),
             onComplete: completeAndDismissIfSaved,
+            onSelectAppSettings: onSelectAppSettings,
             onSelectContext: onSelectContext,
             onRetryTargets: onRetryTargets,
             onToggleStartAtLogin: onToggleStartAtLogin,
-            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts,
-            onContentHeightChange: updateContentHeight
+            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts
         )
         .frame(
             width: SettingsWindowLayout.width,
-            height: settingsWindowHeight,
+            height: SettingsWindowLayout.height,
             alignment: .topLeading
         )
-        .background(SettingsWindowFocusBridge())
+        .background(SettingsWindowFocusBridge(title: "Kubebar Settings"))
         .onAppear(perform: onPrepare)
-    }
-
-    private var settingsWindowHeight: CGFloat {
-        min(
-            max(contentHeight, SettingsWindowLayout.minimumHeight),
-            SettingsWindowLayout.maximumHeight
-        )
     }
 
     private func completeAndDismissIfSaved() {
@@ -48,21 +41,11 @@ struct SettingsRootView: View {
 
         dismiss()
     }
-
-    private func updateContentHeight(_ height: CGFloat) {
-        guard height > 0, abs(contentHeight - height) > SettingsWindowLayout.heightTolerance else {
-            return
-        }
-
-        contentHeight = height
-    }
 }
 
 private enum SettingsWindowLayout {
-    static let width: CGFloat = 560
-    static let minimumHeight: CGFloat = 380
-    static let maximumHeight: CGFloat = 680
-    static let heightTolerance: CGFloat = 1
+    static let width: CGFloat = 640
+    static let height: CGFloat = 560
 }
 
 @MainActor
@@ -99,17 +82,35 @@ enum SettingsWindowPresenter {
 }
 
 private struct SettingsWindowFocusBridge: NSViewRepresentable {
+    let title: String
+
     func makeNSView(context: Context) -> SettingsWindowProbeView {
-        SettingsWindowProbeView()
+        SettingsWindowProbeView(title: title)
     }
 
     func updateNSView(_ nsView: SettingsWindowProbeView, context: Context) {
+        nsView.title = title
         nsView.registerWindowIfAvailable()
     }
 }
 
 private final class SettingsWindowProbeView: NSView {
     private var didBringWindowToFront = false
+    var title: String {
+        didSet {
+            applyWindowTitle()
+        }
+    }
+
+    init(title: String) {
+        self.title = title
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) {
+        self.title = "Kubebar Settings"
+        super.init(coder: coder)
+    }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -122,6 +123,11 @@ private final class SettingsWindowProbeView: NSView {
         }
 
         SettingsWindowPresenter.register(window)
+        applyWindowTitle()
+
+        Task { @MainActor [weak self] in
+            self?.applyWindowTitle()
+        }
 
         guard !didBringWindowToFront else {
             return
@@ -129,5 +135,9 @@ private final class SettingsWindowProbeView: NSView {
 
         didBringWindowToFront = true
         SettingsWindowPresenter.bringToFront()
+    }
+
+    private func applyWindowTitle() {
+        window?.title = title
     }
 }
