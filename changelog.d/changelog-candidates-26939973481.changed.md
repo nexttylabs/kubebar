@@ -1,0 +1,15 @@
+- 添加 Health State Shift Alerts 并补充 Settings 配置
+- 重构 Settings 与 Context 管理，支持自定义导入和启用禁用
+- Add changelog fragment for health alerts
+- Add health shift alerts with stable workload identities
+- Add per-context watchlists and context selector
+- auto publish merged release notes
+- Capture per-context watchlist guidance
+- Fix kubeconfig path handling in Settings and launch scripts
+- ignore DerivedData*
+- improve settings ui
+- Make release workflow explicit and manual
+- Merge remote-tracking branch 'origin/main'
+- Refine settings layout and local context tabs
+- remove derived data
+- Sync release build metadata across app bundle
