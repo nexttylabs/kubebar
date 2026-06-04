@@ -101,6 +101,10 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.targetLoadingState = .failed(reason)
     }
 
+    public mutating func replaceAvailableContexts(_ contexts: [String]) {
+        setupState.replaceAvailableContexts(contexts)
+    }
+
     public mutating func markConfigurationSaveFailed(_ message: String) {
         setupState.configurationMessage = message
     }
@@ -135,7 +139,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
             selectedContext: selectedContext,
             watchlistsByContext: watchlistsByContext,
             refreshIntervalSeconds: setupState.refreshCadence.seconds,
-            healthShiftAlertsEnabled: setupState.healthShiftAlerts.isEnabled
+            healthShiftAlertsEnabled: setupState.healthShiftAlerts.isEnabled,
+            kubeconfigPaths: setupState.kubeconfigPaths
         )
     }
 
@@ -143,7 +148,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.selectedContextForCompletedConfig != config.selectedContext ||
             completedWatchlistsByContext() != Self.namespaceWatchlists(from: config.watchlistsByContext) ||
             setupState.refreshCadence.seconds != config.refreshIntervalSeconds ||
-            setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled
+            setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled ||
+            setupState.kubeconfigPaths != config.kubeconfigPaths
     }
 
     private func completedWatchlistsByContext() -> [String: [WatchTarget]] {
@@ -163,7 +169,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
             selectedContext: config.selectedContext,
             watchlistsByContext: watchlistStates(from: config.watchlistsByContext),
             refreshCadence: config.refreshCadence,
-            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled)
+            healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled),
+            kubeconfigPaths: config.kubeconfigPaths
         )
     }
 

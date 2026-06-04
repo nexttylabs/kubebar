@@ -1,0 +1,23 @@
+{
+  "/Users/derek/workspaces/kubebar/KubebarCore/Models/RefreshCadence.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCadence.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCadence.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCadence.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCadence.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCadence.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/Services/RefreshCoordinator.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshCoordinator.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/Services/RefreshGate.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshGate.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshGate.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshGate.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshGate.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/RefreshGate.swiftdeps"
+  }
+}

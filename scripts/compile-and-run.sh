@@ -24,9 +24,23 @@ done
 
 CONFIGURATION="${XCODE_CONFIGURATION:-Debug}"
 DERIVED_DATA_PATH="${XCODE_DERIVED_DATA_PATH:-DerivedData}"
+LAUNCH_DERIVED_DATA_PATH="${XCODE_LAUNCH_DERIVED_DATA_PATH:-${DERIVED_DATA_PATH}-Launch}"
 APP_NAME="Kubebar"
 BUNDLE_ID="com.nextty.kubebar"
-APP_PATH="${DERIVED_DATA_PATH}/Build/Products/${CONFIGURATION}/${APP_NAME}.app"
+APP_PATH="${LAUNCH_DERIVED_DATA_PATH}/Build/Products/${CONFIGURATION}/${APP_NAME}.app"
+
+build_launchable_app() {
+  xcodebuild -project "${XCODE_PROJECT:-Kubebar.xcodeproj}" \
+    -scheme "${XCODE_SCHEME:-Kubebar}" \
+    -configuration "$CONFIGURATION" \
+    -destination "${XCODE_DESTINATION:-platform=macOS}" \
+    -derivedDataPath "$LAUNCH_DERIVED_DATA_PATH" \
+    build
+}
+
+verify_signed_app() {
+  codesign --verify --deep --strict "$APP_PATH"
+}
 
 echo "Building and testing ${APP_NAME}"
 XCODE_WORKSPACE="" \
@@ -36,10 +50,15 @@ XCODE_WORKSPACE="" \
   XCODE_DERIVED_DATA_PATH="$DERIVED_DATA_PATH" \
   ./scripts/swift-quality-gate.sh local
 
+echo "Building launchable ${APP_NAME} app bundle"
+build_launchable_app
+
 if [ ! -d "$APP_PATH" ]; then
   echo "Built app not found: $APP_PATH" >&2
   exit 1
 fi
+
+verify_signed_app
 
 echo "Quitting existing ${APP_NAME} instance if present"
 osascript -e "tell application id \"${BUNDLE_ID}\" to quit" >/dev/null 2>&1 || true

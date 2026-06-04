@@ -12,7 +12,11 @@ struct AppConfigTests {
                 "stage": [.namespace("web")]
             ],
             refreshIntervalSeconds: 120,
-            healthShiftAlertsEnabled: true
+            healthShiftAlertsEnabled: true,
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/prod.yaml"
+            ]
         )
 
         let updated = config.selectingContext("stage")
@@ -21,8 +25,19 @@ struct AppConfigTests {
         #expect(updated.watchlistsByContext == config.watchlistsByContext)
         #expect(updated.refreshIntervalSeconds == 120)
         #expect(updated.healthShiftAlertsEnabled)
+        #expect(updated.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/prod.yaml"
+        ])
         #expect(updated.watchTargets == [.namespace("web")])
         #expect(!updated.needsSetup)
+    }
+
+    @Test("kubeconfig paths default empty")
+    func kubeconfigPathsDefaultEmpty() {
+        let config = AppConfig()
+
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("selecting context without watchlist marks config incomplete")

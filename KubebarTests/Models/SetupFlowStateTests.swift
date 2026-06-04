@@ -189,4 +189,103 @@ struct SetupFlowStateTests {
         #expect(!state.healthShiftAlerts.isEnabled)
         #expect(state.healthShiftAlerts.message == nil)
     }
+
+    @Test("kubeconfig paths default empty")
+    func kubeconfigPathsDefaultEmpty() {
+        let state = SetupFlowState()
+
+        #expect(state.kubeconfigPaths.isEmpty)
+    }
+
+    @Test("kubeconfig paths persist while switching contexts and app settings")
+    func kubeconfigPathsPersistWhileSwitchingContextsAndAppSettings() {
+        var state = SetupFlowState(
+            selectedContext: "prod",
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")]),
+                "stage": WatchlistSelectionState(selectedTargets: [.namespace("web")])
+            ],
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/prod.yaml"
+            ]
+        )
+
+        state.selectContext("stage")
+        state.selectAppSettingsTab()
+
+        #expect(state.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/prod.yaml"
+        ])
+    }
+
+    @Test("appending kubeconfig paths trims empties and skips duplicates")
+    func appendingKubeconfigPathsTrimsEmptiesAndSkipsDuplicates() {
+        var state = SetupFlowState(
+            kubeconfigPaths: ["/Users/derek/.kube/config"]
+        )
+
+        state.appendKubeconfigPaths([
+            "  ",
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/team.yaml",
+            "/Users/derek/.kube/team.yaml"
+        ])
+
+        #expect(state.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/team.yaml"
+        ])
+    }
+
+    @Test("kubeconfig path rows can be removed and reordered")
+    func kubeconfigPathRowsCanBeRemovedAndReordered() {
+        var state = SetupFlowState(
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/team.yaml",
+                "/Users/derek/.kube/prod.yaml"
+            ]
+        )
+
+        state.moveKubeconfigPathUp(at: 2)
+        #expect(state.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/prod.yaml",
+            "/Users/derek/.kube/team.yaml"
+        ])
+
+        state.moveKubeconfigPathDown(at: 0)
+        #expect(state.kubeconfigPaths == [
+            "/Users/derek/.kube/prod.yaml",
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/team.yaml"
+        ])
+
+        state.removeKubeconfigPath(at: 1)
+        #expect(state.kubeconfigPaths == [
+            "/Users/derek/.kube/prod.yaml",
+            "/Users/derek/.kube/team.yaml"
+        ])
+    }
+
+    @Test("replacing available contexts hides missing tabs but preserves saved watchlists")
+    func replacingAvailableContextsHidesMissingTabsButPreservesSavedWatchlists() {
+        var state = SetupFlowState(
+            selectedContext: "prod",
+            availableContexts: ["prod", "stage"],
+            watchlistsByContext: [
+                "prod": WatchlistSelectionState(selectedTargets: [.namespace("api")]),
+                "stage": WatchlistSelectionState(selectedTargets: [.namespace("web")])
+            ]
+        )
+
+        state.selectContext("stage")
+        state.replaceAvailableContexts(["prod"])
+
+        #expect(state.contextTabs == ["prod"])
+        #expect(state.selectedSettingsTab == .appSettings)
+        #expect(state.currentWatchlistsByContext()["stage"]?.isSelected(.namespace("web")) == true)
+    }
 }

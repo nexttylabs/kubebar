@@ -12,6 +12,10 @@ struct SettingsRootView: View {
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
     let onToggleHealthShiftAlerts: (Bool) -> Void
+    let onAddKubeconfigPaths: ([String]) -> Void
+    let onRemoveKubeconfigPath: (Int) -> Void
+    let onMoveKubeconfigPathUp: (Int) -> Void
+    let onMoveKubeconfigPathDown: (Int) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -23,7 +27,11 @@ struct SettingsRootView: View {
             onSelectContext: onSelectContext,
             onRetryTargets: onRetryTargets,
             onToggleStartAtLogin: onToggleStartAtLogin,
-            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts
+            onToggleHealthShiftAlerts: onToggleHealthShiftAlerts,
+            onAddKubeconfigPaths: chooseKubeconfigPaths,
+            onRemoveKubeconfigPath: onRemoveKubeconfigPath,
+            onMoveKubeconfigPathUp: onMoveKubeconfigPathUp,
+            onMoveKubeconfigPathDown: onMoveKubeconfigPathDown
         )
         .frame(
             width: SettingsWindowLayout.width,
@@ -40,6 +48,22 @@ struct SettingsRootView: View {
         }
 
         dismiss()
+    }
+
+    private func chooseKubeconfigPaths() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = true
+        panel.resolvesAliases = true
+        panel.title = "Choose kubeconfig files"
+        panel.message = "Add one or more kubeconfig files to use for kubectl reads."
+
+        guard panel.runModal() == .OK else {
+            return
+        }
+
+        onAddKubeconfigPaths(panel.urls.map(\.path))
     }
 }
 

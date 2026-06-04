@@ -1,0 +1,3 @@
+framework module KubebarCore {
+  header "KubebarCore-Swift.h"
+}

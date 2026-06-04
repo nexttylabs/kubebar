@@ -5,6 +5,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public let watchlistsByContext: [String: [WatchTarget]]
     public let refreshIntervalSeconds: Int
     public let healthShiftAlertsEnabled: Bool
+    public let kubeconfigPaths: [String]
 
     private enum CodingKeys: String, CodingKey {
         case selectedContext
@@ -12,6 +13,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case watchTargets
         case refreshIntervalSeconds
         case healthShiftAlertsEnabled
+        case kubeconfigPaths
     }
 
     public init(
@@ -19,7 +21,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         watchTargets: [WatchTarget] = [],
         watchlistsByContext: [String: [WatchTarget]]? = nil,
         refreshIntervalSeconds: Int = RefreshCadence.default.seconds,
-        healthShiftAlertsEnabled: Bool = false
+        healthShiftAlertsEnabled: Bool = false,
+        kubeconfigPaths: [String] = []
     ) {
         self.selectedContext = selectedContext
         if let watchlistsByContext {
@@ -31,6 +34,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         }
         self.refreshIntervalSeconds = RefreshCadence.from(seconds: refreshIntervalSeconds).seconds
         self.healthShiftAlertsEnabled = healthShiftAlertsEnabled
+        self.kubeconfigPaths = kubeconfigPaths
     }
 
     public var watchTargets: [WatchTarget] {
@@ -54,7 +58,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
             selectedContext: context,
             watchlistsByContext: watchlistsByContext,
             refreshIntervalSeconds: refreshIntervalSeconds,
-            healthShiftAlertsEnabled: healthShiftAlertsEnabled
+            healthShiftAlertsEnabled: healthShiftAlertsEnabled,
+            kubeconfigPaths: kubeconfigPaths
         )
     }
 
@@ -66,7 +71,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
             watchTargets: try container.decodeIfPresent([WatchTarget].self, forKey: .watchTargets) ?? [],
             watchlistsByContext: try Self.decodedWatchlists(from: container),
             refreshIntervalSeconds: try container.decodeIfPresent(Int.self, forKey: .refreshIntervalSeconds) ?? RefreshCadence.default.seconds,
-            healthShiftAlertsEnabled: try container.decodeIfPresent(Bool.self, forKey: .healthShiftAlertsEnabled) ?? false
+            healthShiftAlertsEnabled: try container.decodeIfPresent(Bool.self, forKey: .healthShiftAlertsEnabled) ?? false,
+            kubeconfigPaths: try container.decodeIfPresent([String].self, forKey: .kubeconfigPaths) ?? []
         )
     }
 
@@ -78,6 +84,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(watchTargets, forKey: .watchTargets)
         try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
         try container.encode(healthShiftAlertsEnabled, forKey: .healthShiftAlertsEnabled)
+        try container.encode(kubeconfigPaths, forKey: .kubeconfigPaths)
     }
 
     private static func decodedWatchlists(from container: KeyedDecodingContainer<CodingKeys>) throws -> [String: [WatchTarget]]? {

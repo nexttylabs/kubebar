@@ -138,7 +138,11 @@ struct MenuRuntimeStateTests {
                 .workload(namespace: "ops", name: "worker", kind: .deployment)
             ],
             refreshIntervalSeconds: 120,
-            healthShiftAlertsEnabled: true
+            healthShiftAlertsEnabled: true,
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/prod.yaml"
+            ]
         )
         var state = MenuRuntimeState(config: config)
 
@@ -148,6 +152,10 @@ struct MenuRuntimeStateTests {
         #expect(state.setupState.watchlist.selectedTargets == [.namespace("api")])
         #expect(state.setupState.refreshCadence == .twoMinutes)
         #expect(state.setupState.healthShiftAlerts.isEnabled)
+        #expect(state.setupState.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/prod.yaml"
+        ])
         #expect(state.setupState.configurationMessage == nil)
     }
 
@@ -329,6 +337,7 @@ struct MenuRuntimeStateTests {
         #expect(config.watchTargets.map(\.displayTitle) == ["api"])
         #expect(config.watchlistsByContext["prod"]?.map(\.displayTitle) == ["api"])
         #expect(config.refreshIntervalSeconds == 120)
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("completed config saves per-context namespace watchlists")
@@ -402,5 +411,53 @@ struct MenuRuntimeStateTests {
         let config = try #require(state.completedConfig())
 
         #expect(config.healthShiftAlertsEnabled)
+    }
+
+    @Test("completed config preserves kubeconfig path order")
+    func completedConfigPreservesKubeconfigPathOrder() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchTargets: [.namespace("api")],
+                kubeconfigPaths: [
+                    "/Users/derek/.kube/config",
+                    "/Users/derek/.kube/team.yaml"
+                ]
+            )
+        )
+
+        state.setupState.kubeconfigPaths = [
+            "/Users/derek/.kube/override.yaml",
+            "/Users/derek/.kube/config"
+        ]
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.kubeconfigPaths == [
+            "/Users/derek/.kube/override.yaml",
+            "/Users/derek/.kube/config"
+        ])
+    }
+
+    @Test("replacing available contexts hides missing context tabs without dropping saved watchlists")
+    func replacingAvailableContextsHidesMissingContextTabsWithoutDroppingSavedWatchlists() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchlistsByContext: [
+                    "prod": [.namespace("api")],
+                    "stage": [.namespace("web")]
+                ]
+            )
+        )
+
+        _ = state.selectContext("stage")
+        state.replaceAvailableContexts(["prod"])
+
+        #expect(state.contextSelectorContexts == ["prod"])
+        #expect(state.setupState.selectedSettingsTab == .appSettings)
+
+        let config = try #require(state.completedConfig())
+        #expect(config.watchlistsByContext["stage"]?.map(\.displayTitle) == ["web"])
     }
 }

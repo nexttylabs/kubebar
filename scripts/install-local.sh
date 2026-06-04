@@ -76,6 +76,7 @@ verify_app_bundle() {
   [ -f "${app_path}/Contents/Resources/AppIcon.icns" ] || invalid_app_bundle "$label" "missing Contents/Resources/AppIcon.icns"
   [ -f "${app_path}/Contents/Resources/Assets.car" ] || invalid_app_bundle "$label" "missing Contents/Resources/Assets.car"
   [ -x "$executable_path" ] || invalid_app_bundle "$label" "missing executable Contents/MacOS/${APP_NAME}"
+  codesign --verify --deep --strict "$app_path" >/dev/null 2>&1 || invalid_app_bundle "$label" "code signature verification failed"
 }
 
 run_quality_gate() {
@@ -93,8 +94,7 @@ build_install_bundle() {
     -configuration "$CONFIGURATION" \
     -destination "${XCODE_DESTINATION:-platform=macOS}" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
-    build \
-    CODE_SIGNING_ALLOWED=NO
+    build
 }
 
 quit_existing_app() {

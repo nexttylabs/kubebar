@@ -22,7 +22,11 @@ struct KubebarApp: App {
                 onSelectContext: viewModel.selectSetupContext,
                 onRetryTargets: viewModel.retryWatchTargetLoad,
                 onToggleStartAtLogin: viewModel.setStartAtLoginEnabled,
-                onToggleHealthShiftAlerts: viewModel.setHealthShiftAlertsEnabled
+                onToggleHealthShiftAlerts: viewModel.setHealthShiftAlertsEnabled,
+                onAddKubeconfigPaths: viewModel.addKubeconfigPaths,
+                onRemoveKubeconfigPath: viewModel.removeKubeconfigPath,
+                onMoveKubeconfigPathUp: viewModel.moveKubeconfigPathUp,
+                onMoveKubeconfigPathDown: viewModel.moveKubeconfigPathDown
             )
         }
     }

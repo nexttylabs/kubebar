@@ -17,6 +17,7 @@ struct AppConfigStoreTests {
         #expect(config.refreshIntervalSeconds == 60)
         #expect(config.refreshCadence == .oneMinute)
         #expect(!config.healthShiftAlertsEnabled)
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("unknown refresh interval normalizes to default")
@@ -53,6 +54,7 @@ struct AppConfigStoreTests {
         #expect(config.watchlistsByContext["prod"] == [.namespace("api")])
         #expect(config.watchTargets == [.namespace("api")])
         #expect(!config.healthShiftAlertsEnabled)
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("unknown saved refresh interval loads as default")
@@ -75,6 +77,7 @@ struct AppConfigStoreTests {
 
         #expect(config.refreshIntervalSeconds == 60)
         #expect(config.refreshCadence == .oneMinute)
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("saved context and watchlist round trip")
@@ -87,7 +90,11 @@ struct AppConfigStoreTests {
                 .namespace("monitoring")
             ],
             refreshIntervalSeconds: 60,
-            healthShiftAlertsEnabled: true
+            healthShiftAlertsEnabled: true,
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/team.yaml"
+            ]
         )
 
         try store.save(config)
@@ -96,6 +103,10 @@ struct AppConfigStoreTests {
         #expect(try store.load().watchlistsByContext["prod"] == [
             .workload(namespace: "api", name: "checkout", kind: .deployment),
             .namespace("monitoring")
+        ])
+        #expect(try store.load().kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/team.yaml"
         ])
     }
 
@@ -110,7 +121,11 @@ struct AppConfigStoreTests {
                 "stage": [.namespace("web"), .namespace("ops")]
             ],
             refreshIntervalSeconds: 120,
-            healthShiftAlertsEnabled: true
+            healthShiftAlertsEnabled: true,
+            kubeconfigPaths: [
+                "/Users/derek/.kube/config",
+                "/Users/derek/.kube/stage.yaml"
+            ]
         )
 
         try store.save(config)
@@ -122,6 +137,10 @@ struct AppConfigStoreTests {
         #expect(loaded.watchlistsByContext["stage"] == [.namespace("web"), .namespace("ops")])
         #expect(loaded.refreshIntervalSeconds == 120)
         #expect(loaded.healthShiftAlertsEnabled)
+        #expect(loaded.kubeconfigPaths == [
+            "/Users/derek/.kube/config",
+            "/Users/derek/.kube/stage.yaml"
+        ])
 
         let savedData = try Data(contentsOf: directory.appendingPathComponent("config.json"))
         let savedPayload = try JSONDecoder().decode(SavedConfigPayload.self, from: savedData)
@@ -173,6 +192,7 @@ struct AppConfigStoreTests {
 
         #expect(config.watchTargets == [.workload(namespace: "api", name: "checkout", kind: .deployment)])
         #expect(config.refreshIntervalSeconds == 60)
+        #expect(config.kubeconfigPaths.isEmpty)
     }
 
     @Test("save failure reports cannot save")

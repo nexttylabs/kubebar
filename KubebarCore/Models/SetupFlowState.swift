@@ -75,6 +75,7 @@ public struct SetupFlowState: Equatable, Sendable {
     public var refreshCadence: RefreshCadence
     public var startAtLogin: StartAtLoginState
     public var healthShiftAlerts: HealthShiftAlertsState
+    public var kubeconfigPaths: [String]
 
     public init(
         selectedContext: String? = nil,
@@ -87,7 +88,8 @@ public struct SetupFlowState: Equatable, Sendable {
         configurationMessage: String? = nil,
         refreshCadence: RefreshCadence = .default,
         startAtLogin: StartAtLoginState = StartAtLoginState(),
-        healthShiftAlerts: HealthShiftAlertsState = HealthShiftAlertsState()
+        healthShiftAlerts: HealthShiftAlertsState = HealthShiftAlertsState(),
+        kubeconfigPaths: [String] = []
     ) {
         self.selectedContext = selectedContext
         self.appSettingsSelectedContext = appSettingsSelectedContext ?? selectedContext
@@ -114,6 +116,7 @@ public struct SetupFlowState: Equatable, Sendable {
         self.refreshCadence = refreshCadence
         self.startAtLogin = startAtLogin
         self.healthShiftAlerts = healthShiftAlerts
+        self.kubeconfigPaths = kubeconfigPaths
     }
 
     public var isConfigured: Bool {
@@ -206,6 +209,10 @@ public struct SetupFlowState: Equatable, Sendable {
         "Add namespace"
     }
 
+    public var usesAutomaticKubeconfigDetection: Bool {
+        kubeconfigPaths.isEmpty
+    }
+
     public func primaryActionTitle(isEditingExistingConfig: Bool) -> String {
         isEditingExistingConfig && isConfigured ? "Save Settings" : "Finish setup"
     }
@@ -220,6 +227,67 @@ public struct SetupFlowState: Equatable, Sendable {
     public mutating func selectAppSettingsTab() {
         preserveCurrentWatchlist()
         selectedSettingsTab = .appSettings
+    }
+
+    public mutating func appendKubeconfigPaths(_ paths: [String]) {
+        var seen = Set(kubeconfigPaths)
+        var appended: [String] = []
+
+        for rawPath in paths {
+            let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !path.isEmpty, !seen.contains(path) else {
+                continue
+            }
+
+            seen.insert(path)
+            appended.append(path)
+        }
+
+        guard !appended.isEmpty else {
+            return
+        }
+
+        kubeconfigPaths.append(contentsOf: appended)
+        configurationMessage = nil
+    }
+
+    public mutating func removeKubeconfigPath(at index: Int) {
+        guard kubeconfigPaths.indices.contains(index) else {
+            return
+        }
+
+        kubeconfigPaths.remove(at: index)
+        configurationMessage = nil
+    }
+
+    public mutating func moveKubeconfigPathUp(at index: Int) {
+        guard kubeconfigPaths.indices.contains(index), index > 0 else {
+            return
+        }
+
+        kubeconfigPaths.swapAt(index, index - 1)
+        configurationMessage = nil
+    }
+
+    public mutating func moveKubeconfigPathDown(at index: Int) {
+        guard kubeconfigPaths.indices.contains(index), index < kubeconfigPaths.index(before: kubeconfigPaths.endIndex) else {
+            return
+        }
+
+        kubeconfigPaths.swapAt(index, index + 1)
+        configurationMessage = nil
+    }
+
+    public mutating func replaceAvailableContexts(_ contexts: [String]) {
+        availableContexts = Array(Set(contexts)).sorted()
+
+        guard case let .context(context) = selectedSettingsTab, !availableContexts.contains(context) else {
+            return
+        }
+
+        selectAppSettingsTab()
+        targetLoadingState = .idle
+        watchlist.clearAvailableTargets()
     }
 
     public func currentWatchlistsByContext() -> [String: WatchlistSelectionState] {

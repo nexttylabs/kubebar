@@ -4,295 +4,140 @@
     "1": {
       "step_id": "U1",
       "state": "closed",
-      "result": "Settings App Settings tab responds when selected from context tabs.",
-      "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check plus visible Settings smoke with 2 contexts",
+      "result": "Ordered explicit kubeconfig paths persist through Settings state.",
+      "verification": "swift test --filter AppConfigTests && swift test --filter AppConfigStoreTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check",
       "test_scenarios": [
-        "2-context segmented selector switches from a Context Settings tab to App Settings",
-        "switching to App Settings preserves the edited context watchlist",
-        "App Settings content shows refresh cadence Start at Login and Health State Shift Alerts",
-        "context tabs remain generated from local and saved context information",
-        "menu-style selector path still uses stable tab identity"
+        "older configs decode with empty kubeconfig paths",
+        "explicit paths round trip in config",
+        "selecting context preserves kubeconfig paths",
+        "preparing Settings exposes saved paths",
+        "completed config preserves path order and per-context watchlists"
       ],
       "discovery_cache": [],
       "parallel_probes": [],
       "depends_on": [],
       "agent_hint": null,
-      "activated_at": "2026-06-03T08:42:59Z",
+      "activated_at": "2026-06-04T06:28:08Z",
       "execution_evidence": {
         "changed_files": [
-          ".imm/specs/2026-06-03-settings-app-tab-selection.md",
-          "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
-          "KubebarCore/Models/SetupFlowState.swift",
-          "Kubebar/Views/SetupView.swift",
-          "Kubebar/Views/SettingsRootView.swift",
-          "Kubebar/KubebarApp.swift",
-          "Kubebar/MenuBarViewModel.swift",
-          "KubebarTests/Models/SetupFlowStateTests.swift",
-          "KubebarTests/Models/MenuRuntimeStateTests.swift"
+          "KubebarCore/Services/AppConfigStore.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarTests/Models/AppConfigTests.swift\nKubebarTests/Services/AppConfigStoreTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift"
         ],
-        "verification_command": "kubectl config get-contexts -o name; first-use QA app Accessibility smoke: open status menu -> Open Settings -> Settings window tab group -> click prod -> click App Settings; swift test --filter SetupFlowStateTests; swift test --filter MenuRuntimeStateTests; rtk git diff --check",
+        "verification_command": "swift test --filter AppConfigTests && swift test --filter AppConfigStoreTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check",
         "verification_result": "passed",
-        "notes": "Rework evidence completed. Local kubectl contexts are exactly dev and prod. Launched DerivedData Debug Kubebar.app with --kubebar-qa-state first-use, opened status menu through Accessibility, clicked the accessible Open Settings button, confirmed window 'Kubebar Settings'. Settings tab radio group exposed App Settings, default(saved), dev, prod. Clicked prod context tab: static text showed Context watchlist and prod. Clicked App Settings tab: tabValues showed App Settings:1 and prod:0, static text showed Refresh cadence and Active context: dev, checkboxes exposed help for Start at Login ('Open Kubebar automatically after login.') and Health State Shift Alerts ('Notify when cluster health or watched items get worse.'). Automated checks also passed: SetupFlowStateTests 14/14, MenuRuntimeStateTests 21/21, rtk git diff --check.",
-        "recorded_at": "2026-06-03T10:07:08Z"
+        "notes": "Added ordered kubeconfigPaths persistence to AppConfig with backward-compatible decoding defaulting to an empty list. Propagated kubeconfigPaths through SetupFlowState and MenuRuntimeState so Settings state preserves and writes the value back without affecting per-context watchlists. Added focused tests covering default empty paths, round-trip persistence, selectingContext preservation, Settings state retention, and completed-config path order.",
+        "recorded_at": "2026-06-04T06:28:19Z"
       },
-      "closed_at": "2026-06-03T10:07:17Z"
+      "closed_at": "2026-06-04T06:28:28Z"
+    },
+    "2": {
+      "step_id": "U2",
+      "state": "closed",
+      "result": "Kubectl-backed reads use explicit AppConfig kubeconfig paths when configured.",
+      "verification": "swift test --filter CommandRunnerTests && swift test --filter ContextCatalogTests && swift test --filter WatchTargetCatalogTests && swift test --filter KubectlClusterReaderTests && swift test --filter RefreshCoordinatorTests && rtk git diff --check",
+      "test_scenarios": [
+        "empty path list falls back to automatic detection",
+        "non-empty path list joins paths with colon",
+        "explicit paths override inherited and shell kubeconfig",
+        "context discovery uses explicit paths",
+        "watch target discovery uses explicit paths",
+        "refresh reads use explicit paths with app-owned --context"
+      ],
+      "discovery_cache": [],
+      "parallel_probes": [],
+      "depends_on": [
+        1
+      ],
+      "agent_hint": null,
+      "activated_at": "2026-06-04T06:28:54Z",
+      "execution_evidence": {
+        "changed_files": [
+          "KubebarCore/Services/CommandRunner.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarCore/Services/KubectlClusterReader.swift\nKubebarCore/Services/RefreshCoordinator.swift\nKubebarTests/Services/CommandRunnerTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\nKubebarTests/Services/KubectlClusterReaderTests.swift\nKubebarTests/Services/RefreshCoordinatorTests.swift"
+        ],
+        "verification_command": "swift test --filter CommandRunnerTests && swift test --filter ContextCatalogTests && swift test --filter WatchTargetCatalogTests && swift test --filter KubectlClusterReaderTests && swift test --filter RefreshCoordinatorTests && rtk git diff --check",
+        "verification_result": "passed",
+        "notes": "Completed Step 2 by routing kubectl-backed reads through config-aware kubeconfig environment resolution. KubectlEnvironment now supports explicit kubeconfig path lists with empty-list fallback, ContextCatalog and WatchTargetCatalog propagate environment overrides, RefreshCoordinator passes full AppConfig through reads, and KubectlClusterReader now resolves environment from the passed config while keeping a compatibility overload for existing call sites and tests.",
+        "recorded_at": "2026-06-04T06:39:13Z"
+      },
+      "closed_at": "2026-06-04T06:39:13Z"
+    },
+    "3": {
+      "step_id": "U3",
+      "state": "closed",
+      "result": "App Settings kubeconfig path management drives context discovery.",
+      "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AppConfigTests && swift test --filter ContextCatalogTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+      "test_scenarios": [
+        "App Settings has path add/remove/reorder state transitions",
+        "file picker callback appends selected paths",
+        "saving Settings persists paths",
+        "changed path list reloads local context tabs",
+        "missing-context watchlists remain saved but hidden from selectable contexts",
+        "Settings UI builds in Xcode"
+      ],
+      "discovery_cache": [],
+      "parallel_probes": [],
+      "depends_on": [
+        2
+      ],
+      "agent_hint": null,
+      "activated_at": "2026-06-04T06:39:23Z",
+      "execution_evidence": {
+        "changed_files": [
+          "Kubebar/KubebarApp.swift\nKubebar/MenuBarViewModel.swift\nKubebar/Views/SettingsRootView.swift\nKubebar/Views/SetupView.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\ndocs/architecture/runtime-invariants.md"
+        ],
+        "verification_command": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AppConfigTests && swift test --filter ContextCatalogTests && swift test --filter WatchTargetCatalogTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project Kubebar.xcodeproj -scheme Kubebar -configuration Debug -destination 'platform=macOS' -derivedDataPath DerivedData test CODE_SIGNING_ALLOWED=NO -only-testing:KubebarTests/ContextCatalogTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "verification_result": "passed",
+        "notes": "Completed Step 3 by adding App Settings kubeconfig path management with native NSOpenPanel file picking, ordered add/remove/reorder state transitions, and Settings wiring through KubebarApp and MenuBarViewModel. Saving Settings now persists kubeconfigPaths, uses preview config for context discovery and namespace candidate reloads, and hides contexts missing from the current effective kubeconfig list while preserving saved watchlists in config. ContextCatalog and WatchTargetCatalog now support config-aware reads through injected services, and runtime invariants plus focused tests were updated to cover explicit path management, missing-context hiding, and config-driven discovery refresh.",
+        "recorded_at": "2026-06-04T07:43:50Z"
+      },
+      "closed_at": "2026-06-04T07:44:00Z"
     }
   },
   "last_review": {
     "decision": "pass",
-    "evidence": "U1 evidence satisfies automated and visible-smoke requirements. Local kubectl contexts are dev/prod. first-use QA Accessibility smoke opened Kubebar Settings, confirmed Settings tab group contained App Settings, dev, prod (plus saved default), switched prod context tab then App Settings, and observed App Settings selected with Refresh cadence, Start at Login help, Health State Shift Alerts help, and Active context text. SetupFlowStateTests 14/14, MenuRuntimeStateTests 21/21, rtk git diff --check passed; full swift-quality-gate local previously passed with 246 tests after the code change.",
-    "artifacts": "Immune-Brain execution evidence recorded at .imm/memory/current_iteration.json; terminal command outputs in this run",
-    "notes": "Visible smoke was completed via Accessibility without broad screenshots.",
-    "step_number": 1,
-    "step_id": "U1"
+    "evidence": "Step 3 verification passed. App Settings now exposes explicit kubeconfig path management with native file picking, ordered add/remove/reorder controls, saved path persistence, and config-driven context/watch-target discovery refresh. Focused model/service tests passed, targeted Xcode test passed, full swift-quality-gate.sh local passed, and runtime invariants were updated to document hidden-missing-context behavior with preserved watchlists.",
+    "artifacts": "Kubebar/Views/SettingsRootView.swift\nKubebar/Views/SetupView.swift\nKubebar/MenuBarViewModel.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\ndocs/architecture/runtime-invariants.md",
+    "notes": "The earlier xcodebuild test hang did not reproduce after rerunning with a narrow only-testing probe first; full quality gate completed successfully in this turn.",
+    "step_number": 3,
+    "step_id": "U3"
   },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
-    "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
+    "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+    "plan_signature": "e1c673138ea32727da48de4b776cec2e091128ba9cc6bd338880b6665c405977",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "Settings App Settings tab responds when selected from context tabs.",
-        "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check plus visible Settings smoke with 2 contexts",
+        "result": "Ordered explicit kubeconfig paths persist through Settings state.",
+        "verification": "swift test --filter AppConfigTests && swift test --filter AppConfigStoreTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check",
         "depends_on": [],
+        "discovery_cache": [],
+        "parallel_probes": []
+      },
+      {
+        "number": 2,
+        "step_id": "U2",
+        "result": "Kubectl-backed reads use explicit AppConfig kubeconfig paths when configured.",
+        "verification": "swift test --filter CommandRunnerTests && swift test --filter ContextCatalogTests && swift test --filter WatchTargetCatalogTests && swift test --filter KubectlClusterReaderTests && swift test --filter RefreshCoordinatorTests && rtk git diff --check",
+        "depends_on": [
+          1
+        ],
+        "discovery_cache": [],
+        "parallel_probes": []
+      },
+      {
+        "number": 3,
+        "step_id": "U3",
+        "result": "App Settings kubeconfig path management drives context discovery.",
+        "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AppConfigTests && swift test --filter ContextCatalogTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+        "depends_on": [
+          2
+        ],
         "discovery_cache": [],
         "parallel_probes": []
       }
     ]
   },
   "history": [
-    {
-      "at": "2026-05-27T10:35:34Z",
-      "action": "review_step",
-      "details": {
-        "step_number": 3,
-        "step_id": "U3",
-        "decision": "pass"
-      }
-    },
-    {
-      "at": "2026-06-01T15:48:40Z",
-      "action": "sync_plan_reset_completed_steps",
-      "details": {
-        "from_plan": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-        "to_plan": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-        "reason": "Plan switched; reset completion state."
-      }
-    },
-    {
-      "at": "2026-06-01T15:48:40Z",
-      "action": "sync_plan_from_imm_plan",
-      "details": {
-        "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-        "plan_signature": "8ee40c41ed03645db1cd176577f2bd4bdc3061deaffe165b2461756f73e5b878",
-        "plan_summary": "Settings can enable macOS notifications for true Health category or",
-        "same_plan": false
-      }
-    },
-    {
-      "at": "2026-06-01T15:49:23Z",
-      "action": "activate_step",
-      "details": {
-        "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-        "step_number": 1,
-        "step_id": "U1",
-        "role_constraints": {
-          "imm-work": {
-            "role": "execute",
-            "role_class": "coordinator",
-            "boundary": "Drive only the active step or pending follow-up to the next boundary."
-          },
-          "imm-executor": {
-            "role": "execute",
-            "role_class": "authority",
-            "boundary": "Implement only the activated step or follow-up scope."
-          },
-          "imm-qa": {
-            "role": "qa",
-            "role_class": "authority",
-            "boundary": "Close, rework, or replan based on recorded evidence only."
-          }
-        }
-      }
-    },
-    {
-      "at": "2026-06-01T15:56:47Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "changed_files": [
-          "CONTEXT.md",
-          ".imm/specs/2026-06-01-health-state-shift-alerts.md",
-          "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-          "KubebarCore/Services/AppConfigStore.swift",
-          "KubebarCore/Models/StartAtLoginState.swift",
-          "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
-          "KubebarCore/Models/SetupFlowState.swift",
-          "KubebarCore/Models/MenuRuntimeState.swift",
-          "KubebarCore/Models/MenuDisplayModel.swift",
-          "Kubebar/Services/LoginItemController.swift",
-          "Kubebar/MenuBarViewModel.swift",
-          "Kubebar/Views/SetupView.swift",
-          "Kubebar/Views/SettingsRootView.swift",
-          "Kubebar/KubebarApp.swift",
-          "KubebarTests/Services/AppConfigStoreTests.swift",
-          "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
-          "KubebarTests/Models/MenuRuntimeStateTests.swift",
-          "KubebarTests/Models/SetupFlowStateTests.swift",
-          "KubebarTests/Models/MenuDisplayModelTests.swift",
-          "docs/architecture/runtime-invariants.md"
-        ]
-      }
-    },
-    {
-      "at": "2026-06-01T15:56:58Z",
-      "action": "review_step",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "decision": "pass"
-      }
-    },
-    {
-      "at": "2026-06-02T01:21:36Z",
-      "action": "sync_plan_reset_completed_steps",
-      "details": {
-        "from_plan": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-        "to_plan": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-        "reason": "Plan switched; reset completion state."
-      }
-    },
-    {
-      "at": "2026-06-02T01:21:36Z",
-      "action": "sync_plan_from_imm_plan",
-      "details": {
-        "plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-        "plan_signature": "19b76d51a786db42419dff6fe9fb058a6f08fd4692a420f82e5a7969bc1e9561",
-        "plan_summary": "Release artifacts should carry both the selected marketing version",
-        "same_plan": false
-      }
-    },
-    {
-      "at": "2026-06-02T01:22:49Z",
-      "action": "activate_step",
-      "details": {
-        "plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-        "step_number": 1,
-        "step_id": "U1",
-        "role_constraints": {
-          "imm-work": {
-            "role": "execute",
-            "role_class": "coordinator",
-            "boundary": "Drive only the active step or pending follow-up to the next boundary."
-          },
-          "imm-executor": {
-            "role": "execute",
-            "role_class": "authority",
-            "boundary": "Implement only the activated step or follow-up scope."
-          },
-          "imm-qa": {
-            "role": "qa",
-            "role_class": "authority",
-            "boundary": "Close, rework, or replan based on recorded evidence only."
-          }
-        }
-      }
-    },
-    {
-      "at": "2026-06-02T01:26:38Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "changed_files": [
-          "CONTEXT.md",
-          "docs/specs/2026-06-02-release-build-version-sync.md",
-          "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-          "scripts/build-release.sh",
-          "scripts/test-release-build-version.sh",
-          "scripts/swift-quality-gate.sh",
-          "project.yml",
-          "docs/RELEASING.md"
-        ]
-      }
-    },
-    {
-      "at": "2026-06-02T01:27:05Z",
-      "action": "review_step",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "decision": "pass"
-      }
-    },
-    {
-      "at": "2026-06-03T01:59:28Z",
-      "action": "recover_current_iteration_from_state_json",
-      "details": {
-        "reason": "recovered_from_state_json",
-        "recovered_plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md"
-      }
-    },
-    {
-      "at": "2026-06-03T01:59:28Z",
-      "action": "sync_plan_reset_completed_steps",
-      "details": {
-        "from_plan": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-        "to_plan": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-        "reason": "Plan switched; reset completion state."
-      }
-    },
-    {
-      "at": "2026-06-03T01:59:28Z",
-      "action": "sync_plan_from_imm_plan",
-      "details": {
-        "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-        "plan_signature": "630ddf83378eb7e3a91dc51a362a3a428fdf3f86dae4bb164669e3e7aecd407d",
-        "plan_summary": "Settings stores a watchlist per Kubernetes context, and the menu can",
-        "same_plan": false
-      }
-    },
-    {
-      "at": "2026-06-03T02:16:12Z",
-      "action": "activate_step",
-      "details": {
-        "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-        "step_number": 1,
-        "step_id": "U1",
-        "role_constraints": {
-          "imm-work": {
-            "role": "execute",
-            "role_class": "coordinator",
-            "boundary": "Drive only the active step or pending follow-up to the next boundary."
-          },
-          "imm-executor": {
-            "role": "execute",
-            "role_class": "authority",
-            "boundary": "Implement only the activated step or follow-up scope."
-          },
-          "imm-qa": {
-            "role": "qa",
-            "role_class": "authority",
-            "boundary": "Close, rework, or replan based on recorded evidence only."
-          }
-        }
-      }
-    },
-    {
-      "at": "2026-06-03T02:19:22Z",
-      "action": "record_execution_evidence",
-      "details": {
-        "step_number": 1,
-        "step_id": "U1",
-        "changed_files": [
-          "KubebarCore/Services/AppConfigStore.swift",
-          "KubebarTests/Services/AppConfigStoreTests.swift",
-          "KubebarTests/Services/RefreshCoordinatorTests.swift"
-        ]
-      }
-    },
     {
       "at": "2026-06-03T02:19:41Z",
       "action": "review_step",
@@ -785,12 +630,238 @@
         "decision": "pass",
         "target_kind": "plan_step"
       }
+    },
+    {
+      "at": "2026-06-04T03:18:44Z",
+      "action": "sync_plan_reset_completed_steps",
+      "details": {
+        "from_plan": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+        "to_plan": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+        "reason": "Plan switched; reset completion state."
+      }
+    },
+    {
+      "at": "2026-06-04T03:18:44Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+        "plan_signature": "30bfdfd0e79dbcd430b810c352ea44c600ac95563dfb056d3daa5cc751413798",
+        "plan_summary": "Support Linux/macOS colon-delimited `KUBECONFIG` by preserving the",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-06-04T03:21:19Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+        "step_number": 1,
+        "step_id": "U1",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-04T03:22:48Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          "CONTEXT.md\n.imm/specs/2026-06-04-kubeconfig-multi-file-support.md\ndocs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md\nKubebarTests/Services/CommandRunnerTests.swift\ndocs/architecture/runtime-invariants.md"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-04T03:23:00Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-06-04T04:10:19Z",
+      "action": "sync_plan_reset_completed_steps",
+      "details": {
+        "from_plan": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+        "to_plan": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+        "reason": "Plan switched; reset completion state."
+      }
+    },
+    {
+      "at": "2026-06-04T04:10:19Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+        "plan_signature": "e1c673138ea32727da48de4b776cec2e091128ba9cc6bd338880b6665c405977",
+        "plan_summary": "Add an App Settings kubeconfig path list that overrides automatic",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-06-04T06:28:08Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+        "step_number": 1,
+        "step_id": "U1",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-04T06:28:19Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "changed_files": [
+          "KubebarCore/Services/AppConfigStore.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarTests/Models/AppConfigTests.swift\nKubebarTests/Services/AppConfigStoreTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-04T06:28:28Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-06-04T06:28:54Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+        "step_number": 2,
+        "step_id": "U2",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-04T06:39:13Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "changed_files": [
+          "KubebarCore/Services/CommandRunner.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarCore/Services/KubectlClusterReader.swift\nKubebarCore/Services/RefreshCoordinator.swift\nKubebarTests/Services/CommandRunnerTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\nKubebarTests/Services/KubectlClusterReaderTests.swift\nKubebarTests/Services/RefreshCoordinatorTests.swift"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-04T06:39:13Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-06-04T06:39:23Z",
+      "action": "activate_step",
+      "details": {
+        "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+        "step_number": 3,
+        "step_id": "U3",
+        "role_constraints": {
+          "imm-work": {
+            "role": "execute",
+            "role_class": "coordinator",
+            "boundary": "Drive only the active step or pending follow-up to the next boundary."
+          },
+          "imm-executor": {
+            "role": "execute",
+            "role_class": "authority",
+            "boundary": "Implement only the activated step or follow-up scope."
+          },
+          "imm-qa": {
+            "role": "qa",
+            "role_class": "authority",
+            "boundary": "Close, rework, or replan based on recorded evidence only."
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-06-04T07:43:50Z",
+      "action": "record_execution_evidence",
+      "details": {
+        "step_number": 3,
+        "step_id": "U3",
+        "changed_files": [
+          "Kubebar/KubebarApp.swift\nKubebar/MenuBarViewModel.swift\nKubebar/Views/SettingsRootView.swift\nKubebar/Views/SetupView.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\ndocs/architecture/runtime-invariants.md"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-04T07:44:00Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 3,
+        "step_id": "U3",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
     }
   ],
   "requires_replan": false,
-  "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
-  "plan_summary": "Fix Settings so selecting the fixed `App Settings` tab responds",
-  "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
-  "plan_last_validated_at": "2026-06-03T08:41:27Z",
+  "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+  "plan_summary": "Add an App Settings kubeconfig path list that overrides automatic",
+  "plan_signature": "e1c673138ea32727da48de4b776cec2e091128ba9cc6bd338880b6665c405977",
+  "plan_last_validated_at": "2026-06-04T04:10:19Z",
   "pending_follow_up": null
 }

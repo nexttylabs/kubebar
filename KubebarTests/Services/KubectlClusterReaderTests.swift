@@ -765,6 +765,58 @@ struct KubectlClusterReaderTests {
 
         #expect(runner.maximumConcurrentRequests > 1)
     }
+
+    @Test("kubectl reads preserve kubeconfig environment overrides")
+    func kubectlReadsPreserveKubeconfigEnvironmentOverrides() throws {
+        let runner = RecordingEnvironmentCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
+            podMetricsCommand: CommandResult(output: podMetricsWithResourceDataJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0),
+            deploymentsCommand: CommandResult(output: deploymentMetadataJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(
+            runner: runner,
+            kubectlEnvironment: KubectlEnvironment(
+                environmentOverrides: ["KUBECONFIG": "/tmp/dev:/tmp/prod"]
+            )
+        )
+
+        _ = try reader.readSnapshot(
+            contextName: "prod",
+            watchTargets: [.workload(namespace: "api", name: "checkout")],
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(!runner.requests.isEmpty)
+        #expect(runner.requests.allSatisfy { $0.environmentOverrides == ["KUBECONFIG": "/tmp/dev:/tmp/prod"] })
+    }
+
+    @Test("kubectl reads derive explicit kubeconfig paths from config")
+    func kubectlReadsDeriveExplicitKubeconfigPathsFromConfig() throws {
+        let runner = RecordingEnvironmentCommandRunner(results: [
+            nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
+            podsCommand: CommandResult(output: podsJSON, error: "", exitCode: 0),
+            nodeMetricsCommand: CommandResult(output: nodeMetricsJSON, error: "", exitCode: 0),
+            podMetricsCommand: CommandResult(output: podMetricsWithResourceDataJSON, error: "", exitCode: 0),
+            warningEventsCommand: CommandResult(output: warningEventsJSON, error: "", exitCode: 0),
+            deploymentsCommand: CommandResult(output: deploymentMetadataJSON, error: "", exitCode: 0)
+        ])
+        let reader = KubectlClusterReader(
+            runner: runner,
+            config: AppConfig(kubeconfigPaths: ["/tmp/dev.yaml", "/tmp/prod.yaml"])
+        )
+
+        _ = try reader.readSnapshot(
+            contextName: "prod",
+            watchTargets: [.workload(namespace: "api", name: "checkout")],
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(!runner.requests.isEmpty)
+        #expect(runner.requests.allSatisfy { $0.environmentOverrides == ["KUBECONFIG": "/tmp/dev.yaml:/tmp/prod.yaml"] })
+    }
 }
 
 private final class FakeMultiCommandRunner: CommandRunning, @unchecked Sendable {
@@ -799,6 +851,30 @@ private final class RecordingCommandRunner: CommandRunning, @unchecked Sendable 
         recordedRequests.append(request)
         lock.unlock()
         return result
+    }
+}
+
+private final class RecordingEnvironmentCommandRunner: CommandRunning, @unchecked Sendable {
+    private let results: [[String]: CommandResult]
+    private let lock = NSLock()
+    private var recordedRequests: [CommandRequest] = []
+
+    init(results: [[String]: CommandResult]) {
+        self.results = results
+    }
+
+    var requests: [CommandRequest] {
+        lock.lock()
+        defer { lock.unlock() }
+        return recordedRequests
+    }
+
+    func run(_ request: CommandRequest) throws -> CommandResult {
+        lock.lock()
+        recordedRequests.append(request)
+        lock.unlock()
+
+        return results[request.arguments] ?? CommandResult(output: "", error: "unexpected command", exitCode: 1)
     }
 }
 

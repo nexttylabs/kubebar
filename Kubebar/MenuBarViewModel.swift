@@ -253,6 +253,26 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func addKubeconfigPaths(_ paths: [String]) {
+        runtimeState.setupState.appendKubeconfigPaths(paths)
+        publishRuntimeState()
+    }
+
+    func removeKubeconfigPath(at index: Int) {
+        runtimeState.setupState.removeKubeconfigPath(at: index)
+        publishRuntimeState()
+    }
+
+    func moveKubeconfigPathUp(at index: Int) {
+        runtimeState.setupState.moveKubeconfigPathUp(at: index)
+        publishRuntimeState()
+    }
+
+    func moveKubeconfigPathDown(at index: Int) {
+        runtimeState.setupState.moveKubeconfigPathDown(at: index)
+        publishRuntimeState()
+    }
+
     func selectSetupContext(_ context: String?) {
         k9sHandoffCoordinator.clear()
         watchTargetLoadTask?.cancel()
@@ -360,19 +380,21 @@ final class MenuBarViewModel: ObservableObject {
 
     private func loadContexts() {
         let contextCatalog = contextCatalog
+        let config = previewConfigForDiscovery()
 
         Task {
             let contexts = await Task.detached(priority: .userInitiated) {
-                (try? contextCatalog.listContexts()) ?? []
+                (try? contextCatalog.listContexts(config: config)) ?? []
             }.value
 
-            runtimeState.setupState.availableContexts = contexts
+            runtimeState.replaceAvailableContexts(contexts)
             publishRuntimeState()
         }
     }
 
     private func loadWatchTargets(for context: String) {
         let watchTargetCatalog = watchTargetCatalog
+        let config = previewConfigForDiscovery()
         watchTargetLoadTask?.cancel()
         runtimeState.beginTargetLoading(for: context)
         publishRuntimeState()
@@ -381,7 +403,7 @@ final class MenuBarViewModel: ObservableObject {
             let result: Result<WatchlistCandidates, Error>
 
             do {
-                let candidates = try await watchTargetCatalog.listCandidates(contextName: context)
+                let candidates = try await watchTargetCatalog.listCandidates(config: config, contextName: context)
                 try Task.checkCancellation()
                 result = .success(candidates)
             } catch is CancellationError {
@@ -403,6 +425,18 @@ final class MenuBarViewModel: ObservableObject {
 
             publishRuntimeState()
         }
+    }
+
+    private func previewConfigForDiscovery() -> AppConfig {
+        var preview = config
+        preview = AppConfig(
+            selectedContext: preview.selectedContext,
+            watchlistsByContext: preview.watchlistsByContext,
+            refreshIntervalSeconds: runtimeState.setupState.refreshCadence.seconds,
+            healthShiftAlertsEnabled: runtimeState.setupState.healthShiftAlerts.isEnabled,
+            kubeconfigPaths: runtimeState.setupState.kubeconfigPaths
+        )
+        return preview
     }
 
     private func startRefreshLoopIfConfigured() {

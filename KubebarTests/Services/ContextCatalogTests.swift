@@ -6,11 +6,17 @@ struct ContextCatalogTests {
     @Test("lists kubectl contexts from command output")
     func listsKubectlContextsFromCommandOutput() throws {
         let runner = FakeCommandRunner(result: CommandResult(stdout: "prod\nstaging\n\n", stderr: "", exitCode: 0))
-        let catalog = ContextCatalog(runner: runner)
+        let catalog = ContextCatalog(
+            runner: runner,
+            kubectlEnvironment: KubectlEnvironment(
+                environmentOverrides: ["KUBECONFIG": "/tmp/dev:/tmp/prod"]
+            )
+        )
 
         #expect(try catalog.listContexts() == ["prod", "staging"])
         #expect(runner.lastRequest?.executable == "kubectl")
         #expect(runner.lastRequest?.arguments == ["config", "get-contexts", "-o", "name"])
+        #expect(runner.lastRequest?.environmentOverrides == ["KUBECONFIG": "/tmp/dev:/tmp/prod"])
     }
 
     @Test("empty context output is recoverable")
@@ -29,6 +35,18 @@ struct ContextCatalogTests {
         #expect(throws: KubectlCommandError.failed("no kubeconfig")) {
             try catalog.listContexts()
         }
+    }
+
+    @Test("context catalog derives explicit kubeconfig paths from config")
+    func contextCatalogDerivesExplicitKubeconfigPathsFromConfig() throws {
+        let runner = FakeCommandRunner(result: CommandResult(stdout: "prod\n", stderr: "", exitCode: 0))
+        let catalog = ContextCatalog(runner: runner)
+
+        _ = try catalog.listContexts(
+            config: AppConfig(kubeconfigPaths: ["/tmp/dev.yaml", "/tmp/prod.yaml"])
+        )
+
+        #expect(runner.lastRequest?.environmentOverrides == ["KUBECONFIG": "/tmp/dev.yaml:/tmp/prod.yaml"])
     }
 }
 

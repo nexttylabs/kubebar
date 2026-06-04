@@ -1,18 +1,54 @@
 import Foundation
 
 public protocol ClusterReading: Sendable {
-    func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot
+    func readSnapshot(config: AppConfig, contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot
 }
 
 public struct KubectlClusterReader: ClusterReading, Sendable {
     private let runner: CommandRunning
+    private let fixedKubectlEnvironment: KubectlEnvironment?
+    private let baseEnvironment: [String: String]
+    private let shellLookup: any ShellEnvironmentLookup
+    private let compatibilityConfig: AppConfig?
 
     public init(runner: CommandRunning = ProcessCommandRunner()) {
         self.runner = runner
+        self.fixedKubectlEnvironment = nil
+        self.baseEnvironment = ProcessInfo.processInfo.environment
+        self.shellLookup = LoginShellEnvironmentLookup()
+        self.compatibilityConfig = nil
     }
 
-    public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
-        let rawSnapshot = readRawSnapshot(contextName: contextName, watchTargets: watchTargets)
+    public init(
+        runner: CommandRunning = ProcessCommandRunner(),
+        kubectlEnvironment: KubectlEnvironment
+    ) {
+        self.runner = runner
+        self.fixedKubectlEnvironment = kubectlEnvironment
+        self.baseEnvironment = [:]
+        self.shellLookup = LoginShellEnvironmentLookup()
+        self.compatibilityConfig = nil
+    }
+
+    public init(
+        runner: CommandRunning = ProcessCommandRunner(),
+        config: AppConfig,
+        baseEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        shellLookup: any ShellEnvironmentLookup = LoginShellEnvironmentLookup()
+    ) {
+        self.runner = runner
+        self.fixedKubectlEnvironment = nil
+        self.baseEnvironment = baseEnvironment
+        self.shellLookup = shellLookup
+        self.compatibilityConfig = config
+    }
+
+    public func readSnapshot(config: AppConfig, contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+        let rawSnapshot = readRawSnapshot(
+            contextName: contextName,
+            watchTargets: watchTargets,
+            kubectlEnvironment: kubectlEnvironment(for: config)
+        )
         let nodeRecordsSection = decodedSection(rawSnapshot.result(for: .nodes), decode: decodeNodeRecords)
         let nodesSection = mappedSection(nodeRecordsSection, transform: makeNodeSummary)
         let metricsRecordsSection = decodedSection(rawSnapshot.result(for: .nodeMetrics), decode: decodeNodeMetrics)
@@ -71,7 +107,31 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         )
     }
 
-    private func readRawSnapshot(contextName: String, watchTargets: [WatchTarget]) -> RawKubectlSnapshot {
+    public func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+        try readSnapshot(
+            config: compatibilityConfig ?? AppConfig(
+                selectedContext: contextName,
+                watchTargets: watchTargets
+            ),
+            contextName: contextName,
+            watchTargets: watchTargets,
+            now: now
+        )
+    }
+
+    private func kubectlEnvironment(for config: AppConfig) -> KubectlEnvironment {
+        fixedKubectlEnvironment ?? KubectlEnvironment(
+            config: config,
+            baseEnvironment: baseEnvironment,
+            shellLookup: shellLookup
+        )
+    }
+
+    private func readRawSnapshot(
+        contextName: String,
+        watchTargets: [WatchTarget],
+        kubectlEnvironment: KubectlEnvironment
+    ) -> RawKubectlSnapshot {
         let reads = KubectlRead.reads(for: watchTargets)
         let results = LockedKubectlResults()
         let group = DispatchGroup()
@@ -80,7 +140,11 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             group.enter()
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
-                    let output = try runKubectl(contextName: contextName, arguments: read.arguments)
+                    let output = try runKubectl(
+                        contextName: contextName,
+                        arguments: read.arguments,
+                        kubectlEnvironment: kubectlEnvironment
+                    )
                     results.set(.success(output), for: read)
                 } catch let error as KubectlCommandError {
                     results.set(.failure(error), for: read)
@@ -102,11 +166,19 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         return RawKubectlSnapshot(results: outputs)
     }
 
-    private func runKubectl(contextName: String, arguments: [String]) throws -> String {
+    private func runKubectl(
+        contextName: String,
+        arguments: [String],
+        kubectlEnvironment: KubectlEnvironment
+    ) throws -> String {
         let result: CommandResult
         do {
             result = try runner.run(
-                CommandRequest(executable: "kubectl", arguments: ["--context", contextName] + arguments)
+                CommandRequest(
+                    executable: "kubectl",
+                    arguments: ["--context", contextName] + arguments,
+                    environmentOverrides: kubectlEnvironment.environmentOverrides
+                )
             )
         } catch CommandRunnerError.timedOut {
             throw KubectlCommandError.failed("kubectl timed out")

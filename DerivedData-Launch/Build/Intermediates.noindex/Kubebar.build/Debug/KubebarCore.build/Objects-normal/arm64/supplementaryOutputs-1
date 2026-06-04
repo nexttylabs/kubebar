@@ -1,0 +1,23 @@
+{
+  "/Users/derek/workspaces/kubebar/KubebarCore/Models/ClusterHealthState.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterHealthState.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/Models/ClusterSnapshot.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/ClusterSnapshot.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/Services/AppConfigStore.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/AppConfigStore.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/AppConfigStore.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/AppConfigStore.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/AppConfigStore.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/AppConfigStore.swiftdeps"
+  }
+}

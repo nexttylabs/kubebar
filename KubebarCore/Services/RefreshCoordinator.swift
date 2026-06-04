@@ -31,6 +31,7 @@ public struct RefreshCoordinator: Sendable {
 
         do {
             let snapshot = try reader.readSnapshot(
+                config: config,
                 contextName: contextName,
                 watchTargets: config.watchTargets,
                 now: now

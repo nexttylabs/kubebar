@@ -55,6 +55,32 @@ struct RefreshCoordinatorTests {
         #expect(reader.lastWatchTargets == [.namespace("web")])
     }
 
+    @Test("refresh passes config kubeconfig paths through cluster reads")
+    func refreshPassesConfigKubeconfigPathsThroughClusterReads() {
+        let snapshot = ClusterSnapshot(
+            contextName: "stage",
+            nodeSummary: NodeSummary(ready: 1, total: 1),
+            podSummary: PodSummary(running: 1, total: 1),
+            warningEventCount: 0,
+            trackedItems: [.init(target: .namespace("web"), state: .ok, reason: "1/1 pods running")],
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+        let reader = RecordingClusterReader(result: .success(snapshot))
+        let coordinator = RefreshCoordinator(reader: reader)
+
+        _ = coordinator.refresh(
+            config: AppConfig(
+                selectedContext: "stage",
+                watchTargets: [.namespace("web")],
+                kubeconfigPaths: ["/tmp/dev.yaml", "/tmp/prod.yaml"]
+            ),
+            previousSnapshot: nil,
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(reader.lastConfig?.kubeconfigPaths == ["/tmp/dev.yaml", "/tmp/prod.yaml"])
+    }
+
     @Test("failed refresh keeps previous snapshot as stale display")
     func failedRefreshKeepsPreviousSnapshotAsStaleDisplay() {
         let previous = ClusterSnapshot(
@@ -196,13 +222,14 @@ struct RefreshCoordinatorTests {
 private struct FakeClusterReader: ClusterReading {
     let result: Result<ClusterSnapshot, Error>
 
-    func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+    func readSnapshot(config: AppConfig, contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
         try result.get()
     }
 }
 
 private final class RecordingClusterReader: ClusterReading, @unchecked Sendable {
     private let result: Result<ClusterSnapshot, Error>
+    private(set) var lastConfig: AppConfig?
     private(set) var lastContextName: String?
     private(set) var lastWatchTargets: [WatchTarget] = []
 
@@ -210,7 +237,8 @@ private final class RecordingClusterReader: ClusterReading, @unchecked Sendable 
         self.result = result
     }
 
-    func readSnapshot(contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+    func readSnapshot(config: AppConfig, contextName: String, watchTargets: [WatchTarget], now: Date) throws -> ClusterSnapshot {
+        lastConfig = config
         lastContextName = contextName
         lastWatchTargets = watchTargets
         return try result.get()

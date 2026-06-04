@@ -1,0 +1,23 @@
+{
+  "/Users/derek/workspaces/kubebar/KubebarCore/Models/MenuRuntimeState.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuRuntimeState.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/QA/MenuStateFixtureCatalog.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuStateFixtureCatalog.swiftdeps"
+  },
+  "/Users/derek/workspaces/kubebar/KubebarCore/Services/MenuLayoutSizing.swift" : {
+    "const-values" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.swiftconstvalues",
+    "dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.d",
+    "diagnostics" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.dia",
+    "object" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.o",
+    "swift-dependencies" : "/Users/derek/workspaces/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/MenuLayoutSizing.swiftdeps"
+  }
+}

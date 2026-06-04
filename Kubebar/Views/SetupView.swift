@@ -10,6 +10,10 @@ struct SetupView: View {
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
     let onToggleHealthShiftAlerts: (Bool) -> Void
+    let onAddKubeconfigPaths: () -> Void
+    let onRemoveKubeconfigPath: (Int) -> Void
+    let onMoveKubeconfigPathUp: (Int) -> Void
+    let onMoveKubeconfigPathDown: (Int) -> Void
 
     init(
         state: Binding<SetupFlowState>,
@@ -19,7 +23,11 @@ struct SetupView: View {
         onSelectContext: @escaping (String?) -> Void = { _ in },
         onRetryTargets: @escaping () -> Void = {},
         onToggleStartAtLogin: @escaping (Bool) -> Void = { _ in },
-        onToggleHealthShiftAlerts: @escaping (Bool) -> Void = { _ in }
+        onToggleHealthShiftAlerts: @escaping (Bool) -> Void = { _ in },
+        onAddKubeconfigPaths: @escaping () -> Void = {},
+        onRemoveKubeconfigPath: @escaping (Int) -> Void = { _ in },
+        onMoveKubeconfigPathUp: @escaping (Int) -> Void = { _ in },
+        onMoveKubeconfigPathDown: @escaping (Int) -> Void = { _ in }
     ) {
         _state = state
         self.primaryActionTitle = primaryActionTitle
@@ -29,6 +37,10 @@ struct SetupView: View {
         self.onRetryTargets = onRetryTargets
         self.onToggleStartAtLogin = onToggleStartAtLogin
         self.onToggleHealthShiftAlerts = onToggleHealthShiftAlerts
+        self.onAddKubeconfigPaths = onAddKubeconfigPaths
+        self.onRemoveKubeconfigPath = onRemoveKubeconfigPath
+        self.onMoveKubeconfigPathUp = onMoveKubeconfigPathUp
+        self.onMoveKubeconfigPathDown = onMoveKubeconfigPathDown
     }
 
     var body: some View {
@@ -78,6 +90,10 @@ struct SetupView: View {
                 SettingsRow(label: "Refresh cadence") {
                     refreshCadencePicker
                 }
+            }
+
+            SettingsSection(title: "Kubeconfig") {
+                kubeconfigPathsSection
             }
 
             SettingsSection(title: "Launch") {
@@ -189,6 +205,84 @@ struct SetupView: View {
         }
     }
 
+    private var kubeconfigPathsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SettingsRow(label: "Source") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(state.usesAutomaticKubeconfigDetection ? "Automatic detection" : "Explicit path list")
+                    Text(kubeconfigPathsHelpText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            SettingsRow(label: "Files") {
+                VStack(alignment: .leading, spacing: 8) {
+                    if state.kubeconfigPaths.isEmpty {
+                        Text("No explicit kubeconfig files. Kubebar will use automatic detection.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(Array(state.kubeconfigPaths.enumerated()), id: \.offset) { entry in
+                                kubeconfigPathRow(path: entry.element, index: entry.offset)
+                            }
+                        }
+                    }
+
+                    Button("Add Files", action: onAddKubeconfigPaths)
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel(Text("Add kubeconfig files"))
+                }
+            }
+        }
+    }
+
+    private func kubeconfigPathRow(path: String, index: Int) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(path)
+                .font(.callout)
+                .textSelection(.enabled)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack(spacing: 4) {
+                Button {
+                    onMoveKubeconfigPathUp(index)
+                } label: {
+                    Image(systemName: "arrow.up")
+                }
+                .buttonStyle(.borderless)
+                .disabled(index == 0)
+                .help(Text("Move up"))
+                .accessibilityLabel(Text("Move kubeconfig path up"))
+
+                Button {
+                    onMoveKubeconfigPathDown(index)
+                } label: {
+                    Image(systemName: "arrow.down")
+                }
+                .buttonStyle(.borderless)
+                .disabled(index == state.kubeconfigPaths.count - 1)
+                .help(Text("Move down"))
+                .accessibilityLabel(Text("Move kubeconfig path down"))
+
+                Button(role: .destructive) {
+                    onRemoveKubeconfigPath(index)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help(Text("Remove"))
+                .accessibilityLabel(Text("Remove kubeconfig path"))
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
     private var healthShiftAlertsToggle: some View {
         VStack(alignment: .leading, spacing: 6) {
             Toggle("Health State Shift Alerts", isOn: healthShiftAlertsBinding)
@@ -241,6 +335,12 @@ struct SetupView: View {
             get: { state.healthShiftAlerts.isEnabled },
             set: { onToggleHealthShiftAlerts($0) }
         )
+    }
+
+    private var kubeconfigPathsHelpText: String {
+        state.usesAutomaticKubeconfigDetection
+            ? "Use inherited KUBECONFIG first, then fall back to login shell lookup."
+            : "Kubebar joins these files with ':' and lets kubectl merge them."
     }
 }
 

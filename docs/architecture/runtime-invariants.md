@@ -41,6 +41,16 @@ These are the rules Kubebar must keep true at runtime.
   not as a standalone top-level row above the menu tabs.
 - `CommandRunner` remains an injectable boundary so reads can be tested without
   shelling out.
+- `CommandRunner` preserves the inherited `KUBECONFIG` environment for
+  `kubectl` reads. On Linux/macOS, colon-delimited multi-file kubeconfig merge
+  behavior is delegated to `kubectl`.
+- If the app process does not inherit `KUBECONFIG`, Kubebar may resolve it from
+  the user's login shell before running `kubectl`, so local context discovery,
+  watchlist candidate reads, and refreshes still use the same effective
+  kubeconfig set.
+- App Settings owns the explicit kubeconfig path list. An empty list keeps
+  automatic detection; a non-empty list overrides automatic detection for
+  context discovery, watchlist candidate reads, and refreshes.
 - Kubebar uses `kubectl` only for the saved context and the status/setup reads
   needed by the menu.
 - CPU and memory cards use `kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes`
@@ -178,6 +188,10 @@ These are the rules Kubebar must keep true at runtime.
   not `OK`.
 - Settings keeps `App Settings` as the fixed first tab. Refresh cadence, Start
   at Login, and Health State Shift Alerts remain app-wide settings in that tab.
+- Saving changed explicit kubeconfig paths must refresh the local context list.
+  Saved watchlists for contexts no longer returned by the effective kubeconfig
+  stay preserved in config but remain hidden from visible Settings tabs and the
+  menu context selector.
 - Settings context tabs and the menu context selector must list only contexts
   reported by the local kubeconfig context list. Saved watchlists for missing
   contexts stay preserved in config, but missing contexts are not displayed as

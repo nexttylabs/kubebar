@@ -32,6 +32,14 @@
   active app-owned selected context. It must list local context information,
   use the active context's per-context watchlist, and must not change the
   terminal's current context.
+- **KUBECONFIG environment**: the inherited `KUBECONFIG` process environment
+  value used by `kubectl` to resolve local kubeconfig files. On Linux/macOS,
+  multiple files are separated with `:` and Kubebar delegates merging to
+  `kubectl`.
+- **Explicit kubeconfig paths**: an ordered App Settings list of kubeconfig
+  files owned by Kubebar. When the list is empty, Kubebar falls back to
+  automatic `KUBECONFIG` detection; when it has entries, Kubebar uses those
+  paths to build the `KUBECONFIG` value for `kubectl`.
 - **Release build version**: the app bundle build number (`CFBundleVersion` /
   `CURRENT_PROJECT_VERSION`) used for release artifacts. It must move in sync
   with release publishing and stay distinct from the user-facing marketing
@@ -58,3 +66,14 @@ explicitly changes that scope.
   context switching, and
   `docs/solutions/architecture/per-context-watchlists-active-context-2026-06-03.md`
   captures the reusable ownership pattern.
+- Kubernetes command environment: `KubebarCore/Services/CommandRunner.swift`
+  owns inherited process environment and PATH normalization for launched tools,
+  while `KubebarCore/Services/ContextCatalog.swift`,
+  `KubebarCore/Services/WatchTargetCatalog.swift`, and
+  `KubebarCore/Services/KubectlClusterReader.swift` own `kubectl` reads.
+- Explicit kubeconfig paths: `KubebarCore/Services/AppConfigStore.swift` owns
+  persistence, `KubebarCore/Models/SetupFlowState.swift` and
+  `KubebarCore/Models/MenuRuntimeState.swift` own Settings editing state, and
+  `Kubebar/Views/SetupView.swift`, `Kubebar/Views/SettingsRootView.swift`, and
+  `Kubebar/MenuBarViewModel.swift` own the App Settings UI and selected-file
+  flow.
