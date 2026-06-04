@@ -1,0 +1,23 @@
+{
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/MenuFooterView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuFooterView.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/MenuTab.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/MenuTab.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/2515/kubebar/Kubebar/Views/NodeDetailsView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.dia",
+    "object" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/2515/kubebar/DerivedDataLayoutPolish/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/NodeDetailsView.swiftdeps"
+  }
+}
