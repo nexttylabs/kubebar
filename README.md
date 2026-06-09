@@ -4,6 +4,8 @@
 
 **Kubebar is a native macOS menu bar for Kubernetes health.**
 
+[Download latest release](https://github.com/nexttylabs/kubebar/releases/latest) · [Star this repo](https://github.com/nexttylabs/kubebar) · [Read permissions & privacy](docs/PERMISSIONS.md)
+
 Kubebar gives Kubernetes operators a lightweight, watchlist-first status instrument that shows whether critical workloads are healthy, need attention, or have gone stale before opening deeper troubleshooting tools.
 
 ![Kubebar menu showing Kubernetes health](docs/assets/readme/overview.png)
@@ -22,6 +24,10 @@ Kubebar is not a replacement for `k9s` or `kubectl`. It is the small, persistent
 - **Visibility**: Always-on health status in your menu bar.
 - **Speed**: Instant access to workload reasons and warning events.
 - **Trust**: Clear indicators for stale data and connectivity issues.
+
+### If you like `k9s`
+
+Think of Kubebar as a tiny companion for `k9s`, not a competitor. Kubebar answers the ambient question — "is anything on fire?" — from the macOS menu bar, then hands you off to `k9s` with `⌘K` when you need the full terminal UI for deep debugging.
 
 ## Why You Can Trust It
 
