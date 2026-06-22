@@ -1,0 +1,1 @@
+- Add a focusable Pod log window for inspecting recent logs from Bad Pod rows.

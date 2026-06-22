@@ -33,7 +33,7 @@ struct ReadOnlyLogTextView: NSViewRepresentable {
         textView.minSize = .zero
         textView.isHorizontallyResizable = true
         textView.isVerticallyResizable = true
-        textView.autoresizingMask = [.width]
+        textView.autoresizingMask = [.height]
 
         scrollView.documentView = textView
         context.coordinator.textView = textView

@@ -95,9 +95,9 @@ public struct PodLogBuffer: Equatable, Sendable {
         }
 
         if lines.isEmpty || !hasOpenLine {
-            lines.append(contentsOf: nextLines.drop { $0.isEmpty })
+            lines.append(contentsOf: nextLines)
         } else if chunk.hasPrefix("\n") {
-            lines.append(contentsOf: nextLines.drop { $0.isEmpty })
+            lines.append(contentsOf: nextLines.dropFirst())
         } else {
             lines[lines.count - 1] += nextLines[0]
             lines.append(contentsOf: nextLines.dropFirst())
@@ -105,7 +105,7 @@ public struct PodLogBuffer: Equatable, Sendable {
 
         hasOpenLine = !chunk.hasSuffix("\n")
 
-        while lines.last == "" {
+        if !hasOpenLine, lines.last == "" {
             lines.removeLast()
         }
 
@@ -244,6 +244,8 @@ public final class ProcessPodLogStreamer: PodLogStreaming, @unchecked Sendable {
             process.terminationHandler = { terminatedProcess in
                 stdout.fileHandleForReading.readabilityHandler = nil
                 stderr.fileHandleForReading.readabilityHandler = nil
+                terminatedProcess.terminationHandler = nil
+                processBox.clearProcess()
 
                 if terminatedProcess.terminationStatus == 0 || processBox.wasCancelled {
                     continuation.finish()
@@ -308,6 +310,12 @@ private final class PodLogProcessBox: @unchecked Sendable {
         }
 
         process.terminate()
+    }
+
+    func clearProcess() {
+        lock.lock()
+        process = nil
+        lock.unlock()
     }
 }
 

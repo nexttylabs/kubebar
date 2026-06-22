@@ -58,6 +58,17 @@ struct PodLogStreamerTests {
         #expect(buffer.text == "first\nsecond\nthird")
     }
 
+    @Test("bounded log buffer preserves intentional empty lines")
+    func boundedLogBufferPreservesIntentionalEmptyLines() {
+        var buffer = PodLogBuffer(maxLineCount: 6)
+
+        buffer.append("first\n\n")
+        buffer.append("\nthird\n")
+
+        #expect(buffer.lines == ["first", "", "", "third"])
+        #expect(buffer.text == "first\n\n\nthird")
+    }
+
     @Test("stream state summarizes safe failure text")
     func streamStateSummarizesSafeFailureText() {
         let state = PodLogDrawerState.failed("Error from server (BadRequest): a container name must be specified for pod checkout")
@@ -116,17 +127,21 @@ struct PodLogStreamerTests {
 
     @Test("process streamer terminates command when stream task is cancelled")
     func processStreamerTerminatesCommandWhenStreamTaskIsCancelled() async throws {
+        let readyMarker = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
         let marker = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         defer {
+            try? FileManager.default.removeItem(at: readyMarker)
             try? FileManager.default.removeItem(at: marker)
         }
 
         let streamer = ProcessPodLogStreamer()
         let target = PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout")
         let script = """
-        printf started
         trap 'printf terminated > "\(marker.path)"; exit 0' TERM
+        printf ready > "\(readyMarker.path)"
+        printf started
         while true; do sleep 1; done
         """
         let streamRequest = PodLogStreamRequest(
@@ -142,7 +157,14 @@ struct PodLogStreamerTests {
             for try await _ in streamer.streamLogs(for: streamRequest) {}
         }
 
-        try await Task.sleep(nanoseconds: 100_000_000)
+        for _ in 0..<20 {
+            if FileManager.default.fileExists(atPath: readyMarker.path) {
+                break
+            }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+
+        #expect(FileManager.default.fileExists(atPath: readyMarker.path))
         task.cancel()
 
         for _ in 0..<20 {
