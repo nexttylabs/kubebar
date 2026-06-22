@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'Kubebar' in project 'Kubebar'
+➜ Explicit dependency on target 'KubebarCore' in project 'Kubebar'
+Target 'KubebarCore' in project 'Kubebar' (no dependencies)

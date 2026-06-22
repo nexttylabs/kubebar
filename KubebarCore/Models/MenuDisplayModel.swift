@@ -356,6 +356,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
     public let helpText: String
     public let accessibilityLabel: String
     public let k9sHandoff: OverviewK9sHandoff?
+    public let logTarget: PodLogTarget?
 
     public var resourceProgress: Double? {
         [cpuProgress, memoryProgress].compactMap(\.self).max()
@@ -372,7 +373,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         issueText: String? = nil,
         helpText: String,
         accessibilityLabel: String,
-        k9sHandoff: OverviewK9sHandoff? = nil
+        k9sHandoff: OverviewK9sHandoff? = nil,
+        logTarget: PodLogTarget? = nil
     ) {
         self.id = "\(namespace)/\(name)"
         self.namespace = namespace
@@ -386,6 +388,7 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         self.helpText = helpText
         self.accessibilityLabel = accessibilityLabel
         self.k9sHandoff = k9sHandoff
+        self.logTarget = logTarget
     }
 
     public init(
@@ -398,7 +401,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
         issueText: String? = nil,
         helpText: String,
         accessibilityLabel: String,
-        k9sHandoff: OverviewK9sHandoff? = nil
+        k9sHandoff: OverviewK9sHandoff? = nil,
+        logTarget: PodLogTarget? = nil
     ) {
         self.init(
             namespace: namespace,
@@ -411,7 +415,8 @@ public struct PodItemDisplay: Equatable, Sendable, Identifiable {
             issueText: issueText,
             helpText: helpText,
             accessibilityLabel: accessibilityLabel,
-            k9sHandoff: k9sHandoff
+            k9sHandoff: k9sHandoff,
+            logTarget: logTarget
         )
     }
 }

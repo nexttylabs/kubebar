@@ -1,0 +1,23 @@
+{
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/QA/QALaunchMode.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/QALaunchMode.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/Views/PodsTabView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/PodsTabView.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/Views/ReadOnlyLogTextView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ReadOnlyLogTextView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ReadOnlyLogTextView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ReadOnlyLogTextView.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ReadOnlyLogTextView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/ReadOnlyLogTextView.swiftdeps"
+  }
+}

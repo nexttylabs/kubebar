@@ -96,238 +96,238 @@
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/CFNetwork.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CFNetwork-F14TCXHHM9H2SOEQZZL8NLVTH.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CFNetwork-GNUCE9JXUD6SAFSJNGQR176H.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "CFNetwork"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/CoreFoundation.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreFoundation-2ZDADNQRJ4HVE28FWN9A1TYW9.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreFoundation-68N6LSXEY91DQNZ2PG5ANRTHE.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "CoreFoundation"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/CoreGraphics.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreGraphics-CE7NAGS8KVQM4YZ9I9G8UMXIT.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreGraphics-AGIXDPA1S50WU7VB1IHT6SQ9V.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "CoreGraphics"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/CoreServices.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreServices-2KH9E5861OV5D97M69E2Y34X5.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/CoreServices-3BDD1S678UBJBH7JOJG9H2XEN.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "CoreServices"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/Darwin.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Darwin-1WAYKHZFLQVOGGTG7VV6QVUH2.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Darwin-212CYYSNBXSVLXAL8HFH52IP2.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "Darwin"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/DiskArbitration.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/DiskArbitration-3RX9OF0HKT9W8Q00QFA6OGWRX.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/DiskArbitration-BDGGH4HHAGS164MCL86OU3Z9R.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "DiskArbitration"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/dispatch.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Dispatch-ES8V94ZVE2UJB2NLKNNVS408M.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Dispatch-69D5YU7I0EQEBA1QFCTR40JX8.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "Dispatch"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/Foundation.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Foundation-D4J6TXJDZYBSCPQUNHYP9K2HZ.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Foundation-4OW3T4DJASJTO45QYQIULSHYC.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "Foundation"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/IOKit.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/IOKit-62CN9D9FXJJAU6NIBP61ZX3OX.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/IOKit-522ZDCN3HXWTGXP7VNEMFIBGD.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "IOKit"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinBasic.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/MachO-7HB5SIQ2YAWKI98V8NTKCE0GL.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/MachO-AUFA2JQ0BXXDETTED3LSYQH5C.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "MachO"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/ObjectiveC.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ObjectiveC-18121YHHD4O6FR1CUDVRO2TWB.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ObjectiveC-CNG90PNUQXPNG4FQUVHKV2XJ3.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "ObjectiveC"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/Security.framework\/Modules\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Security-YIZQUC2L6PFP1PI4Z2KECXEL.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/Security-14B8XJB066ETBIN7TGGJPRHWJ.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "Security"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/lib\/swift\/shims\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/SwiftShims-917L14BSMWMXT9OAE3CFO666C.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/SwiftShims-VH7TEEZB3J1XXBB9VAV1B1YH.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "SwiftShims"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/xpc.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/XPC-4RM8US62LF1OME605CV91G8DV.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/XPC-3Y3RKFEIJZ4GH7UWHRGQ9TB7P.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "XPC"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation1.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_AvailabilityInternal-CIBHUWUL4OVOA6KD86RNKY8AS.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_AvailabilityInternal-D9ZH4IU1ZIN767X90SMQPU0K0.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_AvailabilityInternal"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_float-21M3M7ZP5OV5F7VFSIKML9X1X.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_float-9FRQV79WFRJXCFDPPEYPMMVPD.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_float"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_inttypes-CEHJWVUQ2P211KLUVFAHY93TS.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_inttypes-9Q980EI9MEARB1VGSKZI3OPHD.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_inttypes"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_limits-8ANE62C1R5LWQ3SRLZFLMUPUG.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_limits-CUTKE7O249NZ53EOU75U1WTWB.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_limits"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdarg-T5Z936ZDB9AGIWKWZDCIHKPY.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdarg-ARWCRSC0P783BUTOOGUU7EABB.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_stdarg"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdbool-EKQYXE759KHTWMF310K82M2I2.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdbool-7ZJIA398NDUF9YBDEUCFURMRN.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_stdbool"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stddef-30Z2B3J2F6WZ4HFTPX4OX8L53.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stddef-1V5BYU4BTPF5I06E8IBO6U2C8.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_stddef"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdint-8ZOLJTR7W7VNWFC7XAPPUTQLF.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_Builtin_stdint-1328VPIB9EFJJMX1HJ3LUCS9V.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_Builtin_stdint"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation1.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation1-AT7G0TLW94LVUDSXY2LBPW0SW.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation1-ECBOE5F893X817YUH9AJ1MDF.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_DarwinFoundation1"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation2.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation2-BG6U9XASAYNWDUVMIHMHGN36C.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation2-2DPYIRAY9FAS0EU2157PFY3R3.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_DarwinFoundation2"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation3.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation3-6K5I2D59OF75J1I9CZVJF9QPK.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_DarwinFoundation3-D9O8XSM92GNU16SJZPZHYCLS0.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_DarwinFoundation3"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/lib\/swift\/shims\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_SwiftConcurrencyShims-9W50YS2SOE788M0ULGGJ0DAU3.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/_SwiftConcurrencyShims-66YOY42XK9SXJ06T5520Y3O0W.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "_SwiftConcurrencyShims"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/launch.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/launch-CN78NYN8XI0WGDS1LSSTUG064.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/launch-VZIXL5Y72L5KXD7RMBAYVP6X.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "launch"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/libDER\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/libDER-343YNWMOTAGELKSFKBCWQF3QK.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/libDER-AIKMCAFGVRLQCJQ37R6D1WEEN.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "libDER"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/libkern.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/libkern-B8C49O8N06Z52CFH6TSUKC9DT.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/libkern-4OVGC195O9O2800A82KQGM14U.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "libkern"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/os.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/os_object-4YCS0FYOBXBNKYOEI9V97G9U8.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/os_object-2EZYL2GU9DJIRUVRBRHEF59YF.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "os_object"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/os.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/os_workgroup-9PJCMASWKEQ30NQ8QTK5X43OS.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/os_workgroup-7GF8E546ZDM2K4VTMMFH3QKUA.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "os_workgroup"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ptrauth-8GT6N421W9RU4G2KJ1KCG2486.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ptrauth-A8YT9PO57TZUJ80QLKGI3LY65.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "ptrauth"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/21\/include\/module.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ptrcheck-6FATP9IEJ1U1IGZQLLC3NL1UF.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/ptrcheck-220N9ATFM9O32YPPCLZQRXG1F.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "ptrcheck"
   },
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation2.modulemap",
-    "clangModulePath" : "\/Users\/derek\/workspaces\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/sys_types-D922J4KRQJG1T5XHD6MKNKME.pcm",
+    "clangModulePath" : "\/Users\/derek\/.codex\/worktrees\/cc60\/kubebar\/DerivedData-Launch\/ModuleCache.noindex\/sys_types-6JL7TZDMQEJUL5C0LCPTKRPON.pcm",
     "isBridgingHeaderDependency" : false,
     "isFramework" : false,
     "moduleName" : "sys_types"

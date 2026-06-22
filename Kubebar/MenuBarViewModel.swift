@@ -1,6 +1,26 @@
+import AppKit
 import Foundation
 import SwiftUI
 import KubebarCore
+
+struct PodLogDrawerPresentation: Identifiable, Equatable {
+    fileprivate let session: PodLogStreamSession
+    var target: PodLogTarget
+    var state: PodLogDrawerState
+    var buffer: PodLogBuffer
+
+    var id: String {
+        target.id
+    }
+
+    var visibleText: String {
+        buffer.text
+    }
+
+    func matchCount(for query: String) -> Int {
+        buffer.matchCount(for: query)
+    }
+}
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
@@ -18,6 +38,8 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var isShowingSetup: Bool
     @Published private(set) var isRefreshing: Bool
     @Published private(set) var k9sHandoffState: K9sHandoffLaunchState
+    @Published private(set) var podLogDrawer: PodLogDrawerPresentation?
+    @Published var podLogSearchQuery: String = ""
 
     private let configStore: AppConfigStore
     private let refreshCoordinator: RefreshCoordinator
@@ -38,9 +60,12 @@ final class MenuBarViewModel: ObservableObject {
     private let healthShiftAlertSettings: HealthShiftAlertSettingsCoordinator
     private let healthShiftAlertNotifier: any HealthShiftAlertNotifying
     private let networkReachability: any NetworkReachability
+    private let podLogStreamer: any PodLogStreaming
     private var isNetworkAvailable: Bool = true
     private var healthShiftAlertTracker: HealthShiftAlertTracker
     private var healthShiftAlertSettingsRequestGate: HealthShiftAlertSettingsRequestGate
+    private var podLogStreamTask: Task<Void, Never>?
+    private var activePodLogSession: PodLogStreamSession?
 
     /// Delay before resuming automatic refresh after network recovery.
     /// Avoids rapid kubectl calls during unstable Wi-Fi reconnection.
@@ -57,6 +82,7 @@ final class MenuBarViewModel: ObservableObject {
         ),
         healthShiftAlertNotifier: any HealthShiftAlertNotifying = SystemHealthShiftAlertNotifier(),
         networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
+        podLogStreamer: any PodLogStreaming = ProcessPodLogStreamer(),
         now: Date = Date()
     ) {
         self.configStore = configStore
@@ -68,6 +94,7 @@ final class MenuBarViewModel: ObservableObject {
         self.healthShiftAlertSettings = HealthShiftAlertSettingsCoordinator(authorizer: healthShiftAlertNotifier)
         self.healthShiftAlertNotifier = healthShiftAlertNotifier
         self.networkReachability = networkReachability
+        self.podLogStreamer = podLogStreamer
 
         do {
             self.config = try configStore.load()
@@ -87,6 +114,8 @@ final class MenuBarViewModel: ObservableObject {
         self.display = Self.initialDisplay(for: config, now: now)
         self.activeContextName = config.selectedContext
         self.k9sHandoffState = .idle
+        self.podLogDrawer = nil
+        self.activePodLogSession = nil
         self.healthShiftAlertTracker = HealthShiftAlertTracker()
         self.healthShiftAlertSettingsRequestGate = HealthShiftAlertSettingsRequestGate()
 
@@ -114,6 +143,7 @@ final class MenuBarViewModel: ObservableObject {
         freshnessTimerTask?.cancel()
         watchTargetLoadTask?.cancel()
         networkRecoveryTask?.cancel()
+        podLogStreamTask?.cancel()
         networkReachability.stopMonitoring()
     }
 
@@ -201,6 +231,7 @@ final class MenuBarViewModel: ObservableObject {
 
         do {
             try configStore.save(completedConfig)
+            closePodLogDrawer()
             config = completedConfig
             activeContextName = completedConfig.selectedContext
             healthShiftAlertSettingsRequestGate.invalidate()
@@ -299,6 +330,7 @@ final class MenuBarViewModel: ObservableObject {
             return
         }
 
+        closePodLogDrawer()
         k9sHandoffCoordinator.clear()
         watchTargetLoadTask?.cancel()
         watchTargetLoadTask = nil
@@ -586,6 +618,63 @@ final class MenuBarViewModel: ObservableObject {
         k9sHandoffCoordinator.open(for: handoff)
     }
 
+    func openPodLogDrawer(for target: PodLogTarget) {
+        closePodLogDrawer()
+
+        let request = PodLogStreamRequest(target: target, config: config)
+        let streamer = podLogStreamer
+        let session = PodLogStreamSession(target: target)
+
+        podLogSearchQuery = ""
+        activePodLogSession = session
+        podLogDrawer = PodLogDrawerPresentation(
+            session: session,
+            target: target,
+            state: .loading,
+            buffer: PodLogBuffer()
+        )
+
+        podLogStreamTask = Task { [weak self] in
+            do {
+                for try await chunk in streamer.streamLogs(for: request) {
+                    try Task.checkCancellation()
+                    await MainActor.run {
+                        self?.appendPodLogChunk(chunk, for: target, sessionID: session.id)
+                    }
+                }
+
+                await MainActor.run {
+                    self?.finishPodLogStream(for: target, sessionID: session.id)
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    self?.cancelPodLogStream(for: target, sessionID: session.id)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.failPodLogStream(error, for: target, sessionID: session.id)
+                }
+            }
+        }
+    }
+
+    func closePodLogDrawer() {
+        podLogStreamTask?.cancel()
+        podLogStreamTask = nil
+        activePodLogSession = nil
+        podLogDrawer = nil
+        podLogSearchQuery = ""
+    }
+
+    func copyCurrentPodLogs() {
+        guard let text = podLogDrawer?.visibleText, !text.isEmpty else {
+            return
+        }
+
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
     private func resetK9sHandoffStateForCurrentDisplay() {
         guard let target = k9sHandoffCoordinator.state.target else {
             return
@@ -597,6 +686,60 @@ final class MenuBarViewModel: ObservableObject {
 
     private var availableK9sHandoffs: [OverviewK9sHandoff] {
         display.k9sHandoffs
+    }
+
+    private func appendPodLogChunk(_ chunk: String, for target: PodLogTarget, sessionID: UUID) {
+        guard var drawer = currentPodLogDrawer(for: target, sessionID: sessionID) else {
+            return
+        }
+
+        drawer.buffer.append(chunk)
+        drawer.state = drawer.buffer.lines.isEmpty ? .empty : .live
+        podLogDrawer = drawer
+    }
+
+    private func finishPodLogStream(for target: PodLogTarget, sessionID: UUID) {
+        guard var drawer = currentPodLogDrawer(for: target, sessionID: sessionID) else {
+            return
+        }
+
+        drawer.state = drawer.buffer.lines.isEmpty ? .empty : .ended
+        podLogDrawer = drawer
+        podLogStreamTask = nil
+        activePodLogSession = nil
+    }
+
+    private func cancelPodLogStream(for target: PodLogTarget, sessionID: UUID) {
+        guard var drawer = currentPodLogDrawer(for: target, sessionID: sessionID) else {
+            return
+        }
+
+        drawer.state = .cancelled
+        podLogDrawer = drawer
+        podLogStreamTask = nil
+        activePodLogSession = nil
+    }
+
+    private func failPodLogStream(_ error: Error, for target: PodLogTarget, sessionID: UUID) {
+        guard var drawer = currentPodLogDrawer(for: target, sessionID: sessionID) else {
+            return
+        }
+
+        drawer.state = .failed(Self.failureReason(from: error))
+        podLogDrawer = drawer
+        podLogStreamTask = nil
+        activePodLogSession = nil
+    }
+
+    private func currentPodLogDrawer(for target: PodLogTarget, sessionID: UUID) -> PodLogDrawerPresentation? {
+        guard let drawer = podLogDrawer,
+              drawer.session.accepts(id: sessionID, target: target),
+              activePodLogSession?.accepts(id: sessionID, target: target) == true
+        else {
+            return nil
+        }
+
+        return drawer
     }
 
     private func scheduleFreshnessTimer(now: Date = Date()) {

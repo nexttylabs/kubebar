@@ -1,0 +1,23 @@
+{
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/Views/SettingsRootView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SettingsRootView.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/Views/SetupView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/SetupView.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/Kubebar/Views/StaleBannerView.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/Kubebar.build/Objects-normal/arm64/StaleBannerView.swiftdeps"
+  }
+}
