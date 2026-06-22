@@ -1,0 +1,1 @@
+- improve kubebar README conversion hooks
