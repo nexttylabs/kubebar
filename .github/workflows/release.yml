@@ -200,6 +200,17 @@ jobs:
           name: Kubebar-${{ steps.release.outputs.tag }}
           path: Kubebar.zip
 
+      - name: Summarize publish dry-run
+        if: ${{ steps.release.outputs.dry_run == 'true' }}
+        run: |
+          {
+            echo "## Publish dry-run completed"
+            echo ""
+            echo "Validated notes, quality gates, packaging, and artifact upload for ${{ steps.release.outputs.tag }}."
+            echo "No git tag or GitHub Release was created because dry_run=true."
+            echo "Run this workflow again with mode=publish and dry_run=false to publish."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create Tag
         if: ${{ steps.release.outputs.dry_run != 'true' && steps.release.outputs.create_tag == 'true' && steps.tag_check.outputs.publish == 'true' }}
         run: |

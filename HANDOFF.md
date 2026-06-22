@@ -1,69 +1,62 @@
 # Kubebar Handoff
 
-**Last updated**: 2026-06-03T08:06:53Z
+**Last updated**: 2026-06-22T08:40:00Z
 
 ## Current State
 
-- Plan: `docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md`
-- Summary: Settings separates global app settings from context watchlist tabs, and the menu moves context switching into a nested submenu.
-- Status: complete; ready for optional `imm-compounder`.
-- Completed steps:
-  - U1 `Settings uses an App/Context tab structure.`
-  - U2 `The menu Quick Context Selector moves into a nested submenu.`
+- Plan: `docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md`
+- Summary: Release owners can follow a clearer prepare-then-publish path.
+- Status: implementation and local verification complete; ready for review or commit.
+- Completed work:
+  - Simplified `docs/RELEASING.md` so the normal path is prepare release notes, then publish.
+  - Moved changelog candidate generation and publish dry-run into optional validation guidance.
+  - Added a `Release` workflow summary step that states dry-run publish created no tag or GitHub Release.
 - Active step: none.
-- Latest review: U2 passed QA after the preferred full Swift quality gate passed.
 
 ## Verification
 
-- U1 passed:
-  - `swift build` passed outside sandbox after SwiftPM cache writes were blocked in sandbox.
-  - `swift build --target KubebarCoreTests` passed outside sandbox for the same cache reason.
-  - `rtk git diff --check` passed.
-- U2 passed:
-  - Preferred full quality gate passed: changelog tooling checks, release build version checks, Xcode build, Xcode test, SwiftPM build, SwiftPM test, and QA artifact generation check.
-  - Xcode test passed with 242 tests in 27 suites.
-  - SwiftPM test passed with 244 tests in 28 suites.
-  - `rtk git diff --check` passed.
+- `imm-plan docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md --json` passed.
+- `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/release.yml")'` passed.
+- `./scripts/test-changelog-tools.sh` passed.
+- `./scripts/test-release-build-version.sh` passed.
 
 ## Notes
 
-- U1 implementation is closed under the replanned test-backed recovery closure.
-- U2 implementation moved the Quick Context Selector out of the top-level row and into the menu footer as a nested `Menu`.
-- `MenuBarRootView` now passes context selector state/actions into `MenuFooterView`.
-- `MenuLayoutSizing` no longer reserves the removed top-level context selector height for selected tab content.
-- `MenuLayoutSizingTests` now protects the no-top-selector height budget.
-- `docs/architecture/runtime-invariants.md` now states that Quick Context Selector is a nested menu control, not a standalone row.
-- The same-plan replanning ledger had to be repaired from old `replanning` to `pending` after the plan was revised and synced; this is recorded in `.imm/memory/current_iteration.json` history.
-- No subagents were dispatched for U2 because `imm_activation_plan` returned no candidates (`trigger_not_hit`).
+- `imm-plan --sync` is unavailable in this local CLI, but `imm-plan --json`
+  wrote the validated plan snapshot into `.imm/memory/current_iteration.json`.
+- No real release was published by this work.
+- `v0.5.0` still needs a separate real publish run with `mode=publish`,
+  `version=0.5.0`, and `dry_run=false` after this change is reviewed.
 
 ## Compaction Handoff
 
 ### Active plan
 
-`docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md`
+`docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md`
 
 ### Active step
 
-None. U1 and U2 are closed.
+None. The single planned implementation step has local verification evidence.
 
 ### Files in play (compaction priority)
 
-1. `.imm/memory/current_iteration.json` - workflow state with both steps closed
-2. `docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md` - active plan with revised U2 verification closure
-3. `Kubebar/Views/MenuBarRootView.swift` - removed top-level selector row
-4. `Kubebar/Views/MenuFooterView.swift` - nested Quick Context Selector menu
-5. `KubebarCore/Services/MenuLayoutSizing.swift` - no-top-selector layout budget
+1. `.github/workflows/release.yml` - dry-run publish summary
+2. `docs/RELEASING.md` - simplified release-owner flow
+3. `docs/specs/2026-06-22-release-flow-simplification.md` - scope/spec
+4. `docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md` - validated plan
+5. `.imm/memory/current_iteration.json` - validated plan snapshot
 
 ### Uncommitted work
 
-13 modified files and 3 untracked files. Top paths: `.imm/memory/current_iteration.json`, `Kubebar/Views/MenuBarRootView.swift`, `Kubebar/Views/MenuFooterView.swift`, `KubebarCore/Services/MenuLayoutSizing.swift`, `docs/architecture/runtime-invariants.md`, plus `.imm/memory/current_iteration_history.jsonl`.
+Modified workflow/docs plus new release simplification spec and plan.
 
 ### Decisions this session
 
-- U1 is closed and should not be reopened unless new evidence appears.
-- U2 is closed by QA pass; fallback was not used because the preferred full quality gate passed.
-- Do not advance to `imm-compounder`.
+- Do not publish `v0.5.0` in this change.
+- Keep dry-run publish available, but label it as optional and non-publishing.
+- Preserve existing tag creation and GitHub Release conditions.
 
 ### Next boundary
 
-Optional `imm-compounder` for reusable learning capture.
+Review or commit the release-flow simplification, then run the real `v0.5.0`
+publish workflow separately.

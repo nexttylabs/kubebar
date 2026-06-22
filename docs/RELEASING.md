@@ -5,22 +5,24 @@ This document outlines the release process for Kubebar. Since the project curren
 ## Release Checklist
 
 - [ ] **Finalize Changes**: Ensure all features and fixes for the version are merged.
-- [ ] **Generate Draft Changelog**: In GitHub Actions, run
-  `Generate Changelog Candidates` with `from_ref` set to the previous release
-  tag and `to_ref` set to the target ref. Review and merge the generated PR
-  containing `changelog.d/` candidate fragments.
 - [ ] **Confirm Changelog Fragments**: Ensure every user-facing PR has a
   release-note-ready fragment in `changelog.d/`, or a clear PR explanation for
   why none is needed.
 - [ ] **Prepare Changelog**: In GitHub Actions, run `Release` with
   `mode=prepare`, the target `version`, and `dry_run=false`. Review and merge
   the generated PR containing the finalized `CHANGELOG.md` section.
-- [ ] **Dry-run Publish**: In GitHub Actions, run `Release` with
-  `mode=publish`, the target `version`, and `dry_run=true` to validate release
-  notes, quality gates, and packaging without creating a tag or GitHub Release.
 - [ ] **Publish**: Run `Release` again with `mode=publish` and `dry_run=false`.
   GitHub Actions creates the tag, builds `Kubebar.zip`, uploads the artifact,
   and creates the GitHub Release.
+
+Optional validation tools:
+
+- **Draft changelog candidates**: Run `Generate Changelog Candidates` when
+  existing PR fragments need help or when preparing a release from a commit
+  range. Review and merge the generated PR before preparing the changelog.
+- **Dry-run publish**: Run `Release` with `mode=publish` and `dry_run=true` to
+  validate notes, quality gates, and packaging. A dry-run uploads an Actions
+  artifact only; it does not create a tag or GitHub Release.
 
 ## Changelog Workflow
 
@@ -99,10 +101,12 @@ automatic:
 1. Open GitHub Actions and run `Release`.
 2. Set `mode` to `publish`.
 3. Set `version` to the target version, such as `0.3.2`.
-4. Set `dry_run=true` first to validate the finalized notes, run the quality
-   gate, build `Kubebar.zip`, and upload the artifact without creating a tag or
-   GitHub Release.
-5. Set `dry_run=false` when ready to publish.
+4. Set `dry_run=false` when ready to publish.
+
+If extra validation is useful, run the same publish workflow once with
+`dry_run=true` first. Treat that run as a packaging check only: it uploads a
+temporary Actions artifact and intentionally creates no tag and no GitHub
+Release. You must run publish again with `dry_run=false` to publish.
 
 The publish job reads the finalized `CHANGELOG.md` section, validates the
 notes, checks that the matching tag does not already exist, runs the quality
