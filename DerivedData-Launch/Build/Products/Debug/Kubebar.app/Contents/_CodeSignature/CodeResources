@@ -19,19 +19,19 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			7iJX61cbyESZUuo535dcsslNaJE=
+			QnghYAIZ42eb7Bgnsmr62nRP0/k=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"ee2257eb571bc8449952ea39df975cb2c94d6891"</string>
+			<string>cdhash H"427821600219e3679bec1827b26afada744fd3f9"</string>
 		</dict>
 		<key>MacOS/Kubebar.debug.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			0LCKWuXldPkBreFJjSui58FnG7s=
+			BMOYlAon+31CGAbwOI9XVfaP4ME=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"d0b08a5ae5e574f901ade1498d2ba2e7c1671bbb"</string>
+			<string>cdhash H"04c398940a27fb7d421806f0388f5755f68fe0c1"</string>
 		</dict>
 		<key>MacOS/__preview.dylib</key>
 		<dict>

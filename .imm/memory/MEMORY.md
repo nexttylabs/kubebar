@@ -1,9 +1,9 @@
 # Immune-Brain Summary
 
 ## 当前状态
-- **最新摘要**: Closed: captured reusable architecture guidance for per-context watchlists and the menu Quick Context Selector.
-- **待办事项**: Next: work is closed; optional next step is to review docs/solutions/architecture/per-context-watchlists-active-context-2026-06-03.md or start a new scoped task.
-- **最后同步**: 2026-06-03 11:16:36
+- **最新摘要**: Closed: captured reusable architecture guidance for focusable Pod log windows and native read-only log text surfaces.
+- **待办事项**: Next: work is closed; optional next step is to review docs/solutions/architecture/pod-log-focus-window-2026-06-22.md or start a new scoped task.
+- **最后同步**: 2026-06-22 15:58:45
 
 ## Knowledge Index
 
@@ -15,6 +15,10 @@
   reusable pattern for keeping one app-owned active Kubernetes context while
   preserving per-context watchlists, settings tabs, menu switching, and stale
   runtime invalidation.
+- `docs/solutions/architecture/pod-log-focus-window-2026-06-22.md`:
+  reusable pattern for menu-launched troubleshooting surfaces that need a
+  focusable app-owned macOS window, ViewModel-owned side effects, and native
+  read-only text behavior for live logs.
 - `docs/solutions/app-settings/start-at-login-boundary-2026-05-19.md`:
   reusable pattern for macOS-only settings that mutate system state through an
   app-target boundary while keeping state transitions testable in KubebarCore.

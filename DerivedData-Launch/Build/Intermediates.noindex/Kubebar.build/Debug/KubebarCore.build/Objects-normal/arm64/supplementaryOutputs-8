@@ -1,0 +1,23 @@
+{
+  "/Users/derek/.codex/worktrees/cc60/kubebar/KubebarCore/Models/StartAtLoginState.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/StartAtLoginState.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/KubebarCore/Models/WatchTarget.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/WatchTarget.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/WatchTarget.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/WatchTarget.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/WatchTarget.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/WatchTarget.swiftdeps"
+  },
+  "/Users/derek/.codex/worktrees/cc60/kubebar/KubebarCore/Services/NetworkReachability.swift" : {
+    "const-values" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/NetworkReachability.swiftconstvalues",
+    "dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/NetworkReachability.d",
+    "diagnostics" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/NetworkReachability.dia",
+    "object" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/NetworkReachability.o",
+    "swift-dependencies" : "/Users/derek/.codex/worktrees/cc60/kubebar/DerivedData-Launch/Build/Intermediates.noindex/Kubebar.build/Debug/KubebarCore.build/Objects-normal/arm64/NetworkReachability.swiftdeps"
+  }
+}

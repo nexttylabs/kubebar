@@ -344,6 +344,8 @@ extern "C" {
 #if __has_warning("-Watimport-in-framework-header")
 #pragma clang diagnostic ignored "-Watimport-in-framework-header"
 #endif
+@import AppKit;
+@import ObjectiveC;
 #endif
 
 #endif // defined(__OBJC__)
@@ -365,6 +367,17 @@ extern "C" {
 #endif
 
 #if defined(__OBJC__)
+
+SWIFT_CLASS("_TtC7Kubebar21PodLogWindowPresenter")
+@interface PodLogWindowPresenter : NSObject
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
+@end
+
+@class NSNotification;
+@interface PodLogWindowPresenter (SWIFT_EXTENSION(Kubebar)) <NSWindowDelegate>
+- (void)windowWillClose:(NSNotification * _Nonnull)notification;
+@end
 
 #endif // defined(__OBJC__)
 #if __has_attribute(external_source_symbol)

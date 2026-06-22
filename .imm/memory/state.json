@@ -1,8 +1,8 @@
 {
-  "last_update": "2026-06-03T11:16:36.780698",
-  "summary": "Closed: captured reusable architecture guidance for per-context watchlists and the menu Quick Context Selector.",
+  "last_update": "2026-06-22T15:58:45.708185",
+  "summary": "Closed: captured reusable architecture guidance for focusable Pod log windows and native read-only log text surfaces.",
   "next_steps": [
-    "Next: work is closed; optional next step is to review docs/solutions/architecture/per-context-watchlists-active-context-2026-06-03.md or start a new scoped task."
+    "Next: work is closed; optional next step is to review docs/solutions/architecture/pod-log-focus-window-2026-06-22.md or start a new scoped task."
   ],
   "logic_state": {},
   "current_iteration": {
@@ -11,148 +11,54 @@
       "1": {
         "step_id": "U1",
         "state": "closed",
-        "result": "App config supports compatible per-context watchlist storage.",
-        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+        "result": "Bad Pod logs remain interactive in a focusable native log window.",
+        "verification": "swift test --filter PodLogStream && swift test --filter MenuDisplayModelTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check; HITL smoke: open a Bad Pod log window, confirm short log output starts at the top-left, type in search, select/copy log text, scroll vertically and horizontally, close the window, and verify the log stream stops",
         "test_scenarios": [
-          "missing config remains setup-required",
-          "old config with selectedContext and watchTargets migrates targets under that context",
-          "new per-context config round trips multiple context watchlists",
-          "active watchTargets returns only selectedContext targets",
-          "selected context with no watchlist is incomplete",
-          "refresh uses the active context and active watchlist",
-          "refresh cadence and Health State Shift Alerts remain global"
+          "log action opens or updates a focusable app-owned window",
+          "short log output starts at the top-left instead of vertical center",
+          "search field accepts keyboard focus",
+          "native log text supports selection and vertical/horizontal scrolling",
+          "Copy uses current in-memory text",
+          "closing the window calls the ViewModel close path and cancels the stream",
+          "opening another Pod updates/replaces the window without orphaning the previous stream",
+          "no Sheet remains attached to the menu root",
+          "the log body is not implemented as primitive SwiftUI ScrollView plus Text"
         ],
         "discovery_cache": [],
         "parallel_probes": [],
         "depends_on": [],
         "agent_hint": null,
-        "activated_at": "2026-06-03T02:16:12Z",
+        "activated_at": "2026-06-22T06:54:22Z",
         "execution_evidence": {
           "changed_files": [
-            "KubebarCore/Services/AppConfigStore.swift",
-            "KubebarTests/Services/AppConfigStoreTests.swift",
-            "KubebarTests/Services/RefreshCoordinatorTests.swift"
+            "none"
           ],
-          "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-          "verification_result": "passed: Swift quality gate mode local completed successfully; focused AppConfigStoreTests and RefreshCoordinatorTests passed; full Swift test run reported 229 tests in 27 suites passed",
-          "notes": "RED confirmed missing watchlistsByContext API and initializer. GREEN added per-context watchlist storage with legacy watchTargets decoding under selectedContext and active watchTargets lookup. YAGNI audit: no Settings or menu UI changes in U1.",
-          "recorded_at": "2026-06-03T02:19:22Z"
+          "verification_command": "HITL smoke by user confirmation after ./scripts/compile-and-run.sh launched the live app",
+          "verification_result": "passed: user confirmed the Pod log window HITL smoke passed",
+          "notes": "User confirmed the remaining manual verification passed after the live app was launched. Covered HITL criteria from the active step: open a Bad Pod log window from a real Bad Pod row, confirm the app-owned log window remains focusable, short log output starts top-left, search accepts typing, log text can be selected/copied, vertical/horizontal scrolling remains usable during live updates, and closing the window stops the log stream.",
+          "recorded_at": "2026-06-22T07:54:35Z"
         },
-        "closed_at": "2026-06-03T02:19:41Z"
-      },
-      "2": {
-        "step_id": "U2",
-        "state": "closed",
-        "result": "Settings edits separate watchlists through context tabs.",
-        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-        "test_scenarios": [
-          "Settings opens with tabs for available contexts and saved contexts",
-          "selecting a tab loads candidates for that context",
-          "each tab preserves its own namespace selections",
-          "failed candidate loading preserves the selected context watchlist and other context watchlists",
-          "saving Settings writes all per-context watchlists and makes the active tab the selected context",
-          "existing global Settings toggles and cadence remain unchanged"
-        ],
-        "discovery_cache": [],
-        "parallel_probes": [],
-        "depends_on": [
-          1
-        ],
-        "agent_hint": null,
-        "activated_at": "2026-06-03T02:20:06Z",
-        "execution_evidence": {
-          "changed_files": [
-            "KubebarCore/Models/SetupFlowState.swift",
-            "KubebarCore/Models/MenuRuntimeState.swift",
-            "Kubebar/Views/SetupView.swift",
-            "KubebarTests/Models/SetupFlowStateTests.swift",
-            "KubebarTests/Models/MenuRuntimeStateTests.swift"
-          ],
-          "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-          "verification_result": "passed: focused SetupFlowStateTests/MenuRuntimeStateTests passed; full Swift quality gate mode local completed successfully with 234 tests in 27 suites passing",
-          "notes": "RED confirmed missing per-context SetupFlowState tabs API. GREEN added contextTabs, per-context Settings watchlist state, a segmented tab-like Settings context control, and completed config preserves per-context namespace watchlists. YAGNI audit: no main-menu Quick Context Selector or context-switch refresh behavior included in U2.",
-          "recorded_at": "2026-06-03T02:27:17Z"
-        },
-        "closed_at": "2026-06-03T02:27:24Z"
-      },
-      "3": {
-        "step_id": "U3",
-        "state": "closed",
-        "result": "The menu Quick Context Selector switches active context safely with the matching watchlist.",
-        "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-        "test_scenarios": [
-          "menu selector lists available and saved contexts",
-          "current context is visually identifiable and accessible",
-          "selecting another configured context saves it, clears previous snapshot/freshness/handoff/alert state, rejects old in-flight refresh results, and refreshes with that context's watchlist",
-          "selecting a context without a watchlist shows configuration-required state",
-          "selector does not mutate terminal current context",
-          "long context names truncate in the menu with full help/accessibility text"
-        ],
-        "discovery_cache": [],
-        "parallel_probes": [],
-        "depends_on": [
-          2
-        ],
-        "agent_hint": null,
-        "activated_at": "2026-06-03T02:27:35Z",
-        "execution_evidence": {
-          "changed_files": [
-            "Kubebar/MenuBarViewModel.swift",
-            "Kubebar/Views/MenuBarRootView.swift",
-            "Kubebar/KubebarApp.swift",
-            "KubebarCore/Services/AppConfigStore.swift",
-            "KubebarCore/Models/MenuRuntimeState.swift",
-            "KubebarTests/Models/AppConfigTests.swift",
-            "KubebarTests/Models/MenuRuntimeStateTests.swift"
-          ],
-          "verification_command": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-          "verification_result": "passed: focused AppConfigTests/MenuRuntimeStateTests/MenuBarRootViewTests passed; full Swift quality gate mode local completed successfully with 239 tests in 28 suites passing",
-          "notes": "RED confirmed missing context selection API and menu runtime switching API. GREEN added app-owned AppConfig context switching, menu selector contexts, active-config application that moves configured contexts to menu and unconfigured contexts to setup, and a top-level menu Context selector. Switching saves Kubebar config, invalidates refresh tickets/snapshots/handoff/alert baseline, restarts the refresh loop, and refreshes using the selected context watchlist. YAGNI audit: no kubectl config use-context/current-context mutation; cadence and health-shift alerts remain global.",
-          "recorded_at": "2026-06-03T02:37:48Z"
-        },
-        "closed_at": "2026-06-03T02:37:57Z"
+        "closed_at": "2026-06-22T07:55:01Z"
       }
     },
     "last_review": {
       "decision": "pass",
-      "evidence": "U3 evidence is sufficient: menu selector contexts come from available plus saved contexts, configured context switching preserves per-context watchlists and global cadence/alerts, unconfigured context switching makes the app configuration-required, switching invalidates refresh state and queues a refresh through the new selected context, and the code path only saves Kubebar config rather than mutating kubeconfig current-context.",
-      "artifacts": "Kubebar/MenuBarViewModel.swift; Kubebar/Views/MenuBarRootView.swift; Kubebar/KubebarApp.swift; KubebarCore/Services/AppConfigStore.swift; KubebarCore/Models/MenuRuntimeState.swift; KubebarTests/Models/AppConfigTests.swift; KubebarTests/Models/MenuRuntimeStateTests.swift",
-      "notes": "Focused U3 tests passed and full Swift quality gate passed with 239 tests in 28 suites. Long names are truncated in the menu label/items with full help/accessibility text.",
-      "step_number": 3,
-      "step_id": "U3"
+      "evidence": "Automated verification passed earlier: swift test --filter PodLogStream, swift test --filter MenuDisplayModelTests, full Swift quality gate, and rtk git diff --check. Visible app smoke passed via ./scripts/compile-and-run.sh. User confirmed the remaining HITL Pod log window smoke passed: focusable native window, top-left log output, search input, selection/copy, vertical/horizontal scrolling during live updates, and close-to-cancel stream behavior.",
+      "artifacts": "Kubebar/Views/PodLogWindowPresenter.swift; Kubebar/Views/ReadOnlyLogTextView.swift; Kubebar/KubebarApp.swift; Kubebar/MenuBarViewModel.swift; KubebarCore/Services/PodLogStreamer.swift; KubebarTests/Services/PodLogStreamerTests.swift; KubebarTests/Models/MenuDisplayModelTests.swift; docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+      "notes": "YAGNI/zoom-out check: the change remains inside the active step boundary. It keeps MenuDisplayModel/HealthEvaluator ownership, app-owned context, in-memory-only logs, native AppKit read-only text surface, and ViewModel stream cancellation. The HITL portion is manual by nature because focus behavior depends on macOS window interaction.",
+      "step_number": 1,
+      "step_id": "U1"
     },
     "validated_plan_snapshot": {
-      "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-      "plan_signature": "630ddf83378eb7e3a91dc51a362a3a428fdf3f86dae4bb164669e3e7aecd407d",
+      "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+      "plan_signature": "5ca13f5239c5894e7252c4ccf94d62528d9e0df31b6d7d443243b38040b6a253",
       "steps": [
         {
           "number": 1,
           "step_id": "U1",
-          "result": "App config supports compatible per-context watchlist storage.",
-          "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
+          "result": "Bad Pod logs remain interactive in a focusable native log window.",
+          "verification": "swift test --filter PodLogStream && swift test --filter MenuDisplayModelTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check; HITL smoke: open a Bad Pod log window, confirm short log output starts at the top-left, type in search, select/copy log text, scroll vertically and horizontally, close the window, and verify the log stream stops",
           "depends_on": [],
-          "discovery_cache": [],
-          "parallel_probes": []
-        },
-        {
-          "number": 2,
-          "step_id": "U2",
-          "result": "Settings edits separate watchlists through context tabs.",
-          "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-          "depends_on": [
-            1
-          ],
-          "discovery_cache": [],
-          "parallel_probes": []
-        },
-        {
-          "number": 3,
-          "step_id": "U3",
-          "result": "The menu Quick Context Selector switches active context safely with the matching watchlist.",
-          "verification": "/usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local",
-          "depends_on": [
-            2
-          ],
           "discovery_cache": [],
           "parallel_probes": []
         }
@@ -160,70 +66,21 @@
     },
     "history": [
       {
-        "at": "2026-05-27T10:21:56Z",
-        "action": "sync_plan_from_imm_plan",
+        "at": "2026-06-03T08:00:01Z",
+        "action": "repair_replanned_step_after_same_plan_sync",
         "details": {
-          "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "plan_signature": "32e81e6b25e2d460f040ef81a6ed5ee7cb181152274e6e838864c41045f79da6",
-          "plan_summary": "GitHub Actions can drive changelog review, release preparation, and publishing.",
-          "same_plan": false
+          "step_number": 2,
+          "step_id": "U2",
+          "from_state": "replanning",
+          "to_state": "pending",
+          "reason": "Planner revised and synced the same plan; imm-work status reported can_auto_advance but activation rejected replanning -> active."
         }
       },
       {
-        "at": "2026-05-27T10:22:59Z",
+        "at": "2026-06-03T08:00:22Z",
         "action": "activate_step",
         "details": {
-          "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "step_number": 1,
-          "step_id": "U1",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-05-27T10:25:38Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            ".github/workflows/changelog-candidates.yml",
-            "docs/RELEASING.md",
-            "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-            "docs/specs/2026-05-27-github-first-release-flow.md",
-            ".imm/memory/current_iteration.json"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-27T10:26:22Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-05-27T10:26:41Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
+          "plan_path": "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
           "step_number": 2,
           "step_id": "U2",
           "role_constraints": {
@@ -246,99 +103,58 @@
         }
       },
       {
-        "at": "2026-05-27T10:30:38Z",
+        "at": "2026-06-03T08:06:00Z",
         "action": "record_execution_evidence",
         "details": {
           "step_number": 2,
           "step_id": "U2",
           "changed_files": [
-            ".github/workflows/release.yml",
-            "docs/RELEASING.md",
-            ".imm/memory/current_iteration.json"
+            "Kubebar/Views/MenuBarRootView.swift",
+            "Kubebar/Views/MenuFooterView.swift",
+            "KubebarCore/Services/MenuLayoutSizing.swift",
+            "KubebarTests/Services/MenuLayoutSizingTests.swift",
+            "docs/architecture/runtime-invariants.md",
+            ".imm/memory/current_iteration.json",
+            "HANDOFF.md",
+            "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
+            ".imm/specs/2026-06-03-settings-tabs-context-submenu.md"
           ]
         }
       },
       {
-        "at": "2026-05-27T10:30:48Z",
+        "at": "2026-06-03T08:06:37Z",
         "action": "review_step",
         "details": {
           "step_number": 2,
           "step_id": "U2",
-          "decision": "pass"
+          "decision": "pass",
+          "target_kind": "plan_step"
         }
       },
       {
-        "at": "2026-05-27T10:31:11Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "step_number": 3,
-          "step_id": "U3",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-05-27T10:35:23Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 3,
-          "step_id": "U3",
-          "changed_files": [
-            ".github/workflows/release.yml",
-            "docs/RELEASING.md",
-            ".imm/memory/current_iteration.json"
-          ]
-        }
-      },
-      {
-        "at": "2026-05-27T10:35:34Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 3,
-          "step_id": "U3",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-06-01T15:48:40Z",
+        "at": "2026-06-03T08:41:27Z",
         "action": "sync_plan_reset_completed_steps",
         "details": {
-          "from_plan": "docs/plans/2026-05-27-001-ci-github-first-release-flow-plan.md",
-          "to_plan": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+          "from_plan": "docs/plans/2026-06-03-002-refactor-settings-tabs-context-submenu-plan.md",
+          "to_plan": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
           "reason": "Plan switched; reset completion state."
         }
       },
       {
-        "at": "2026-06-01T15:48:40Z",
+        "at": "2026-06-03T08:41:27Z",
         "action": "sync_plan_from_imm_plan",
         "details": {
-          "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-          "plan_signature": "8ee40c41ed03645db1cd176577f2bd4bdc3061deaffe165b2461756f73e5b878",
-          "plan_summary": "Settings can enable macOS notifications for true Health category or",
+          "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+          "plan_signature": "dbddbbbc74285670e5838eacf9e091b2bcf17cdd3e9cf42be3602d6f7f6bf401",
+          "plan_summary": "Fix Settings so selecting the fixed `App Settings` tab responds",
           "same_plan": false
         }
       },
       {
-        "at": "2026-06-01T15:49:23Z",
+        "at": "2026-06-03T08:42:59Z",
         "action": "activate_step",
         "details": {
-          "plan_path": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
+          "plan_path": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
           "step_number": 1,
           "step_id": "U1",
           "role_constraints": {
@@ -361,306 +177,581 @@
         }
       },
       {
-        "at": "2026-06-01T15:56:47Z",
+        "at": "2026-06-03T08:57:28Z",
         "action": "record_execution_evidence",
         "details": {
           "step_number": 1,
           "step_id": "U1",
           "changed_files": [
-            "CONTEXT.md",
-            ".imm/specs/2026-06-01-health-state-shift-alerts.md",
-            "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-            "KubebarCore/Services/AppConfigStore.swift",
-            "KubebarCore/Models/StartAtLoginState.swift",
-            "KubebarCore/Services/StartAtLoginSettingsCoordinator.swift",
+            ".imm/specs/2026-06-03-settings-app-tab-selection.md",
+            "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
             "KubebarCore/Models/SetupFlowState.swift",
-            "KubebarCore/Models/MenuRuntimeState.swift",
-            "KubebarCore/Models/MenuDisplayModel.swift",
-            "Kubebar/Services/LoginItemController.swift",
-            "Kubebar/MenuBarViewModel.swift",
             "Kubebar/Views/SetupView.swift",
             "Kubebar/Views/SettingsRootView.swift",
             "Kubebar/KubebarApp.swift",
-            "KubebarTests/Services/AppConfigStoreTests.swift",
-            "KubebarTests/Services/StartAtLoginSettingsCoordinatorTests.swift",
-            "KubebarTests/Models/MenuRuntimeStateTests.swift",
-            "KubebarTests/Models/SetupFlowStateTests.swift",
-            "KubebarTests/Models/MenuDisplayModelTests.swift",
-            "docs/architecture/runtime-invariants.md"
-          ]
-        }
-      },
-      {
-        "at": "2026-06-01T15:56:58Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-06-02T01:21:36Z",
-        "action": "sync_plan_reset_completed_steps",
-        "details": {
-          "from_plan": "docs/plans/2026-06-01-001-feat-health-state-shift-alerts-plan.md",
-          "to_plan": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-          "reason": "Plan switched; reset completion state."
-        }
-      },
-      {
-        "at": "2026-06-02T01:21:36Z",
-        "action": "sync_plan_from_imm_plan",
-        "details": {
-          "plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-          "plan_signature": "19b76d51a786db42419dff6fe9fb058a6f08fd4692a420f82e5a7969bc1e9561",
-          "plan_summary": "Release artifacts should carry both the selected marketing version",
-          "same_plan": false
-        }
-      },
-      {
-        "at": "2026-06-02T01:22:49Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-          "step_number": 1,
-          "step_id": "U1",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-06-02T01:26:38Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "CONTEXT.md",
-            "docs/specs/2026-06-02-release-build-version-sync.md",
-            "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-            "scripts/build-release.sh",
-            "scripts/test-release-build-version.sh",
-            "scripts/swift-quality-gate.sh",
-            "project.yml",
-            "docs/RELEASING.md"
-          ]
-        }
-      },
-      {
-        "at": "2026-06-02T01:27:05Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass"
-        }
-      },
-      {
-        "at": "2026-06-03T01:59:28Z",
-        "action": "recover_current_iteration_from_state_json",
-        "details": {
-          "reason": "recovered_from_state_json",
-          "recovered_plan_path": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md"
-        }
-      },
-      {
-        "at": "2026-06-03T01:59:28Z",
-        "action": "sync_plan_reset_completed_steps",
-        "details": {
-          "from_plan": "docs/plans/2026-06-02-001-ci-release-build-version-sync-plan.md",
-          "to_plan": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-          "reason": "Plan switched; reset completion state."
-        }
-      },
-      {
-        "at": "2026-06-03T01:59:28Z",
-        "action": "sync_plan_from_imm_plan",
-        "details": {
-          "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-          "plan_signature": "630ddf83378eb7e3a91dc51a362a3a428fdf3f86dae4bb164669e3e7aecd407d",
-          "plan_summary": "Settings stores a watchlist per Kubernetes context, and the menu can",
-          "same_plan": false
-        }
-      },
-      {
-        "at": "2026-06-03T02:16:12Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-          "step_number": 1,
-          "step_id": "U1",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-06-03T02:19:22Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "changed_files": [
-            "KubebarCore/Services/AppConfigStore.swift",
-            "KubebarTests/Services/AppConfigStoreTests.swift",
-            "KubebarTests/Services/RefreshCoordinatorTests.swift"
-          ]
-        }
-      },
-      {
-        "at": "2026-06-03T02:19:41Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 1,
-          "step_id": "U1",
-          "decision": "pass",
-          "target_kind": "plan_step"
-        }
-      },
-      {
-        "at": "2026-06-03T02:20:06Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-          "step_number": 2,
-          "step_id": "U2",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-06-03T02:27:17Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 2,
-          "step_id": "U2",
-          "changed_files": [
-            "KubebarCore/Models/SetupFlowState.swift",
-            "KubebarCore/Models/MenuRuntimeState.swift",
-            "Kubebar/Views/SetupView.swift",
-            "KubebarTests/Models/SetupFlowStateTests.swift",
-            "KubebarTests/Models/MenuRuntimeStateTests.swift"
-          ]
-        }
-      },
-      {
-        "at": "2026-06-03T02:27:24Z",
-        "action": "review_step",
-        "details": {
-          "step_number": 2,
-          "step_id": "U2",
-          "decision": "pass",
-          "target_kind": "plan_step"
-        }
-      },
-      {
-        "at": "2026-06-03T02:27:35Z",
-        "action": "activate_step",
-        "details": {
-          "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-          "step_number": 3,
-          "step_id": "U3",
-          "role_constraints": {
-            "imm-work": {
-              "role": "execute",
-              "role_class": "coordinator",
-              "boundary": "Drive only the active step or pending follow-up to the next boundary."
-            },
-            "imm-executor": {
-              "role": "execute",
-              "role_class": "authority",
-              "boundary": "Implement only the activated step or follow-up scope."
-            },
-            "imm-qa": {
-              "role": "qa",
-              "role_class": "authority",
-              "boundary": "Close, rework, or replan based on recorded evidence only."
-            }
-          }
-        }
-      },
-      {
-        "at": "2026-06-03T02:37:48Z",
-        "action": "record_execution_evidence",
-        "details": {
-          "step_number": 3,
-          "step_id": "U3",
-          "changed_files": [
             "Kubebar/MenuBarViewModel.swift",
-            "Kubebar/Views/MenuBarRootView.swift",
-            "Kubebar/KubebarApp.swift",
-            "KubebarCore/Services/AppConfigStore.swift",
-            "KubebarCore/Models/MenuRuntimeState.swift",
-            "KubebarTests/Models/AppConfigTests.swift",
+            "KubebarTests/Models/SetupFlowStateTests.swift",
             "KubebarTests/Models/MenuRuntimeStateTests.swift"
           ]
         }
       },
       {
-        "at": "2026-06-03T02:37:57Z",
+        "at": "2026-06-03T08:58:55Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "rework",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-03T10:07:08Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            ".imm/specs/2026-06-03-settings-app-tab-selection.md",
+            "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+            "KubebarCore/Models/SetupFlowState.swift",
+            "Kubebar/Views/SetupView.swift",
+            "Kubebar/Views/SettingsRootView.swift",
+            "Kubebar/KubebarApp.swift",
+            "Kubebar/MenuBarViewModel.swift",
+            "KubebarTests/Models/SetupFlowStateTests.swift",
+            "KubebarTests/Models/MenuRuntimeStateTests.swift"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-03T10:07:17Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-04T03:18:44Z",
+        "action": "sync_plan_reset_completed_steps",
+        "details": {
+          "from_plan": "docs/plans/2026-06-03-003-fix-settings-app-tab-selection-plan.md",
+          "to_plan": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+          "reason": "Plan switched; reset completion state."
+        }
+      },
+      {
+        "at": "2026-06-04T03:18:44Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+          "plan_signature": "30bfdfd0e79dbcd430b810c352ea44c600ac95563dfb056d3daa5cc751413798",
+          "plan_summary": "Support Linux/macOS colon-delimited `KUBECONFIG` by preserving the",
+          "same_plan": false
+        }
+      },
+      {
+        "at": "2026-06-04T03:21:19Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-04T03:22:48Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "CONTEXT.md\n.imm/specs/2026-06-04-kubeconfig-multi-file-support.md\ndocs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md\nKubebarTests/Services/CommandRunnerTests.swift\ndocs/architecture/runtime-invariants.md"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-04T03:23:00Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-04T04:10:19Z",
+        "action": "sync_plan_reset_completed_steps",
+        "details": {
+          "from_plan": "docs/plans/2026-06-04-001-fix-kubeconfig-multi-file-support-plan.md",
+          "to_plan": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "reason": "Plan switched; reset completion state."
+        }
+      },
+      {
+        "at": "2026-06-04T04:10:19Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "plan_signature": "e1c673138ea32727da48de4b776cec2e091128ba9cc6bd338880b6665c405977",
+          "plan_summary": "Add an App Settings kubeconfig path list that overrides automatic",
+          "same_plan": false
+        }
+      },
+      {
+        "at": "2026-06-04T06:28:08Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-04T06:28:19Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "KubebarCore/Services/AppConfigStore.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarTests/Models/AppConfigTests.swift\nKubebarTests/Services/AppConfigStoreTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-04T06:28:28Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-04T06:28:54Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "step_number": 2,
+          "step_id": "U2",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-04T06:39:13Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 2,
+          "step_id": "U2",
+          "changed_files": [
+            "KubebarCore/Services/CommandRunner.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarCore/Services/KubectlClusterReader.swift\nKubebarCore/Services/RefreshCoordinator.swift\nKubebarTests/Services/CommandRunnerTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\nKubebarTests/Services/KubectlClusterReaderTests.swift\nKubebarTests/Services/RefreshCoordinatorTests.swift"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-04T06:39:13Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 2,
+          "step_id": "U2",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-04T06:39:23Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "step_number": 3,
+          "step_id": "U3",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-04T07:43:50Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 3,
+          "step_id": "U3",
+          "changed_files": [
+            "Kubebar/KubebarApp.swift\nKubebar/MenuBarViewModel.swift\nKubebar/Views/SettingsRootView.swift\nKubebar/Views/SetupView.swift\nKubebarCore/Models/MenuRuntimeState.swift\nKubebarCore/Models/SetupFlowState.swift\nKubebarCore/Services/ContextCatalog.swift\nKubebarCore/Services/WatchTargetCatalog.swift\nKubebarTests/Models/MenuRuntimeStateTests.swift\nKubebarTests/Models/SetupFlowStateTests.swift\nKubebarTests/Services/ContextCatalogTests.swift\nKubebarTests/Services/WatchTargetCatalogTests.swift\ndocs/architecture/runtime-invariants.md"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-04T07:44:00Z",
         "action": "review_step",
         "details": {
           "step_number": 3,
           "step_id": "U3",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-20T02:57:27Z",
+        "action": "sync_plan_reset_completed_steps",
+        "details": {
+          "from_plan": "docs/plans/2026-06-04-002-feat-explicit-kubeconfig-path-list-plan.md",
+          "to_plan": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "reason": "Plan switched; reset completion state."
+        }
+      },
+      {
+        "at": "2026-06-20T02:57:27Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "plan_signature": "753a378463bbdcc76458d2bf8f3e3246945189502db85da823d466b681bf90a5",
+          "plan_summary": "Add a bounded live `kubectl logs --tail=100 -f` Sheet for `Bad` Pod",
+          "same_plan": false
+        }
+      },
+      {
+        "at": "2026-06-20T07:39:51Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "plan_signature": "45a208cf693b0e7db0e5f64566aa0150f61dcc5c953afae2403c16963888386d",
+          "plan_summary": "为 `Bad` Pod 行添加有界实时 `kubectl logs --tail=100 -f`",
+          "same_plan": true
+        }
+      },
+      {
+        "at": "2026-06-20T07:40:31Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "plan_signature": "45a208cf693b0e7db0e5f64566aa0150f61dcc5c953afae2403c16963888386d",
+          "plan_summary": "为 `Bad` Pod 行添加有界实时 `kubectl logs --tail=100 -f`",
+          "same_plan": true
+        }
+      },
+      {
+        "at": "2026-06-20T07:52:08Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "plan_signature": "753a378463bbdcc76458d2bf8f3e3246945189502db85da823d466b681bf90a5",
+          "plan_summary": "Add a bounded live `kubectl logs --tail=100 -f` Sheet for `Bad` Pod",
+          "same_plan": true
+        }
+      },
+      {
+        "at": "2026-06-20T07:53:39Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "plan_signature": "753a378463bbdcc76458d2bf8f3e3246945189502db85da823d466b681bf90a5",
+          "plan_summary": "Add a bounded live `kubectl logs --tail=100 -f` Sheet for `Bad` Pod",
+          "same_plan": true
+        }
+      },
+      {
+        "at": "2026-06-20T08:03:01Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-20T08:23:17Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "CONTEXT.md\n.imm/specs/2026-06-20-pod-micro-logs-drawer.md\ndocs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md\nKubebar.xcodeproj/project.pbxproj\nKubebar/KubebarApp.swift\nKubebar/MenuBarViewModel.swift\nKubebar/Views/MenuBarRootView.swift\nKubebar/Views/PodsTabView.swift\nKubebarCore/Models/MenuDisplayModel.swift\nKubebarCore/Services/HealthEvaluator.swift\nKubebarCore/Services/PodLogStreamer.swift\nKubebarTests/Models/MenuDisplayModelTests.swift\nKubebarTests/Services/PodLogStreamerTests.swift\ndocs/architecture/runtime-invariants.md"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-20T08:23:30Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "pass",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-22T06:29:01Z",
+        "action": "sync_plan_reset_completed_steps",
+        "details": {
+          "from_plan": "docs/plans/2026-06-20-001-feat-pod-micro-logs-drawer-plan.md",
+          "to_plan": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "reason": "Plan switched; reset completion state."
+        }
+      },
+      {
+        "at": "2026-06-22T06:29:01Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "plan_signature": "dba784353ea93360badc3ab367aea88655e84e54cdf731e62b787df085dcea11",
+          "plan_summary": "Replace the menu-attached Pod log Sheet with a focusable app-owned",
+          "same_plan": false
+        }
+      },
+      {
+        "at": "2026-06-22T06:31:43Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-22T06:40:34Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "CONTEXT.md\n.imm/specs/2026-06-22-pod-log-focus-window.md\ndocs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md\nKubebar.xcodeproj/project.pbxproj\nKubebar/KubebarApp.swift\nKubebar/Views/MenuBarRootView.swift\nKubebar/Views/PodLogWindowPresenter.swift\n.imm/memory/current_iteration.json\n.imm/memory/current_iteration_history.jsonl"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T06:52:36Z",
+        "action": "sync_plan_reset_active_step",
+        "details": {
+          "from_plan": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "to_plan": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "reason": "Plan signature changed."
+        }
+      },
+      {
+        "at": "2026-06-22T06:52:36Z",
+        "action": "sync_plan_from_imm_plan",
+        "details": {
+          "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "plan_signature": "5ca13f5239c5894e7252c4ccf94d62528d9e0df31b6d7d443243b38040b6a253",
+          "plan_summary": "Replace the menu-attached Pod log Sheet with a focusable app-owned",
+          "same_plan": true
+        }
+      },
+      {
+        "at": "2026-06-22T06:54:22Z",
+        "action": "activate_step",
+        "details": {
+          "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+          "step_number": 1,
+          "step_id": "U1",
+          "role_constraints": {
+            "imm-work": {
+              "role": "execute",
+              "role_class": "coordinator",
+              "boundary": "Drive only the active step or pending follow-up to the next boundary."
+            },
+            "imm-executor": {
+              "role": "execute",
+              "role_class": "authority",
+              "boundary": "Implement only the activated step or follow-up scope."
+            },
+            "imm-qa": {
+              "role": "qa",
+              "role_class": "authority",
+              "boundary": "Close, rework, or replan based on recorded evidence only."
+            }
+          }
+        }
+      },
+      {
+        "at": "2026-06-22T06:56:42Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "CONTEXT.md\n.imm/specs/2026-06-22-pod-log-focus-window.md\ndocs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md\nKubebar.xcodeproj/project.pbxproj\nKubebar/KubebarApp.swift\nKubebar/Views/MenuBarRootView.swift\nKubebar/Views/PodLogWindowPresenter.swift\nKubebar/Views/ReadOnlyLogTextView.swift\n.imm/memory/current_iteration.json\n.imm/memory/current_iteration_history.jsonl"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T07:15:13Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "Kubebar/Views/PodLogWindowPresenter.swift\nCONTEXT.md\n.imm/specs/2026-06-22-pod-log-focus-window.md\ndocs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md\nKubebar.xcodeproj/project.pbxproj\nKubebar/KubebarApp.swift\nKubebar/Views/MenuBarRootView.swift\nKubebar/Views/ReadOnlyLogTextView.swift\n.imm/memory/current_iteration.json\n.imm/memory/current_iteration_history.jsonl"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T07:44:10Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "Kubebar/Views/ReadOnlyLogTextView.swift"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T07:44:18Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "decision": "rework",
+          "target_kind": "plan_step"
+        }
+      },
+      {
+        "at": "2026-06-22T07:52:27Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "none"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T07:54:35Z",
+        "action": "record_execution_evidence",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
+          "changed_files": [
+            "none"
+          ]
+        }
+      },
+      {
+        "at": "2026-06-22T07:55:01Z",
+        "action": "review_step",
+        "details": {
+          "step_number": 1,
+          "step_id": "U1",
           "decision": "pass",
           "target_kind": "plan_step"
         }
       }
     ],
     "requires_replan": false,
-    "plan_path": "docs/plans/2026-06-03-001-feat-per-context-watchlists-context-selector-plan.md",
-    "plan_summary": "Settings stores a watchlist per Kubernetes context, and the menu can",
-    "plan_signature": "630ddf83378eb7e3a91dc51a362a3a428fdf3f86dae4bb164669e3e7aecd407d",
-    "plan_last_validated_at": "2026-06-03T01:59:28Z",
+    "plan_path": "docs/plans/2026-06-22-001-fix-pod-log-focus-window-plan.md",
+    "plan_summary": "Replace the menu-attached Pod log Sheet with a focusable app-owned",
+    "plan_signature": "5ca13f5239c5894e7252c4ccf94d62528d9e0df31b6d7d443243b38040b6a253",
+    "plan_last_validated_at": "2026-06-22T06:52:36Z",
     "pending_follow_up": null
   },
   "environment": {
-    "cwd": "/Users/derek/.codex/worktrees/e438/kubebar",
+    "cwd": "/Users/derek/.codex/worktrees/cc60/kubebar",
     "os": "darwin"
   }
 }
