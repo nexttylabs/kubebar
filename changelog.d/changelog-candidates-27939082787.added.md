@@ -1,0 +1,2 @@
+- add pod log focus window
+- add pod log focus window and micro logs drawer
