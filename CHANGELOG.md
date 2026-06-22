@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.5.0] - 2026-06-22
+
+### Added
+- add pod log focus window
+- add pod log focus window and micro logs drawer
+- Add a focusable Pod log window for inspecting recent logs from Bad Pod rows.
+
+### Changed
+- streamline kubebar data flow
+
+### Fixed
+- address pod log window review blockers
+
+### Documentation
+- improve kubebar README conversion hooks
+
 ## [0.4.0] - 2026-06-04
 
 ### Added
