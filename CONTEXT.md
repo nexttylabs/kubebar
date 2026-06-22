@@ -19,6 +19,14 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **Pod Micro-Logs Drawer**: a user-opened focusable log window for a single
+  `Bad` Pod row that streams a bounded `kubectl logs --tail=100 -f` view
+  through Kubebar's app-owned context and kubeconfig. It is temporary
+  troubleshooting UI, not stored history, alerting, or a Health category input.
+- **Read-only log text view**: the native macOS text surface used inside the
+  Pod Micro-Logs Drawer for log output. It should use AppKit text behavior for
+  top-left log layout, selection, copy, and scrolling instead of rebuilding a
+  text viewer from primitive SwiftUI `ScrollView` and `Text`.
 - **App Settings tab**: the fixed first Settings tab for global app behavior
   such as refresh cadence, Start at Login, and Health State Shift Alerts. It is
   not tied to a Kubernetes context.
@@ -77,3 +85,11 @@ explicitly changes that scope.
   `Kubebar/Views/SetupView.swift`, `Kubebar/Views/SettingsRootView.swift`, and
   `Kubebar/MenuBarViewModel.swift` own the App Settings UI and selected-file
   flow.
+- Pod Micro-Logs Drawer: `KubebarCore/Models/MenuDisplayModel.swift` carries
+  display-ready Pod row identity, `KubebarCore/Services/HealthEvaluator.swift`
+  maps `PodDetail` into `PodItemDisplay`, `KubebarCore/Services/CommandRunner.swift`
+  owns process-launch environment behavior, `Kubebar/MenuBarViewModel.swift`
+  owns app-owned context and lifecycle cancellation, and
+  `Kubebar/Views/PodsTabView.swift` plus `Kubebar/Views/MenuBarRootView.swift`
+  own the row entry point and focusable log window UI. The log body should be
+  hosted by a Read-only log text view rather than a hand-built text scroller.

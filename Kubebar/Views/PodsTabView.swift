@@ -6,18 +6,21 @@ struct PodsTabView: View {
     let itemsMaxHeight: CGFloat
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
+    let onOpenPodLogs: (PodLogTarget) -> Void
     @State private var podItemsContentHeight: CGFloat = 0
 
     init(
         display: MenuDisplayModel,
         itemsMaxHeight: CGFloat = Layout.defaultItemsMaxHeight,
         k9sHandoffState: K9sHandoffLaunchState,
-        onOpenK9sHandoff: @escaping (OverviewK9sHandoff) -> Void
+        onOpenK9sHandoff: @escaping (OverviewK9sHandoff) -> Void,
+        onOpenPodLogs: @escaping (PodLogTarget) -> Void = { _ in }
     ) {
         self.display = display
         self.itemsMaxHeight = itemsMaxHeight
         self.k9sHandoffState = k9sHandoffState
         self.onOpenK9sHandoff = onOpenK9sHandoff
+        self.onOpenPodLogs = onOpenPodLogs
     }
 
     var body: some View {
@@ -78,7 +81,8 @@ struct PodsTabView: View {
                 PodNamespaceSectionView(
                     section: section,
                     k9sHandoffState: k9sHandoffState,
-                    onOpenK9sHandoff: onOpenK9sHandoff
+                    onOpenK9sHandoff: onOpenK9sHandoff,
+                    onOpenPodLogs: onOpenPodLogs
                 )
             }
         }
@@ -114,6 +118,7 @@ private struct PodNamespaceSectionView: View {
     let section: PodNamespaceDisplay
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
+    let onOpenPodLogs: (PodLogTarget) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -147,7 +152,7 @@ private struct PodNamespaceSectionView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(section.rows) { row in
-                    PodRowView(row: row)
+                    PodRowView(row: row, onOpenPodLogs: onOpenPodLogs)
                 }
             }
         }
@@ -183,6 +188,7 @@ private struct PodNamespaceSectionView: View {
 
 private struct PodRowView: View {
     let row: PodItemDisplay
+    let onOpenPodLogs: (PodLogTarget) -> Void
     @State private var isPulsing = false
 
     private var shouldPulse: Bool {
@@ -231,6 +237,19 @@ private struct PodRowView: View {
                             .monospacedDigit()
                             .foregroundStyle(.primary.opacity(0.7))
                             .lineLimit(1)
+
+                        if let logTarget = row.logTarget {
+                            Button {
+                                onOpenPodLogs(logTarget)
+                            } label: {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.borderless)
+                            .controlSize(.small)
+                            .help(Text("Open recent logs for \(row.name)"))
+                            .accessibilityLabel("Open recent logs for \(row.name)")
+                        }
                     }
 
                     if let issueText = row.issueText {

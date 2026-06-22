@@ -663,7 +663,8 @@ public struct HealthEvaluator: Sendable {
             makePodSections(
                 from: $0,
                 contextName: snapshot.contextName,
-                allowsK9sHandoff: allowsK9sHandoff
+                allowsK9sHandoff: allowsK9sHandoff,
+                allowsPodLogTarget: allowsK9sHandoff
             )
         } ?? []
 
@@ -710,11 +711,12 @@ public struct HealthEvaluator: Sendable {
     private func makePodSections(
         from podDetails: [PodDetail],
         contextName: String,
-        allowsK9sHandoff: Bool
+        allowsK9sHandoff: Bool,
+        allowsPodLogTarget: Bool
     ) -> [PodNamespaceDisplay] {
         let rowsByNamespace = Dictionary(
             grouping: podDetails.map {
-                makePodRow(from: $0)
+                makePodRow(from: $0, contextName: contextName, allowsLogTarget: allowsPodLogTarget)
             },
             by: \.namespace
         )
@@ -752,7 +754,7 @@ public struct HealthEvaluator: Sendable {
             }
     }
 
-    private func makePodRow(from detail: PodDetail) -> PodItemDisplay {
+    private func makePodRow(from detail: PodDetail, contextName: String, allowsLogTarget: Bool) -> PodItemDisplay {
         let state = podItemState(from: detail)
         let readyLabel = podReadyLabel(from: detail)
         let resourceLabel = podResourceLabel(from: detail.resourceSummary)
@@ -777,7 +779,30 @@ public struct HealthEvaluator: Sendable {
             memoryProgress: podMemoryProgress(from: detail.resourceSummary),
             issueText: issueText,
             helpText: helpText,
-            accessibilityLabel: helpText
+            accessibilityLabel: helpText,
+            logTarget: podLogTarget(
+                for: detail,
+                contextName: contextName,
+                state: state,
+                isAllowed: allowsLogTarget
+            )
+        )
+    }
+
+    private func podLogTarget(
+        for detail: PodDetail,
+        contextName: String,
+        state: PodItemState,
+        isAllowed: Bool
+    ) -> PodLogTarget? {
+        guard isAllowed, state == .bad else {
+            return nil
+        }
+
+        return PodLogTarget(
+            contextName: contextName,
+            namespace: detail.namespace,
+            podName: detail.name
         )
     }
 
@@ -1443,7 +1468,8 @@ public struct HealthEvaluator: Sendable {
         return makePodSections(
             from: podDetails,
             contextName: snapshot.contextName,
-            allowsK9sHandoff: false
+            allowsK9sHandoff: false,
+            allowsPodLogTarget: false
         )
             .lazy
             .compactMap { section in

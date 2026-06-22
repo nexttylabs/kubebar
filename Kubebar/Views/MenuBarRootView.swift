@@ -14,6 +14,7 @@ struct MenuBarRootView: View {
     let onPrepareSettings: () -> Void
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
+    let onOpenPodLogs: (PodLogTarget) -> Void
     let onQuit: () -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
@@ -146,7 +147,8 @@ struct MenuBarRootView: View {
                 display: display,
                 itemsMaxHeight: podItemsMaxHeight,
                 k9sHandoffState: k9sHandoffState,
-                onOpenK9sHandoff: onOpenK9sHandoff
+                onOpenK9sHandoff: onOpenK9sHandoff,
+                onOpenPodLogs: onOpenPodLogs
             )
         case .events:
             EventsTabView(display: display)
@@ -230,6 +232,100 @@ struct MenuBarRootView: View {
                 minimumHeight: minimumMainContentHeight
             )
         }
+    }
+}
+
+struct PodLogDrawerView: View {
+    let drawer: PodLogDrawerPresentation
+    @Binding var searchQuery: String
+    let onCopyLogs: () -> Void
+
+    private var matchCount: Int {
+        drawer.matchCount(for: searchQuery)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+            controls
+            logText
+        }
+        .padding(16)
+        .frame(width: 640, height: 480)
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(drawer.target.podName)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(Text(drawer.target.podName))
+
+            HStack(spacing: 6) {
+                Text(drawer.target.namespace)
+                Text("·")
+                Text(drawer.state.statusText)
+                if let detail = drawer.state.detailText {
+                    Text("·")
+                    Text(detail)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(Text(detail))
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var controls: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            TextField("Search logs", text: $searchQuery)
+                .textFieldStyle(.roundedBorder)
+
+            Text(matchLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 72, alignment: .trailing)
+
+            Button {
+                onCopyLogs()
+            } label: {
+                Image(systemName: "doc.on.doc")
+            }
+            .disabled(drawer.visibleText.isEmpty)
+            .help(Text("Copy logs"))
+            .accessibilityLabel("Copy logs")
+        }
+    }
+
+    private var logText: some View {
+        ReadOnlyLogTextView(
+            text: drawer.visibleText,
+            placeholder: placeholderText,
+            isPlaceholder: drawer.visibleText.isEmpty
+        )
+        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+        .overlay {
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.secondary.opacity(0.18))
+        }
+    }
+
+    private var placeholderText: String {
+        drawer.state.detailText ?? drawer.state.statusText
+    }
+
+    private var matchLabel: String {
+        searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? ""
+            : "\(matchCount) matches"
     }
 }
 

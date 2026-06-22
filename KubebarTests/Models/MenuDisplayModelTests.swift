@@ -259,7 +259,14 @@ struct MenuDisplayModelTests {
             ]),
             podsSection: .available(PodSummary(ready: 0, running: 1, total: 1)),
             podDetailsSection: .available([
-                podDetail(namespace: "api", name: "checkout-7f9d", readyContainerCount: 0, totalContainerCount: 1)
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-7f9d",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    waitingReason: "CrashLoopBackOff",
+                    isNotReady: true
+                )
             ]),
             warningEventsSection: .available([]),
             workloadsSection: .available([
@@ -283,6 +290,7 @@ struct MenuDisplayModelTests {
         #expect(watchItem.k9sHandoff == nil)
         #expect(display.podTab.sections.first?.k9sHandoff == nil)
         #expect(podRow.k9sHandoff == nil)
+        #expect(podRow.logTarget == nil)
         #expect(display.nodeTab.k9sHandoff == nil)
         #expect(nodeRow.k9sHandoff == nil)
     }
@@ -612,6 +620,48 @@ struct MenuDisplayModelTests {
         #expect(apiRows[1].readyLabel == "-")
         #expect(apiRows[1].issueText == "Pending")
         #expect(apiRows[2].issueText == nil)
+    }
+
+    @Test("bad pod rows expose log target while non bad rows do not")
+    func badPodRowsExposeLogTargetWhileNonBadRowsDoNot() throws {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(ready: 2, running: 3, total: 3)),
+            podDetailsSection: .available([
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-crash",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    waitingReason: "CrashLoopBackOff",
+                    isNotReady: true
+                ),
+                podDetail(
+                    namespace: "api",
+                    name: "checkout-watch",
+                    readyContainerCount: 0,
+                    totalContainerCount: 1,
+                    isNotReady: true
+                ),
+                podDetail(namespace: "api", name: "checkout-ready", readyContainerCount: 1, totalContainerCount: 1)
+            ]),
+            warningEventsSection: .available([]),
+            workloadsSection: .available([
+                TrackedItemStatus(target: .namespace("api"), state: .bad, reason: "1 pod restarting")
+            ]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
+        let rows = try #require(display.podTab.sections.first?.rows)
+        let bad = try #require(rows.first { $0.name == "checkout-crash" })
+        let watch = try #require(rows.first { $0.name == "checkout-watch" })
+        let ready = try #require(rows.first { $0.name == "checkout-ready" })
+
+        #expect(bad.logTarget == PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout-crash"))
+        #expect(watch.logTarget == nil)
+        #expect(ready.logTarget == nil)
     }
 
     @Test("pod rows include resource summary labels")

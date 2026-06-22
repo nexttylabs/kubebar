@@ -5,6 +5,7 @@ import KubebarCore
 @main
 struct KubebarApp: App {
     @StateObject private var viewModel = MenuBarViewModel()
+    @State private var podLogWindowPresenter: PodLogWindowPresenter?
 #if DEBUG
     private let qaFixture = QALaunchMode.fixture()
 #endif
@@ -83,7 +84,37 @@ struct KubebarApp: App {
             onPrepareSettings: viewModel.prepareSettings,
             k9sHandoffState: viewModel.k9sHandoffState,
             onOpenK9sHandoff: viewModel.openK9sHandoff,
+            onOpenPodLogs: viewModel.openPodLogDrawer,
             onQuit: { NSApplication.shared.terminate(nil) }
+        )
+        .onAppear {
+            ensurePodLogWindowPresenter()
+        }
+        .onChange(of: viewModel.podLogDrawer) { _, drawer in
+            syncPodLogWindow(with: drawer)
+        }
+    }
+
+    @MainActor
+    private func ensurePodLogWindowPresenter() {
+        guard podLogWindowPresenter == nil else {
+            return
+        }
+
+        podLogWindowPresenter = PodLogWindowPresenter(onClose: viewModel.closePodLogDrawer)
+    }
+
+    @MainActor
+    private func syncPodLogWindow(with drawer: PodLogDrawerPresentation?) {
+        ensurePodLogWindowPresenter()
+
+        guard drawer != nil else {
+            podLogWindowPresenter?.closeFromViewModel()
+            return
+        }
+
+        podLogWindowPresenter?.present(
+            viewModel: viewModel
         )
     }
 }
@@ -109,6 +140,7 @@ private struct QAFixtureMenuRootView: View {
             onPrepareSettings: {},
             k9sHandoffState: .idle,
             onOpenK9sHandoff: { _ in },
+            onOpenPodLogs: { _ in },
             onQuit: { NSApplication.shared.terminate(nil) }
         )
     }

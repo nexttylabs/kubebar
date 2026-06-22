@@ -92,6 +92,15 @@ These are the rules Kubebar must keep true at runtime.
 - Pod rows keep issue text above resource text when both are present. Resource
   visuals remain informational and must be distinguishable without implying a
   new health alert.
+- Bad Pod rows may expose a user-opened Pod Micro-Logs Drawer backed by
+  `kubectl logs --tail=100 -f` for that Pod only. The drawer is bounded,
+  read-only, in-memory, and must cancel its stream when closed or replaced.
+- Pod log output is a troubleshooting surface only. It must not feed
+  `HealthEvaluator`, change menu health categories, create alerts, persist
+  history, or expose raw command transcripts.
+- Pod log reads must use the app-owned context and the effective kubeconfig
+  rules used by other `kubectl` reads. They must not mutate Kubernetes
+  resources or read Secrets.
 - Historical restart count alone must not make a Pod item Bad. Current failed,
   waiting, or crash-looping state may make a Pod item Bad.
 - Successfully completed Job Pods are not active readiness failures. They do
