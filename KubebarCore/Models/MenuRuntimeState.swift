@@ -76,6 +76,10 @@ public struct MenuRuntimeState: Equatable, Sendable {
         setupState.configurationMessage = nil
     }
 
+    public mutating func selectAppPage(_ page: SettingsTabSelection) {
+        setupState.selectAppPage(page)
+    }
+
     public mutating func beginTargetLoading(for context: String) {
         guard setupState.selectedContext == context else {
             return
@@ -140,7 +144,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
             watchlistsByContext: watchlistsByContext,
             refreshIntervalSeconds: setupState.refreshCadence.seconds,
             healthShiftAlertsEnabled: setupState.healthShiftAlerts.isEnabled,
-            kubeconfigPaths: setupState.kubeconfigPaths
+            kubeconfigPaths: setupState.kubeconfigPaths,
+            aiDiagnosticAssistant: setupState.aiDiagnosticAssistant.config
         )
     }
 
@@ -149,7 +154,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
             completedWatchlistsByContext() != Self.namespaceWatchlists(from: config.watchlistsByContext) ||
             setupState.refreshCadence.seconds != config.refreshIntervalSeconds ||
             setupState.healthShiftAlerts.isEnabled != config.healthShiftAlertsEnabled ||
-            setupState.kubeconfigPaths != config.kubeconfigPaths
+            setupState.kubeconfigPaths != config.kubeconfigPaths ||
+            setupState.aiDiagnosticAssistant.config != config.aiDiagnosticAssistant
     }
 
     private func completedWatchlistsByContext() -> [String: [WatchTarget]] {
@@ -170,7 +176,8 @@ public struct MenuRuntimeState: Equatable, Sendable {
             watchlistsByContext: watchlistStates(from: config.watchlistsByContext),
             refreshCadence: config.refreshCadence,
             healthShiftAlerts: HealthShiftAlertsState(isEnabled: config.healthShiftAlertsEnabled),
-            kubeconfigPaths: config.kubeconfigPaths
+            kubeconfigPaths: config.kubeconfigPaths,
+            aiDiagnosticAssistant: AIDiagnosticAssistantState(config: config.aiDiagnosticAssistant)
         )
     }
 

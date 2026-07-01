@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A20000000000000000000001 /* AIDiagnosticAssistantConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* AIDiagnosticAssistantConfig.swift */; };
+		A20000000000000000000003 /* AIDiagnosticAssistantState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* AIDiagnosticAssistantState.swift */; };
+		A20000000000000000000005 /* AIProviderCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* AIProviderCredentialStore.swift */; };
+		A20000000000000000000007 /* AIProviderConnectionTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* AIProviderConnectionTester.swift */; };
+		A20000000000000000000009 /* HTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* HTTPClient.swift */; };
+		A2000000000000000000000B /* AIProviderCredentialStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* AIProviderCredentialStoreTests.swift */; };
+		A2000000000000000000000D /* AIProviderConnectionTesterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */; };
+		A2000000000000000000000F /* KeychainAIProviderCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* KeychainAIProviderCredentialStore.swift */; };
+		A20000000000000000000011 /* URLSessionHTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* URLSessionHTTPClient.swift */; };
 		0ABC7D9044D83EA481BBB112 /* WatchTargetCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD651CCDAAD62B4E7C090D6F /* WatchTargetCatalog.swift */; };
 		0C5D3D56CEDAB47E9528A4F6 /* WatchlistCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41CF64AA3581163BEA218DFB /* WatchlistCandidate.swift */; };
 		0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */; };
@@ -134,6 +143,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A20000000000000000000002 /* AIDiagnosticAssistantConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDiagnosticAssistantConfig.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* AIDiagnosticAssistantState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDiagnosticAssistantState.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* AIProviderCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderCredentialStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* AIProviderConnectionTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConnectionTester.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* HTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPClient.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* AIProviderCredentialStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderCredentialStoreTests.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConnectionTesterTests.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* KeychainAIProviderCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAIProviderCredentialStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* URLSessionHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionHTTPClient.swift; sourceTree = "<group>"; };
 		039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusSummaryView.swift; sourceTree = "<group>"; };
 		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
 		044436EFC75907A7253A3A7A /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
@@ -310,6 +328,8 @@
 			isa = PBXGroup;
 			children = (
 				684455D1430321334848EB7F /* AppConfigStoreTests.swift */,
+				A2000000000000000000000C /* AIProviderCredentialStoreTests.swift */,
+				A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */,
 				B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */,
 				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
 				BEC71932B945E1D6592AA77E /* FreshnessDisplayScheduleTests.swift */,
@@ -330,6 +350,8 @@
 		83DF995219C93DBAE4855014 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A20000000000000000000002 /* AIDiagnosticAssistantConfig.swift */,
+				A20000000000000000000004 /* AIDiagnosticAssistantState.swift */,
 				256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */,
 				7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */,
 				E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */,
@@ -350,6 +372,9 @@
 			isa = PBXGroup;
 			children = (
 				E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */,
+				A20000000000000000000006 /* AIProviderCredentialStore.swift */,
+				A20000000000000000000008 /* AIProviderConnectionTester.swift */,
+				A2000000000000000000000A /* HTTPClient.swift */,
 				A59D91E3E139CA91BC232D40 /* CommandRunner.swift */,
 				16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */,
 				F145C7042CEB53D7185BD7FA /* FreshnessDisplaySchedule.swift */,
@@ -373,6 +398,8 @@
 			children = (
 				A10000000000000000000007 /* LoginItemController.swift */,
 				A1000000000000000000000E /* NetworkReachabilityMonitor.swift */,
+				A20000000000000000000010 /* KeychainAIProviderCredentialStore.swift */,
+				A20000000000000000000012 /* URLSessionHTTPClient.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -547,6 +574,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */,
+				A2000000000000000000000B /* AIProviderCredentialStoreTests.swift in Sources */,
+				A2000000000000000000000D /* AIProviderConnectionTesterTests.swift in Sources */,
 				495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */,
 				2673AA6352855DBB0B87599A /* CommandRunnerTests.swift in Sources */,
 				1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */,
@@ -577,6 +606,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				279114E96D410FFB2622B97E /* AppConfigStore.swift in Sources */,
+				A20000000000000000000001 /* AIDiagnosticAssistantConfig.swift in Sources */,
+				A20000000000000000000003 /* AIDiagnosticAssistantState.swift in Sources */,
+				A20000000000000000000005 /* AIProviderCredentialStore.swift in Sources */,
+				A20000000000000000000007 /* AIProviderConnectionTester.swift in Sources */,
+				A20000000000000000000009 /* HTTPClient.swift in Sources */,
 				43A2E812863B312A3F47C289 /* ClusterHealthState.swift in Sources */,
 				DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */,
 				3C89297B5C863C683E8D33CA /* CommandRunner.swift in Sources */,
@@ -616,6 +650,8 @@
 				E557AF4691C5FFE49437ADB4 /* EventsTabView.swift in Sources */,
 				323A03773863A8CD97D0BA65 /* InlineProgressBar.swift in Sources */,
 				1E1CA9DB320A0E65272B5E42 /* KubebarApp.swift in Sources */,
+				A2000000000000000000000F /* KeychainAIProviderCredentialStore.swift in Sources */,
+				A20000000000000000000011 /* URLSessionHTTPClient.swift in Sources */,
 				A10000000000000000000003 /* LoginItemController.swift in Sources */,
 				A1000000000000000000000B /* NetworkReachabilityMonitor.swift in Sources */,
 				229B3FE94ACDE1EB70B1869A /* MenuBarRootView.swift in Sources */,

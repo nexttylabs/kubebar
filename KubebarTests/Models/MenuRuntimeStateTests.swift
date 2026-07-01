@@ -439,6 +439,63 @@ struct MenuRuntimeStateTests {
         ])
     }
 
+    @Test("prepare settings exposes saved ai diagnostic assistant config")
+    func prepareSettingsExposesSavedAIDiagnosticAssistantConfig() {
+        let savedConfig = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")],
+            aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
+                provider: .anthropic,
+                modelID: "claude-3",
+                baseURL: nil
+            )
+        )
+        let state = MenuRuntimeState(config: savedConfig)
+
+        #expect(state.setupState.aiDiagnosticAssistant.config == savedConfig.aiDiagnosticAssistant)
+    }
+
+    @Test("completed config preserves ai diagnostic assistant config")
+    func completedConfigPreservesAIDiagnosticAssistantConfig() throws {
+        var state = MenuRuntimeState(
+            config: AppConfig(
+                selectedContext: "prod",
+                watchTargets: [.namespace("api")],
+                aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
+                    provider: .openAICompatible,
+                    modelID: "gpt-4o-mini",
+                    baseURL: "https://example.test/v1"
+                )
+            )
+        )
+        state.setupState.aiDiagnosticAssistant.config.modelID = "gpt-4o"
+
+        let config = try #require(state.completedConfig())
+
+        #expect(config.aiDiagnosticAssistant.provider == .openAICompatible)
+        #expect(config.aiDiagnosticAssistant.modelID == "gpt-4o")
+        #expect(config.aiDiagnosticAssistant.baseURL == "https://example.test/v1")
+    }
+
+    @Test("changed ai diagnostic assistant config marks settings unsaved")
+    func changedAIDiagnosticAssistantConfigMarksSettingsUnsaved() {
+        let savedConfig = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")],
+            aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                baseURL: nil
+            )
+        )
+        var state = MenuRuntimeState(config: savedConfig)
+        state.setupState.aiDiagnosticAssistant.config.modelID = "gpt-4o"
+
+        state.prepareSettings(config: savedConfig)
+
+        #expect(state.setupState.aiDiagnosticAssistant.config.modelID == "gpt-4o")
+    }
+
     @Test("replacing available contexts hides missing context tabs without dropping saved watchlists")
     func replacingAvailableContextsHidesMissingContextTabsWithoutDroppingSavedWatchlists() throws {
         var state = MenuRuntimeState(

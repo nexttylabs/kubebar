@@ -113,6 +113,16 @@ These are the rules Kubebar must keep true at runtime.
 - A watched target with no matching Pods is a normal OK condition with a clear
   row reason, not a Watch or Bad Pod failure.
 - Kubebar does not query Kubernetes Secrets.
+- AI Diagnostic Assistant is display/help behavior only. It must not affect
+  `HealthEvaluator`, `MenuDisplayModel` health categorization, or the menu bar
+  icon category.
+- AI Provider API keys must be stored in macOS Keychain, never in `AppConfig`,
+  `config.json`, command output, diagnostics, or visible error text.
+- AI Test Connection is manually triggered. It sends a minimal provider probe
+  with no Kubernetes data: no warning text, Pod logs, kubeconfig content, raw
+  `kubectl` output, or cluster JSON.
+- AI diagnostic input, when implemented in a future plan, is limited to
+  user-approved warning summary text and must remain manually triggered.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
   of the first scan.

@@ -20,6 +20,7 @@ struct KubebarApp: App {
                 onPrepare: viewModel.prepareSettings,
                 onComplete: viewModel.completeSetup,
                 onSelectAppSettings: viewModel.selectAppSettingsTab,
+                onSelectAppPage: viewModel.selectAppPage,
                 onSelectContext: viewModel.selectSetupContext,
                 onRetryTargets: viewModel.retryWatchTargetLoad,
                 onToggleStartAtLogin: viewModel.setStartAtLoginEnabled,
@@ -27,7 +28,12 @@ struct KubebarApp: App {
                 onAddKubeconfigPaths: viewModel.addKubeconfigPaths,
                 onRemoveKubeconfigPath: viewModel.removeKubeconfigPath,
                 onMoveKubeconfigPathUp: viewModel.moveKubeconfigPathUp,
-                onMoveKubeconfigPathDown: viewModel.moveKubeconfigPathDown
+                onMoveKubeconfigPathDown: viewModel.moveKubeconfigPathDown,
+                onUpdateAIProvider: viewModel.updateAIProvider,
+                onUpdateAIModelID: viewModel.updateAIModelID,
+                onUpdateAIBaseURL: viewModel.updateAIBaseURL,
+                onUpdateAIAPIKeyDraft: viewModel.updateAIAPIKeyDraft,
+                onTestAIConnection: viewModel.testAIConnection
             )
         }
     }
