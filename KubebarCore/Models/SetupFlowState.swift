@@ -7,13 +7,22 @@ public enum WatchTargetLoadingState: Equatable, Sendable {
 }
 
 public enum SettingsTabSelection: Equatable, Hashable, Sendable {
-    case appSettings
+    case general
+    case kubernetes
+    case notifications
+    case aiAssistant
     case context(String)
 
     public var id: SettingsTabID {
         switch self {
-        case .appSettings:
-            return .appSettings
+        case .general:
+            return .general
+        case .kubernetes:
+            return .kubernetes
+        case .notifications:
+            return .notifications
+        case .aiAssistant:
+            return .aiAssistant
         case let .context(context):
             return .context(context)
         }
@@ -21,8 +30,14 @@ public enum SettingsTabSelection: Equatable, Hashable, Sendable {
 
     public var title: String {
         switch self {
-        case .appSettings:
-            return "App Settings"
+        case .general:
+            return "General"
+        case .kubernetes:
+            return "Kubernetes"
+        case .notifications:
+            return "Notifications"
+        case .aiAssistant:
+            return "AI Assistant"
         case let .context(context):
             return context
         }
@@ -30,8 +45,14 @@ public enum SettingsTabSelection: Equatable, Hashable, Sendable {
 
     public var helpText: String {
         switch self {
-        case .appSettings:
-            return "App Settings"
+        case .general:
+            return "General app settings"
+        case .kubernetes:
+            return "Kubeconfig discovery"
+        case .notifications:
+            return "Health shift alerts"
+        case .aiAssistant:
+            return "AI Diagnostic Assistant"
         case let .context(context):
             return context
         }
@@ -39,11 +60,21 @@ public enum SettingsTabSelection: Equatable, Hashable, Sendable {
 
     public var systemImageName: String {
         switch self {
-        case .appSettings:
+        case .general:
             return "gearshape"
+        case .kubernetes:
+            return "square.3.layers.3d"
+        case .notifications:
+            return "bell"
+        case .aiAssistant:
+            return "sparkles"
         case .context:
             return "server.rack"
         }
+    }
+
+    public static var appSettings: SettingsTabSelection {
+        .general
     }
 }
 
@@ -54,7 +85,12 @@ public struct SettingsTabID: RawRepresentable, Equatable, Hashable, Sendable {
         self.rawValue = rawValue
     }
 
-    public static let appSettings = SettingsTabID(rawValue: "app-settings")
+    public static let general = SettingsTabID(rawValue: "app-general")
+    public static let kubernetes = SettingsTabID(rawValue: "app-kubernetes")
+    public static let notifications = SettingsTabID(rawValue: "app-notifications")
+    public static let aiAssistant = SettingsTabID(rawValue: "app-ai-assistant")
+
+    public static let appSettings = SettingsTabID.general
 
     public static func context(_ context: String) -> SettingsTabID {
         SettingsTabID(rawValue: "context:\(context)")
@@ -76,6 +112,7 @@ public struct SetupFlowState: Equatable, Sendable {
     public var startAtLogin: StartAtLoginState
     public var healthShiftAlerts: HealthShiftAlertsState
     public var kubeconfigPaths: [String]
+    public var aiDiagnosticAssistant: AIDiagnosticAssistantState
 
     public init(
         selectedContext: String? = nil,
@@ -89,7 +126,8 @@ public struct SetupFlowState: Equatable, Sendable {
         refreshCadence: RefreshCadence = .default,
         startAtLogin: StartAtLoginState = StartAtLoginState(),
         healthShiftAlerts: HealthShiftAlertsState = HealthShiftAlertsState(),
-        kubeconfigPaths: [String] = []
+        kubeconfigPaths: [String] = [],
+        aiDiagnosticAssistant: AIDiagnosticAssistantState = AIDiagnosticAssistantState()
     ) {
         self.selectedContext = selectedContext
         self.appSettingsSelectedContext = appSettingsSelectedContext ?? selectedContext
@@ -117,6 +155,7 @@ public struct SetupFlowState: Equatable, Sendable {
         self.startAtLogin = startAtLogin
         self.healthShiftAlerts = healthShiftAlerts
         self.kubeconfigPaths = kubeconfigPaths
+        self.aiDiagnosticAssistant = aiDiagnosticAssistant
     }
 
     public var isConfigured: Bool {
@@ -131,8 +170,12 @@ public struct SetupFlowState: Equatable, Sendable {
         Set(availableContexts).sorted()
     }
 
+    public static var appPages: [SettingsTabSelection] {
+        [.general, .kubernetes, .notifications, .aiAssistant]
+    }
+
     public var settingsTabs: [SettingsTabSelection] {
-        [.appSettings] + contextTabs.map { .context($0) }
+        Self.appPages + contextTabs.map { .context($0) }
     }
 
     public var selectedSettingsTabID: SettingsTabID {
@@ -145,7 +188,7 @@ public struct SetupFlowState: Equatable, Sendable {
 
     public var selectedContextForCompletedConfig: String? {
         switch selectedSettingsTab {
-        case .appSettings:
+        case .general, .kubernetes, .notifications, .aiAssistant:
             return appSettingsSelectedContext ?? selectedContext
         case .context:
             return selectedContext
@@ -220,13 +263,21 @@ public struct SetupFlowState: Equatable, Sendable {
     public mutating func selectContext(_ context: String?) {
         preserveCurrentWatchlist()
         selectedContext = context
-        selectedSettingsTab = context.map { .context($0) } ?? .appSettings
+        selectedSettingsTab = context.map { .context($0) } ?? .general
         watchlist = context.flatMap { watchlistsByContext[$0] } ?? WatchlistSelectionState()
     }
 
     public mutating func selectAppSettingsTab() {
+        selectAppPage(.general)
+    }
+
+    public mutating func selectAppPage(_ page: SettingsTabSelection) {
+        guard Self.appPages.contains(page) else {
+            return
+        }
         preserveCurrentWatchlist()
-        selectedSettingsTab = .appSettings
+        selectedSettingsTab = page
+        configurationMessage = nil
     }
 
     public mutating func appendKubeconfigPaths(_ paths: [String]) {
@@ -288,6 +339,36 @@ public struct SetupFlowState: Equatable, Sendable {
         selectAppSettingsTab()
         targetLoadingState = .idle
         watchlist.clearAvailableTargets()
+    }
+
+    public mutating func updateAIDiagnosticAssistant(modelID: String) {
+        aiDiagnosticAssistant.config.modelID = modelID
+        configurationMessage = nil
+    }
+
+    public mutating func updateAIDiagnosticAssistant(baseURL: String?) {
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(baseURL: baseURL)
+        configurationMessage = nil
+    }
+
+    public mutating func updateAIDiagnosticAssistant(provider: AIProvider) {
+        aiDiagnosticAssistant.config = AIDiagnosticAssistantConfig(
+            provider: provider,
+            modelID: aiDiagnosticAssistant.config.modelID,
+            baseURL: aiDiagnosticAssistant.config.baseURL
+        )
+        aiDiagnosticAssistant.testConnectionResult = nil
+        configurationMessage = nil
+    }
+
+    public mutating func updateAIDiagnosticAssistantAPIKeyDraft(_ draft: String) {
+        aiDiagnosticAssistant.apiKeyDraft = draft
+        configurationMessage = nil
+    }
+
+    public mutating func applyAIDiagnosticAssistantTestConnectionResult(_ result: AIProviderConnectionResult?) {
+        aiDiagnosticAssistant.testConnectionResult = result
+        configurationMessage = nil
     }
 
     public func currentWatchlistsByContext() -> [String: WatchlistSelectionState] {

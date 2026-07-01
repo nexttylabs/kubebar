@@ -19,6 +19,22 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **AI Diagnostic Assistant**: an optional app-wide Settings feature for
+  manually testing a configured AI provider and, in a later diagnostic slice,
+  explaining user-approved warning text. It is display/help behavior only and
+  must not change `Health category`.
+- **AI Provider configuration**: non-secret app-wide provider metadata such as
+  provider kind, `Model ID`, and an `OpenAI-compatible` `Base URL`. It belongs
+  in App Settings and may be persisted in local app config.
+- **AI Provider API key**: the secret credential for an AI provider. It must be
+  stored in macOS Keychain, never in `AppConfig`, command output, diagnostics,
+  or visible raw error text.
+- **OpenAI-compatible provider**: a custom endpoint that uses only `Bearer` API
+  key authentication, `Base URL`, and `Model ID` in the first version. Custom
+  headers are out of scope.
+- **Warning text diagnostic input**: a future manually submitted AI diagnostic
+  payload limited to warning summary text. It does not include Pod logs,
+  Kubernetes Secrets, raw `kubectl` output, kubeconfig content, or cluster JSON.
 - **Pod Micro-Logs Drawer**: a user-opened focusable log window for a single
   `Bad` Pod row that streams a bounded `kubectl logs --tail=100 -f` view
   through Kubebar's app-owned context and kubeconfig. It is temporary
@@ -27,10 +43,12 @@
   Pod Micro-Logs Drawer for log output. It should use AppKit text behavior for
   top-left log layout, selection, copy, and scrolling instead of rebuilding a
   text viewer from primitive SwiftUI `ScrollView` and `Text`.
-- **App Settings tab**: the fixed first Settings tab for global app behavior
-  such as refresh cadence, Start at Login, and Health State Shift Alerts. It is
-  not tied to a Kubernetes context.
-- **Context Settings tab**: a Settings tab generated from local context
+- **App Settings page**: one of the fixed App-level Settings pages in the
+  Settings sidebar: `General`, `Kubernetes`, `Notifications`, and `AI Assistant`.
+  They are app-wide behavior such as refresh cadence, Start at Login, Health
+  State Shift Alerts, explicit kubeconfig paths, and AI Diagnostic Assistant
+  configuration, and are not tied to a Kubernetes context.
+- **Context Settings page**: a Settings page generated from local context
   information. It edits the per-context watchlist for exactly one Kubernetes
   context.
 - **Per-context watchlist**: a saved set of watch targets keyed by Kubernetes

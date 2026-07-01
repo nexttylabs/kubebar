@@ -18,6 +18,7 @@ struct AppConfigStoreTests {
         #expect(config.refreshCadence == .oneMinute)
         #expect(!config.healthShiftAlertsEnabled)
         #expect(config.kubeconfigPaths.isEmpty)
+        #expect(config.aiDiagnosticAssistant == AIDiagnosticAssistantConfig())
     }
 
     @Test("unknown refresh interval normalizes to default")
@@ -94,7 +95,12 @@ struct AppConfigStoreTests {
             kubeconfigPaths: [
                 "/Users/derek/.kube/config",
                 "/Users/derek/.kube/team.yaml"
-            ]
+            ],
+            aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                baseURL: nil
+            )
         )
 
         try store.save(config)
@@ -108,6 +114,8 @@ struct AppConfigStoreTests {
             "/Users/derek/.kube/config",
             "/Users/derek/.kube/team.yaml"
         ])
+        #expect(try store.load().aiDiagnosticAssistant.provider == .openAI)
+        #expect(try store.load().aiDiagnosticAssistant.modelID == "gpt-4o-mini")
     }
 
     @Test("per-context watchlists round trip")
@@ -205,6 +213,28 @@ struct AppConfigStoreTests {
         #expect(throws: AppConfigStoreError.cannotSave) {
             try store.save(AppConfig(selectedContext: "prod", watchTargets: [.namespace("api")]))
         }
+    }
+
+    @Test("config without ai diagnostic assistant setting defaults unconfigured")
+    func configWithoutAIDiagnosticAssistantSettingDefaultsUnconfigured() throws {
+        let directory = makeTemporaryDirectory()
+        let configURL = directory.appendingPathComponent("config.json")
+        let json = """
+        {
+          "selectedContext": "prod",
+          "refreshIntervalSeconds": 60,
+          "watchTargets": [
+            {"namespace": {"_0": "api"}}
+          ]
+        }
+        """
+        try json.write(to: configURL, atomically: true, encoding: .utf8)
+        let store = AppConfigStore(directory: directory)
+
+        let config = try store.load()
+
+        #expect(config.aiDiagnosticAssistant == AIDiagnosticAssistantConfig())
+        #expect(config.aiDiagnosticAssistant.modelID.isEmpty)
     }
 
     private func makeTemporaryDirectory() -> URL {
