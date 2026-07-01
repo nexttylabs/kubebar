@@ -2,65 +2,222 @@
   "schema_version": 2,
   "steps": {
     "1": {
+      "number": 1,
       "step_id": "U1",
-      "state": "pending",
-      "result": "Publish dry-runs cannot be mistaken for public release success.",
-      "verification": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")' && ./scripts/test-changelog-tools.sh && ./scripts/test-release-build-version.sh",
+      "result": "Settings state exposes page-oriented navigation while preserving completed configuration behavior.",
+      "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check",
       "test_scenarios": [
-        "default checklist no longer requires candidate generation or publish dry-run",
-        "publish dry-run logs an explicit no-tag/no-release summary",
-        "real publish path remains conditioned on dry_run != true"
+        "App pages are available in stable order",
+        "context pages are generated from available contexts",
+        "selecting an App page preserves current watchlist edits",
+        "selecting a Context page loads that context's watchlist",
+        "completed config is unchanged by page navigation",
+        "`CONTEXT.md` Settings vocabulary matches page/sidebar navigation"
       ],
       "discovery_cache": [
         {
-          "path": "docs/RELEASING.md",
-          "reason": "release-owner checklist"
+          "path": "KubebarCore/Models/SetupFlowState.swift",
+          "reason": "Settings selection model"
         },
         {
-          "path": ".github/workflows/release.yml",
-          "reason": "publish dry-run and real publish conditions"
+          "path": "KubebarCore/Models/MenuRuntimeState.swift",
+          "reason": "prepare/save/selection state"
         },
         {
-          "path": "scripts/test-changelog-tools.sh",
-          "reason": "release-note tooling regression check"
+          "path": "KubebarTests/Models/SetupFlowStateTests.swift",
+          "reason": "Settings state tests"
         },
         {
-          "path": "scripts/test-release-build-version.sh",
-          "reason": "release packaging metadata check"
+          "path": "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "reason": "runtime state tests"
+        },
+        {
+          "path": "CONTEXT.md",
+          "reason": "canonical Settings vocabulary"
         }
       ],
+      "parallel_probes": [],
       "depends_on": [],
-      "agent_hint": null
+      "agent_hint": null,
+      "state": "closed",
+      "activated_at": "2026-07-01T09:49:30Z",
+      "execution_evidence": {
+        "changed_files": [
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Models/MenuRuntimeState.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "CONTEXT.md"
+        ],
+        "verification_result": "passed",
+        "verification_command": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "notes": "U1 complete: SettingsTabSelection expanded to App pages (.general/.kubernetes/.notifications/.aiAssistant) + .context. Added SetupFlowState.appPages, selectAppPage(_:), selectAppSettingsTab bridges to .general. MenuRuntimeState.selectAppPage added. Fixed navigation reset bug: SetupView binding now calls onSelectAppPage(page) -> viewModel.selectAppPage instead of onSelectAppSettings (which forced .general). Wired onSelectAppPage through SettingsRootView/KubebarApp. CONTEXT.md App/Context Settings tab -> page vocabulary. 6 new tests. 318 tests 31 suites pass, build + test succeeded, rtk clean.",
+        "recorded_at": "2026-07-01T09:59:51Z"
+      },
+      "closed_at": "2026-07-01T10:00:44Z"
+    },
+    "2": {
+      "number": 2,
+      "step_id": "U2",
+      "result": "Settings renders a sidebar/detail layout with `AI Assistant` as a focused App page.",
+      "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIDiagnosticAssistant && swift build && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+      "test_scenarios": [
+        "sidebar shows App group and Context pages",
+        "`General` renders refresh cadence and Start at Login",
+        "`Kubernetes` renders kubeconfig source/files and Add Files action",
+        "`Notifications` renders Health State Shift Alerts",
+        "`AI Assistant` renders Provider/Endpoint/Credentials/Connection groups",
+        "Base URL appears only for `OpenAI-compatible`",
+        "Test Connection stays manual and local to AI page",
+        "footer save action remains visible",
+        "visible Settings smoke confirms hierarchy and spacing"
+      ],
+      "discovery_cache": [
+        {
+          "path": "Kubebar/Views/SetupView.swift",
+          "reason": "Settings layout"
+        },
+        {
+          "path": "Kubebar/Views/SettingsRootView.swift",
+          "reason": "window frame and callbacks"
+        },
+        {
+          "path": "Kubebar/MenuBarViewModel.swift",
+          "reason": "Settings callbacks and save/test behavior"
+        },
+        {
+          "path": "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "reason": "AI UI state"
+        },
+        {
+          "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+          "reason": "manual Test Connection behavior"
+        },
+        {
+          "path": "docs/architecture/runtime-invariants.md",
+          "reason": "AI and Settings runtime constraints"
+        }
+      ],
+      "parallel_probes": [],
+      "depends_on": [
+        1
+      ],
+      "agent_hint": null,
+      "state": "closed",
+      "activated_at": "2026-07-01T10:04:35Z",
+      "execution_evidence": {
+        "changed_files": [
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift"
+        ],
+        "verification_result": "passed",
+        "verification_command": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIDiagnosticAssistant && swift build && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "notes": "U2 final: sidebar/detail layout with 4 focused App pages. Fixed footer subtitle/tab vocabulary to page. 318 tests pass, build+test succeeded, rtk clean.",
+        "recorded_at": "2026-07-01T10:05:44Z"
+      },
+      "closed_at": "2026-07-01T10:06:15Z"
     }
   },
-  "last_review": null,
+  "pending_follow_up": null,
+  "last_review": {
+    "decision": "pass",
+    "evidence": "",
+    "artifacts": "",
+    "notes": "",
+    "recorded_at": "2026-07-01T10:06:15Z"
+  },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md",
-    "plan_signature": "fb1d0367839f1113eff25ccc1464545a231e3c6e9c03c1c9e21ac3d5d6071aa9",
+    "plan_path": "docs/plans/2026-07-01-002-refactor-settings-sidebar-layout-plan.md",
+    "plan_signature": "56f391bdf1048358bf78b8f613f6dd13c76b58b6139cf6ef8c37ee6d250041b4",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "Publish dry-runs cannot be mistaken for public release success.",
-        "verification": "ruby -e 'require \"yaml\"; YAML.load_file(\".github/workflows/release.yml\")' && ./scripts/test-changelog-tools.sh && ./scripts/test-release-build-version.sh",
+        "result": "Settings state exposes page-oriented navigation while preserving completed configuration behavior.",
+        "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && rtk git diff --check",
         "depends_on": [],
         "discovery_cache": [
           {
-            "path": "docs/RELEASING.md",
-            "reason": "release-owner checklist"
+            "path": "KubebarCore/Models/SetupFlowState.swift",
+            "reason": "Settings selection model"
           },
           {
-            "path": ".github/workflows/release.yml",
-            "reason": "publish dry-run and real publish conditions"
+            "path": "KubebarCore/Models/MenuRuntimeState.swift",
+            "reason": "prepare/save/selection state"
           },
           {
-            "path": "scripts/test-changelog-tools.sh",
-            "reason": "release-note tooling regression check"
+            "path": "KubebarTests/Models/SetupFlowStateTests.swift",
+            "reason": "Settings state tests"
           },
           {
-            "path": "scripts/test-release-build-version.sh",
-            "reason": "release packaging metadata check"
+            "path": "KubebarTests/Models/MenuRuntimeStateTests.swift",
+            "reason": "runtime state tests"
+          },
+          {
+            "path": "CONTEXT.md",
+            "reason": "canonical Settings vocabulary"
           }
+        ],
+        "parallel_probes": [],
+        "agent_hint": null,
+        "test_scenarios": [
+          "App pages are available in stable order",
+          "context pages are generated from available contexts",
+          "selecting an App page preserves current watchlist edits",
+          "selecting a Context page loads that context's watchlist",
+          "completed config is unchanged by page navigation",
+          "`CONTEXT.md` Settings vocabulary matches page/sidebar navigation"
+        ]
+      },
+      {
+        "number": 2,
+        "step_id": "U2",
+        "result": "Settings renders a sidebar/detail layout with `AI Assistant` as a focused App page.",
+        "verification": "swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIDiagnosticAssistant && swift build && /usr/bin/env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "depends_on": [
+          1
+        ],
+        "discovery_cache": [
+          {
+            "path": "Kubebar/Views/SetupView.swift",
+            "reason": "Settings layout"
+          },
+          {
+            "path": "Kubebar/Views/SettingsRootView.swift",
+            "reason": "window frame and callbacks"
+          },
+          {
+            "path": "Kubebar/MenuBarViewModel.swift",
+            "reason": "Settings callbacks and save/test behavior"
+          },
+          {
+            "path": "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+            "reason": "AI UI state"
+          },
+          {
+            "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+            "reason": "manual Test Connection behavior"
+          },
+          {
+            "path": "docs/architecture/runtime-invariants.md",
+            "reason": "AI and Settings runtime constraints"
+          }
+        ],
+        "parallel_probes": [],
+        "agent_hint": null,
+        "test_scenarios": [
+          "sidebar shows App group and Context pages",
+          "`General` renders refresh cadence and Start at Login",
+          "`Kubernetes` renders kubeconfig source/files and Add Files action",
+          "`Notifications` renders Health State Shift Alerts",
+          "`AI Assistant` renders Provider/Endpoint/Credentials/Connection groups",
+          "Base URL appears only for `OpenAI-compatible`",
+          "Test Connection stays manual and local to AI page",
+          "footer save action remains visible",
+          "visible Settings smoke confirms hierarchy and spacing"
         ]
       }
     ]
@@ -75,11 +232,86 @@
         "plan_summary": "Release owners can follow a clearer prepare-then-publish path.",
         "same_plan": false
       }
+    },
+    {
+      "at": "2026-07-01T07:09:18Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-07-01-001-feat-ai-diagnostic-assistant-settings-plan.md",
+        "plan_signature": "9ba9f21b9953648122ed854dee1c6a1ad9a96e998c9920271c75e7708ac6a259",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-07-01T07:59:52Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-01T08:09:38Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-01T08:17:45Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 3,
+        "step_id": "U3",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-01T09:45:28Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-07-01-002-refactor-settings-sidebar-layout-plan.md",
+        "plan_signature": "56f391bdf1048358bf78b8f613f6dd13c76b58b6139cf6ef8c37ee6d250041b4",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-07-01T10:00:44Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-01T10:06:15Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 2,
+        "step_id": "U2",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
     }
   ],
   "requires_replan": false,
-  "plan_path": "docs/plans/2026-06-22-002-ci-release-flow-simplification-plan.md",
-  "plan_summary": "Release owners can follow a clearer prepare-then-publish path.",
-  "plan_signature": "fb1d0367839f1113eff25ccc1464545a231e3c6e9c03c1c9e21ac3d5d6071aa9",
-  "plan_last_validated_at": "2026-06-22T08:39:02Z"
+  "runtime_status": "idle",
+  "plan_path": "docs/plans/2026-07-01-002-refactor-settings-sidebar-layout-plan.md",
+  "plan_summary": "Redesign Kubebar Settings from a stacked tab/form surface into a native sidebar/detail layout with a dedicated `AI Assistant` page.",
+  "plan_signature": "56f391bdf1048358bf78b8f613f6dd13c76b58b6139cf6ef8c37ee6d250041b4",
+  "plan_last_validated_at": "2026-07-01T09:45:28Z",
+  "completed_steps": [
+    1,
+    2
+  ],
+  "active_step": null,
+  "next_action": null
 }

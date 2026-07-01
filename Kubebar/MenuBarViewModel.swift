@@ -61,6 +61,8 @@ final class MenuBarViewModel: ObservableObject {
     private let healthShiftAlertNotifier: any HealthShiftAlertNotifying
     private let networkReachability: any NetworkReachability
     private let podLogStreamer: any PodLogStreaming
+    private let aiCredentialStore: any AIProviderCredentialStoring
+    private let aiConnectionTester: AIProviderConnectionTester?
     private var isNetworkAvailable: Bool = true
     private var healthShiftAlertTracker: HealthShiftAlertTracker
     private var healthShiftAlertSettingsRequestGate: HealthShiftAlertSettingsRequestGate
@@ -70,6 +72,7 @@ final class MenuBarViewModel: ObservableObject {
     /// Delay before resuming automatic refresh after network recovery.
     /// Avoids rapid kubectl calls during unstable Wi-Fi reconnection.
     private static let networkRecoveryDebounceNanoseconds: UInt64 = 2_000_000_000
+    private static let aiCredentialSaveFailureMessage = "Could not save API key. Check macOS Keychain access."
 
     init(
         configStore: AppConfigStore = AppConfigStore(directory: MenuBarViewModel.defaultConfigDirectory),
@@ -83,6 +86,11 @@ final class MenuBarViewModel: ObservableObject {
         healthShiftAlertNotifier: any HealthShiftAlertNotifying = SystemHealthShiftAlertNotifier(),
         networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
         podLogStreamer: any PodLogStreaming = ProcessPodLogStreamer(),
+        aiCredentialStore: any AIProviderCredentialStoring = KeychainAIProviderCredentialStore(),
+        aiConnectionTester: AIProviderConnectionTester? = AIProviderConnectionTester(
+            credentialStore: KeychainAIProviderCredentialStore(),
+            httpClient: URLSessionHTTPClient()
+        ),
         now: Date = Date()
     ) {
         self.configStore = configStore
@@ -95,6 +103,8 @@ final class MenuBarViewModel: ObservableObject {
         self.healthShiftAlertNotifier = healthShiftAlertNotifier
         self.networkReachability = networkReachability
         self.podLogStreamer = podLogStreamer
+        self.aiCredentialStore = aiCredentialStore
+        self.aiConnectionTester = aiConnectionTester
 
         do {
             self.config = try configStore.load()
@@ -231,6 +241,21 @@ final class MenuBarViewModel: ObservableObject {
 
         do {
             try configStore.save(completedConfig)
+
+            if runtimeState.setupState.aiDiagnosticAssistant.hasAPIKeyDraft {
+                do {
+                    try aiCredentialStore.saveAPIKey(
+                        runtimeState.setupState.aiDiagnosticAssistant.apiKeyDraft,
+                        for: completedConfig.aiDiagnosticAssistant.provider
+                    )
+                } catch {
+                    runtimeState.markConfigurationSaveFailed(Self.aiCredentialSaveFailureMessage)
+                    publishRuntimeState()
+                    return false
+                }
+            }
+
+            runtimeState.setupState.updateAIDiagnosticAssistantAPIKeyDraft("")
             closePodLogDrawer()
             config = completedConfig
             activeContextName = completedConfig.selectedContext
@@ -304,6 +329,47 @@ final class MenuBarViewModel: ObservableObject {
         publishRuntimeState()
     }
 
+    func updateAIProvider(_ provider: AIProvider) {
+        runtimeState.setupState.updateAIDiagnosticAssistant(provider: provider)
+        publishRuntimeState()
+    }
+
+    func updateAIModelID(_ modelID: String) {
+        runtimeState.setupState.updateAIDiagnosticAssistant(modelID: modelID)
+        publishRuntimeState()
+    }
+
+    func updateAIBaseURL(_ baseURL: String) {
+        runtimeState.setupState.updateAIDiagnosticAssistant(baseURL: baseURL)
+        publishRuntimeState()
+    }
+
+    func updateAIAPIKeyDraft(_ draft: String) {
+        runtimeState.setupState.updateAIDiagnosticAssistantAPIKeyDraft(draft)
+        publishRuntimeState()
+    }
+
+    func testAIConnection() {
+        guard let tester = aiConnectionTester else {
+            return
+        }
+
+        let provider = runtimeState.setupState.aiDiagnosticAssistant.config.provider
+        let config = runtimeState.setupState.aiDiagnosticAssistant.config
+        let draft = runtimeState.setupState.aiDiagnosticAssistant.hasAPIKeyDraft
+            ? runtimeState.setupState.aiDiagnosticAssistant.apiKeyDraft
+            : nil
+
+        runtimeState.setupState.applyAIDiagnosticAssistantTestConnectionResult(nil)
+        publishRuntimeState()
+
+        Task {
+            let result = await tester.testConnection(config: config, provider: provider, apiKeyOverride: draft)
+            runtimeState.setupState.applyAIDiagnosticAssistantTestConnectionResult(result)
+            publishRuntimeState()
+        }
+    }
+
     func selectSetupContext(_ context: String?) {
         k9sHandoffCoordinator.clear()
         watchTargetLoadTask?.cancel()
@@ -318,6 +384,12 @@ final class MenuBarViewModel: ObservableObject {
     func selectAppSettingsTab() {
         k9sHandoffCoordinator.clear()
         runtimeState.selectAppSettingsTab()
+        publishRuntimeState()
+    }
+
+    func selectAppPage(_ page: SettingsTabSelection) {
+        k9sHandoffCoordinator.clear()
+        runtimeState.selectAppPage(page)
         publishRuntimeState()
     }
 

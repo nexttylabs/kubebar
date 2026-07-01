@@ -8,6 +8,7 @@ struct SettingsRootView: View {
     let onPrepare: () -> Void
     let onComplete: () -> Bool
     let onSelectAppSettings: () -> Void
+    let onSelectAppPage: (SettingsTabSelection) -> Void
     let onSelectContext: (String?) -> Void
     let onRetryTargets: () -> Void
     let onToggleStartAtLogin: (Bool) -> Void
@@ -16,6 +17,11 @@ struct SettingsRootView: View {
     let onRemoveKubeconfigPath: (Int) -> Void
     let onMoveKubeconfigPathUp: (Int) -> Void
     let onMoveKubeconfigPathDown: (Int) -> Void
+    let onUpdateAIProvider: (AIProvider) -> Void
+    let onUpdateAIModelID: (String) -> Void
+    let onUpdateAIBaseURL: (String) -> Void
+    let onUpdateAIAPIKeyDraft: (String) -> Void
+    let onTestAIConnection: () -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -24,6 +30,7 @@ struct SettingsRootView: View {
             primaryActionTitle: state.primaryActionTitle(isEditingExistingConfig: isEditingExistingConfig),
             onComplete: completeAndDismissIfSaved,
             onSelectAppSettings: onSelectAppSettings,
+            onSelectAppPage: onSelectAppPage,
             onSelectContext: onSelectContext,
             onRetryTargets: onRetryTargets,
             onToggleStartAtLogin: onToggleStartAtLogin,
@@ -31,7 +38,12 @@ struct SettingsRootView: View {
             onAddKubeconfigPaths: chooseKubeconfigPaths,
             onRemoveKubeconfigPath: onRemoveKubeconfigPath,
             onMoveKubeconfigPathUp: onMoveKubeconfigPathUp,
-            onMoveKubeconfigPathDown: onMoveKubeconfigPathDown
+            onMoveKubeconfigPathDown: onMoveKubeconfigPathDown,
+            onUpdateAIProvider: onUpdateAIProvider,
+            onUpdateAIModelID: onUpdateAIModelID,
+            onUpdateAIBaseURL: onUpdateAIBaseURL,
+            onUpdateAIAPIKeyDraft: onUpdateAIAPIKeyDraft,
+            onTestAIConnection: onTestAIConnection
         )
         .frame(
             width: SettingsWindowLayout.width,
@@ -68,8 +80,8 @@ struct SettingsRootView: View {
 }
 
 private enum SettingsWindowLayout {
-    static let width: CGFloat = 640
-    static let height: CGFloat = 560
+    static let width: CGFloat = 760
+    static let height: CGFloat = 620
 }
 
 @MainActor
