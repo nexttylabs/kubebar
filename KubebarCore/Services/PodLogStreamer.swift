@@ -245,6 +245,17 @@ public final class ProcessPodLogStreamer: PodLogStreaming, @unchecked Sendable {
                 stdout.fileHandleForReading.readabilityHandler = nil
                 stderr.fileHandleForReading.readabilityHandler = nil
                 terminatedProcess.terminationHandler = nil
+
+                let remainingStdout = stdout.fileHandleForReading.readDataToEndOfFile()
+                if let chunk = String(data: remainingStdout, encoding: .utf8), !chunk.isEmpty {
+                    continuation.yield(chunk)
+                }
+
+                let remainingStderr = stderr.fileHandleForReading.readDataToEndOfFile()
+                if !remainingStderr.isEmpty {
+                    processBox.appendStderr(remainingStderr)
+                }
+
                 processBox.clearProcess()
 
                 if terminatedProcess.terminationStatus == 0 || processBox.wasCancelled {

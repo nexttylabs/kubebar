@@ -19,9 +19,9 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
-- **AI Diagnostic Assistant**: an optional app-wide Settings feature for
-  manually testing a configured AI provider and, in a later diagnostic slice,
-  explaining user-approved warning text. It is display/help behavior only and
+- **AI Diagnostic Assistant**: an optional app-wide feature for manually testing
+  a configured AI provider and, from a Pod troubleshooting surface, explaining
+  user-approved Pod diagnostic context. It is display/help behavior only and
   must not change `Health category`.
 - **AI Provider configuration**: non-secret app-wide provider metadata such as
   provider kind, `Model ID`, and an `OpenAI-compatible` `Base URL`. It belongs
@@ -32,9 +32,12 @@
 - **OpenAI-compatible provider**: a custom endpoint that uses only `Bearer` API
   key authentication, `Base URL`, and `Model ID` in the first version. Custom
   headers are out of scope.
-- **Warning text diagnostic input**: a future manually submitted AI diagnostic
-  payload limited to warning summary text. It does not include Pod logs,
-  Kubernetes Secrets, raw `kubectl` output, kubeconfig content, or cluster JSON.
+- **AI Pod diagnostic input**: a manually submitted AI diagnostic payload from
+  the Pod Micro-Logs Drawer. It is limited to the selected Pod's display-ready
+  status, up to 3 related warning summaries, and a freshly read, bounded,
+  redacted `kubectl logs --tail=50` sample. It does not include Kubernetes
+  Secrets, kubeconfig content, raw cluster JSON, full command transcripts, or
+  automatically executed remediation.
 - **Pod Micro-Logs Drawer**: a user-opened focusable log window for a single
   `Bad` Pod row that streams a bounded `kubectl logs --tail=100 -f` view
   through Kubebar's app-owned context and kubeconfig. It is temporary
@@ -106,8 +109,10 @@ explicitly changes that scope.
 - Pod Micro-Logs Drawer: `KubebarCore/Models/MenuDisplayModel.swift` carries
   display-ready Pod row identity, `KubebarCore/Services/HealthEvaluator.swift`
   maps `PodDetail` into `PodItemDisplay`, `KubebarCore/Services/CommandRunner.swift`
-  owns process-launch environment behavior, `Kubebar/MenuBarViewModel.swift`
-  owns app-owned context and lifecycle cancellation, and
-  `Kubebar/Views/PodsTabView.swift` plus `Kubebar/Views/MenuBarRootView.swift`
-  own the row entry point and focusable log window UI. The log body should be
-  hosted by a Read-only log text view rather than a hand-built text scroller.
+  owns process-launch environment behavior, `KubebarCore/Services/PodDiagnosticLogReader.swift`
+  owns finite AI diagnostic log reads, `KubebarCore/Services/AIPodDiagnosticRequester.swift`
+  owns provider diagnostic requests, `Kubebar/MenuBarViewModel.swift` owns
+  app-owned context and lifecycle cancellation, and `Kubebar/Views/PodsTabView.swift`
+  plus `Kubebar/Views/MenuBarRootView.swift` own the row entry point and
+  focusable log window UI. The log body should be hosted by a Read-only log
+  text view rather than a hand-built text scroller.

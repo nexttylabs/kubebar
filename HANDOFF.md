@@ -1,39 +1,44 @@
 # Kubebar Handoff
 
-**Last updated**: 2026-07-01T11:00:00Z
+**Last updated**: 2026-07-02T04:05:00Z
 
 ## Current State
 
-- Plan: `docs/plans/2026-07-01-002-refactor-settings-sidebar-layout-plan.md`
-- Summary: Settings redesigned from a stacked TabView into a sidebar/detail layout with a dedicated AI Assistant page; UI polish applied.
-- Status: complete with post-review polish.
+- Plan: `docs/plans/2026-07-02-001-feat-ai-pod-diagnostics-plan.md`
+- Summary: Pod Micro-Logs Drawer now has a manual `AI Diagnose this Pod` action that rereads `kubectl logs --tail=50`, sends bounded/redacted Pod context to the configured AI Provider, and renders a transient Markdown diagnosis.
+- Status: complete; Step U1 passed QA.
 - Completed steps:
-  - U1 (closed): Settings state exposes page-oriented navigation while preserving completed configuration behavior.
-  - U2 (closed): Settings renders a sidebar/detail layout with AI Assistant as a focused App page.
+  - U1 (closed): The Pod Micro-Logs Drawer manually renders a safe AI diagnosis for its selected Pod.
 - Active step: none.
+- Known blockers: none.
 
 ## Verification
 
-- `swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests` passed.
+- `swift test --filter AIProviderConnectionTesterTests` passed.
+- `swift test --filter AIPodDiagnosticRequesterTests` passed.
+- `swift test --filter PodLogStreamerTests` passed.
+- `swift test --filter MenuDisplayModelTests` passed.
 - `swift build` passed.
-- `./scripts/swift-quality-gate.sh local` passed (318 tests, 31 suites, BUILD SUCCEEDED, TEST SUCCEEDED).
+- `./scripts/swift-quality-gate.sh local` passed.
 - `rtk git diff --check` clean.
-- App launches cleanly via `./scripts/compile-and-run.sh`.
-
-## UI Polish Applied
-
-- Replaced invalid `k.stack` SF Symbol with `square.3.layers.3d`.
-- Added keyboard shortcuts `Cmd+1`..`Cmd+4` for App pages.
-- Merged AI Assistant sections into "Provider configuration" and "Connection".
-- Base URL hidden unless provider is `OpenAI-compatible`.
-- App pages show descriptive subtitles instead of active context.
-- Removed unnecessary `maxHeight: .infinity` from detail pane.
-- Widened `SettingsRow` content area to 360pt.
-- Raised window height to 620pt.
-- Added warning icon for contexts with no watchlist selected.
-- Unified sidebar row style: both App pages and Contexts use the same `HStack` helper with a fixed 20pt icon width, identical spacing, and optional trailing warning icon, so icons and text align consistently across the App and Contexts sections.
 
 ## Notes
 
-- No automated SwiftUI snapshot tests exist; layout quality is HITL.
-- Native macOS app screenshots require Accessibility consent (not available in this environment).
+- AI Provider API keys remain Keychain-only.
+- AI Pod diagnosis is manual, target-scoped, transient, and does not affect Health category, alerts, watchlist ordering, or menu bar icon state.
+- Suggested `kubectl` commands in the AI report are text only; Kubebar does not execute them.
+- The first quality-gate run exposed a `ProcessPodLogStreamer` stderr drain race; fixed by draining remaining pipe data on termination.
+
+## Compaction Handoff
+
+- Active plan: `docs/plans/2026-07-02-001-feat-ai-pod-diagnostics-plan.md`
+- Active Step ID plus Result: none active; U1 passed — The Pod Micro-Logs Drawer manually renders a safe AI diagnosis for its selected Pod.
+- Priority files for reload:
+  - `Kubebar/MenuBarViewModel.swift`
+  - `Kubebar/Views/MenuBarRootView.swift`
+  - `KubebarCore/Services/AIPodDiagnosticRequester.swift`
+  - `KubebarCore/Services/PodDiagnosticLogReader.swift`
+  - `docs/architecture/runtime-invariants.md`
+- Uncommitted work summary: AI Pod diagnosis implementation, docs/spec/plan/changelog, Xcode project references, and focused tests are uncommitted.
+- Session decisions: primary entry lives in Pod Micro-Logs Drawer, not footer; diagnosis sends display-ready Pod status, up to 3 related warning summaries, and freshly read redacted last 50 log lines; reports are transient and no command is auto-executed.
+- Next boundary skill: none required unless user asks for follow-up; otherwise ready for review/commit.

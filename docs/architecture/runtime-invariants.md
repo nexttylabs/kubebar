@@ -121,8 +121,16 @@ These are the rules Kubebar must keep true at runtime.
 - AI Test Connection is manually triggered. It sends a minimal provider probe
   with no Kubernetes data: no warning text, Pod logs, kubeconfig content, raw
   `kubectl` output, or cluster JSON.
-- AI diagnostic input, when implemented in a future plan, is limited to
-  user-approved warning summary text and must remain manually triggered.
+- AI Pod diagnosis is manually triggered from a specific Pod Micro-Logs Drawer
+  target. It may send only the selected Pod's display-ready status, up to 3
+  related warning summaries, and a freshly read, bounded, redacted
+  `kubectl logs --tail=50` sample to the configured AI Provider.
+- AI Pod diagnosis must clearly disclose the submitted context before or while
+  running, must store no diagnosis history, and must not feed Health State Shift
+  Alerts, watchlist ordering, `HealthEvaluator`, or menu bar icon state.
+- AI Pod diagnosis must not query Kubernetes Secrets, send kubeconfig content,
+  send full raw command transcripts, send raw cluster JSON, expose provider raw
+  response bodies, or automatically execute suggested `kubectl` commands.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
   of the first scan.
