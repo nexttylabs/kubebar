@@ -15,6 +15,7 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
     public let message: String?
     public let fullMessage: String?
     public let isTracked: Bool
+    public let diagnosticTarget: WarningEventDiagnosticTarget?
 
     public var summary: String {
         let base = "\(reason) \(location) \(age)"
@@ -86,7 +87,8 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
         occurrenceCount: Int,
         message: String?,
         fullMessage: String? = nil,
-        isTracked: Bool = false
+        isTracked: Bool = false,
+        diagnosticTarget: WarningEventDiagnosticTarget? = nil
     ) {
         self.id = id
         self.reason = reason
@@ -96,6 +98,7 @@ public struct WarningEventDisplay: Equatable, Sendable, Identifiable {
         self.message = message
         self.fullMessage = fullMessage ?? message
         self.isTracked = isTracked
+        self.diagnosticTarget = diagnosticTarget
     }
 }
 

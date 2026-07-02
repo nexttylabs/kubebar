@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AIPodDiagnosticRequester: Sendable {
+public struct AIEventDiagnosticRequester: Sendable {
     public static let transportFailureMessage = "Could not reach the AI provider. Check your network and Base URL."
     public static let unreadableResponseMessage = "Could not read the AI diagnosis. Try again later."
 
@@ -13,10 +13,10 @@ public struct AIPodDiagnosticRequester: Sendable {
     }
 
     public func diagnose(
-        context: AIPodDiagnosticContext,
+        context: AIEventDiagnosticContext,
         config: AIDiagnosticAssistantConfig,
         provider: AIProvider
-    ) async -> AIPodDiagnosticResult {
+    ) async -> AIEventDiagnosticResult {
         guard !config.modelID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return .failed(AIProviderConnectionTester.missingModelIDMessage)
         }
@@ -64,7 +64,7 @@ public struct AIPodDiagnosticRequester: Sendable {
         config: AIDiagnosticAssistantConfig,
         provider: AIProvider,
         apiKey: String,
-        context: AIPodDiagnosticContext
+        context: AIEventDiagnosticContext
     ) -> URLRequest? {
         switch provider {
         case .openAI:
@@ -101,7 +101,7 @@ public struct AIPodDiagnosticRequester: Sendable {
         url: String,
         apiKey: String,
         model: String,
-        context: AIPodDiagnosticContext
+        context: AIEventDiagnosticContext
     ) -> URLRequest? {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 45)
@@ -126,7 +126,7 @@ public struct AIPodDiagnosticRequester: Sendable {
         url: String,
         apiKey: String,
         model: String,
-        context: AIPodDiagnosticContext
+        context: AIEventDiagnosticContext
     ) -> URLRequest? {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 45)
@@ -145,7 +145,7 @@ public struct AIPodDiagnosticRequester: Sendable {
         return request
     }
 
-    private func geminiRequest(model: String, apiKey: String, context: AIPodDiagnosticContext) -> URLRequest? {
+    private func geminiRequest(model: String, apiKey: String, context: AIEventDiagnosticContext) -> URLRequest? {
         guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent") else {
             return nil
         }
@@ -167,42 +167,41 @@ public struct AIPodDiagnosticRequester: Sendable {
         return request
     }
 
-    private func diagnosticPrompt(from context: AIPodDiagnosticContext) -> String {
-        let warningText = context.warnings.prefix(3).map { warning in
-            "- \(warning.reason) \(warning.location) \(warning.age): \(warning.message ?? "No message")"
-        }.joined(separator: "\n")
-        let logs = context.logLines
-            .suffix(50)
-            .map(AIDiagnosticRedactor.redact)
+    private func diagnosticPrompt(from context: AIEventDiagnosticContext) -> String {
+        let eventText = context.events
+            .suffix(5)
+            .enumerated()
+            .map { index, event in
+                """
+                Event \(index + 1):
+                - Reason: \(event.reason)
+                - Namespace: \(event.namespace ?? "none")
+                - Object: \(event.objectKind ?? "unknown")/\(event.objectName ?? "unknown")
+                - Observed at: \(event.observedAt ?? "unknown")
+                - Count: \(event.count)
+                - Message: \(AIDiagnosticRedactor.redact(event.message ?? "No message"))
+                """
+            }
             .joined(separator: "\n")
         let staleText = context.isStale ? "stale" : "fresh"
 
         return """
-        Diagnose this Kubernetes Pod for a human operator.
+        Diagnose these Kubernetes Warning Events for a human operator.
 
-        Target:
+        Target warning group:
         - Context: \(context.target.contextName)
-        - Namespace: \(context.target.namespace)
-        - Pod: \(context.target.podName)
+        - Namespace: \(context.target.namespace ?? "none")
+        - Object kind: \(context.target.objectKind)
+        - Object name: \(context.target.objectName)
+        - Reason: \(context.target.reason)
         - Snapshot freshness: \(staleText)
 
-        Current Pod status:
-        - State: \(context.podStatus.state)
-        - Ready: \(context.podStatus.ready)
-        - Reason: \(context.podStatus.reason ?? "unknown")
-        - Detail: \(context.podStatus.detail ?? "none")
-
-        Latest warning summaries, capped at 3:
-        \(warningText.isEmpty ? "- No related warning summaries available" : warningText)
-
-        Last 50 log lines, redacted before submission:
-        ```text
-        \(logs.isEmpty ? "No recent log lines returned" : logs)
-        ```
+        Latest matching Warning Events, capped at 5 and redacted before submission:
+        \(eventText.isEmpty ? "- No matching warning events returned" : eventText)
 
         Return concise Markdown with exactly these sections:
         ## 🔍 **Possible causes**
-        - 2-4 likely causes grounded in the status, warnings, and logs.
+        - 2-4 likely causes grounded only in the Warning Events above.
 
         ## 🛠️ **Actionable fixes**
         - 2-5 practical next actions.
@@ -249,27 +248,5 @@ public struct AIPodDiagnosticRequester: Sendable {
         }
     }
 
-    private static let systemPrompt = "You are a concise Kubernetes incident assistant. Use only the provided context. Do not claim you executed commands."
-}
-
-public enum AIDiagnosticRedactor {
-    public static func redact(_ text: String) -> String {
-        var redacted = text
-        let replacements: [(String, String)] = [
-            (#"(?i)(authorization\s*[:=]\s*bearer\s+)[^\s,;]+"#, "$1[REDACTED]"),
-            (#"(?i)(bearer\s+)[A-Za-z0-9._\-]+"#, "$1[REDACTED]"),
-            (#"(?i)((?:api[_-]?key|token|password|passwd|secret)\s*[:=]\s*)[^\s,;]+"#, "$1[REDACTED]"),
-            (#"(?i)(x-api-key\s*[:=]\s*)[^\s,;]+"#, "$1[REDACTED]")
-        ]
-
-        for (pattern, replacement) in replacements {
-            redacted = redacted.replacingOccurrences(
-                of: pattern,
-                with: replacement,
-                options: .regularExpression
-            )
-        }
-
-        return redacted
-    }
+    private static let systemPrompt = "You are a concise Kubernetes incident assistant. Use only the provided event context. Do not claim you executed commands."
 }

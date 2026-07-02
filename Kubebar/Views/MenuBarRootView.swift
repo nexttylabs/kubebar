@@ -4,6 +4,7 @@ import KubebarCore
 
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
+    let eventDiagnosis: EventDiagnosisPresentation?
     let activeContextName: String?
     let contextSelectorContexts: [String]
     let isShowingSetup: Bool
@@ -15,6 +16,8 @@ struct MenuBarRootView: View {
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
     let onOpenPodLogs: (PodLogTarget) -> Void
+    let onDiagnoseWarningEvent: (WarningEventDiagnosticTarget) -> Void
+    let onDismissWarningEventDiagnosis: () -> Void
     let onQuit: () -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
@@ -133,8 +136,11 @@ struct MenuBarRootView: View {
         case .overview:
             OverviewTabView(
                 display: display,
+                eventDiagnosis: eventDiagnosis,
                 k9sHandoffState: k9sHandoffState,
-                onOpenK9sHandoff: onOpenK9sHandoff
+                onOpenK9sHandoff: onOpenK9sHandoff,
+                onDiagnoseWarningEvent: onDiagnoseWarningEvent,
+                onDismissWarningEventDiagnosis: onDismissWarningEventDiagnosis
             )
         case .nodes:
             NodesTabView(
@@ -382,7 +388,7 @@ struct PodLogDrawerView: View {
             }
         case let .success(markdown):
             ScrollView {
-                AIDiagnosisMarkdownView(markdown: markdown)
+                AIDiagnosisContentView(markdown: markdown)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
@@ -398,20 +404,6 @@ struct PodLogDrawerView: View {
         searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? ""
             : "\(matchCount) matches"
-    }
-}
-
-private struct AIDiagnosisMarkdownView: View {
-    let markdown: String
-
-    var body: some View {
-        if let attributed = try? AttributedString(markdown: markdown) {
-            Text(attributed)
-                .font(.caption)
-        } else {
-            Text(markdown)
-                .font(.caption)
-        }
     }
 }
 

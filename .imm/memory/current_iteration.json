@@ -4,52 +4,54 @@
     "1": {
       "number": 1,
       "step_id": "U1",
-      "result": "The Pod Micro-Logs Drawer manually renders a safe AI diagnosis for its selected Pod.",
-      "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter PodLogStreamerTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+      "result": "`Overview` `Recent Warnings` manually renders a safe AI diagnosis from the latest 5 fresh matching Warning Events.",
+      "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
       "test_scenarios": [
-        "Pod AI action is only in the Pod log drawer",
-        "finite log request uses `--context`, `logs`, `--tail=50`, namespace, and pod name without `-f`",
-        "explicit kubeconfig paths flow into the finite log environment",
+        "Overview Recent Warnings exposes the AI action while Events tab rows do not",
+        "the diagnostic reader builds a fresh `kubectl --context <context> get events --all-namespaces --field-selector type=Warning -o json` style read with effective kubeconfig overrides",
+        "exact matching uses `namespace`, `objectKind`, `objectName`, and `reason` without substring fallback",
+        "provider input is sorted newest first and capped at 5 matching Warning Events",
+        "no matching fresh events produces a safe retryable failure",
+        "event messages are redacted before provider submission",
         "missing provider model/key/base URL returns safe local failure",
-        "diagnostic request body includes Pod status, 3 warning summaries, redacted last 50 log lines, and required Markdown headings",
-        "obvious secrets in logs are redacted before submission",
-        "provider/network errors never expose API keys/Bearer tokens/raw response body",
-        "report state supports loading, success, retryable failure, unavailable logs, and empty logs",
+        "provider/network errors never expose API keys/Bearer tokens/raw response bodies",
+        "request body includes structured event context and required Markdown instructions but no Pod logs, kubeconfig content, raw cluster JSON, or raw kubectl transcript",
+        "diagnosis state supports loading, success, retryable failure, unavailable configuration, and stale-display disclosure",
         "AI suggested commands remain text only and no mutation command is executed by Kubebar",
         "docs preserve Health category independence"
       ],
       "discovery_cache": [
         {
-          "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
-          "reason": "provider request/redaction pattern"
+          "path": "Kubebar/Views/OverviewTabView.swift",
+          "reason": "Overview Recent Warnings UI"
         },
         {
-          "path": "KubebarCore/Services/AIProviderCredentialStore.swift",
-          "reason": "Keychain protocol"
-        },
-        {
-          "path": "KubebarCore/Services/HTTPClient.swift",
-          "reason": "provider HTTP boundary"
-        },
-        {
-          "path": "KubebarCore/Services/PodLogStreamer.swift",
-          "reason": "kubectl logs context/kubeconfig pattern"
-        },
-        {
-          "path": "Kubebar/MenuBarViewModel.swift",
-          "reason": "Pod drawer lifecycle and AI settings callbacks"
-        },
-        {
-          "path": "Kubebar/Views/MenuBarRootView.swift",
-          "reason": "PodLogDrawerView"
-        },
-        {
-          "path": "Kubebar/Views/PodLogWindowPresenter.swift",
-          "reason": "log window host"
+          "path": "Kubebar/Views/WarningEventsView.swift",
+          "reason": "shared warning row view and Events-tab separation risk"
         },
         {
           "path": "KubebarCore/Models/MenuDisplayModel.swift",
-          "reason": "display-ready warnings and Pod rows"
+          "reason": "display-ready warnings and diagnostic target value"
+        },
+        {
+          "path": "KubebarCore/Services/HealthEvaluator.swift",
+          "reason": "warning grouping key"
+        },
+        {
+          "path": "KubebarCore/Services/KubectlClusterReader.swift",
+          "reason": "Warning Event kubectl decode/command pattern"
+        },
+        {
+          "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+          "reason": "provider validation pattern"
+        },
+        {
+          "path": "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "reason": "diagnostic requester/redaction pattern"
+        },
+        {
+          "path": "Kubebar/MenuBarViewModel.swift",
+          "reason": "transient AI state and app-owned config"
         },
         {
           "path": "docs/architecture/runtime-invariants.md",
@@ -64,83 +66,86 @@
       "depends_on": [],
       "agent_hint": null,
       "state": "closed",
-      "activated_at": "2026-07-02T03:58:07Z",
+      "activated_at": "2026-07-02T07:07:13Z",
       "execution_evidence": {
         "changed_files": [
           "CONTEXT.md",
           "docs/architecture/runtime-invariants.md",
-          ".imm/specs/2026-07-02-ai-pod-diagnostics.md",
-          "docs/plans/2026-07-02-001-feat-ai-pod-diagnostics-plan.md",
-          "changelog.d/ai-pod-diagnostics.added.md",
+          ".imm/specs/2026-07-02-ai-event-diagnostics.md",
+          "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
+          "changelog.d/ai-event-diagnostics.added.md",
           "Kubebar.xcodeproj/project.pbxproj",
-          "KubebarCore/Models/AIPodDiagnosis.swift",
-          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
-          "KubebarCore/Services/PodDiagnosticLogReader.swift",
-          "KubebarCore/Services/PodLogStreamer.swift",
+          "KubebarCore/Models/AIEventDiagnosis.swift",
+          "KubebarCore/Models/MenuDisplayModel.swift",
+          "KubebarCore/Services/HealthEvaluator.swift",
+          "KubebarCore/Services/WarningEventDiagnosticReader.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
           "Kubebar/MenuBarViewModel.swift",
           "Kubebar/Views/MenuBarRootView.swift",
-          "Kubebar/Views/PodLogWindowPresenter.swift",
-          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
-          "KubebarTests/Services/PodLogStreamerTests.swift"
+          "Kubebar/Views/OverviewTabView.swift",
+          "Kubebar/KubebarApp.swift",
+          "KubebarTests/Services/WarningEventDiagnosticReaderTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Models/MenuDisplayModelTests.swift"
         ],
-        "verification_result": "passed: focused Swift tests, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check",
-        "verification_command": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIPodDiagnosticRequesterTests && swift test --filter PodLogStreamerTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
-        "notes": "TDD evidence: RED captured before implementation with missing AIPodDiagnosticContext/AIPodWarningContext/PodDiagnosticLogReadRequest types and inaccessible local TestError; GREEN implemented contextual Pod Micro-Logs Drawer AI diagnosis with finite --tail=50 log reread, redacted provider request, transient Markdown report UI, docs/spec/plan/changelog updates, and Xcode project source references. One quality-gate run exposed flaky stderr drain in ProcessPodLogStreamer; fixed by draining remaining pipes on termination and reran quality gate successfully.",
-        "recorded_at": "2026-07-02T04:05:05Z"
+        "verification_result": "passed: focused Swift tests, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check after UI review follow-up",
+        "verification_command": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "notes": "Implemented Overview-only Recent Warnings AI event diagnosis. Addressed UI review follow-up by making each sparkles button accessible/help text include warning reason and location, and by adding a dismiss action to the transient diagnosis panel. Focused tests, swift build, quality gate, and diff check passed after follow-up.",
+        "recorded_at": "2026-07-02T07:44:12Z"
       },
-      "closed_at": "2026-07-02T04:05:31Z"
+      "closed_at": "2026-07-02T07:44:55Z"
     }
   },
   "pending_follow_up": null,
   "last_review": {
     "decision": "pass",
-    "evidence": "",
-    "artifacts": "",
-    "notes": "",
-    "recorded_at": "2026-07-02T04:05:31Z"
+    "evidence": "Focused tests, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check passed after implementation and UI follow-up. UI review findings fixed: distinctive warning-specific accessibility labels/help and dismiss control for inline diagnosis panel. Code review child returned no findings/output; main-thread verification checked fresh event read, exact matching, latest-5 cap, redaction, no Pod logs, and Events tab remains action-free.",
+    "artifacts": "CONTEXT.md; docs/architecture/runtime-invariants.md; .imm/specs/2026-07-02-ai-event-diagnostics.md; docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md; changelog.d/ai-event-diagnostics.added.md; KubebarCore/Models/AIEventDiagnosis.swift; KubebarCore/Services/WarningEventDiagnosticReader.swift; KubebarCore/Services/AIEventDiagnosticRequester.swift; Kubebar/MenuBarViewModel.swift; Kubebar/Views/OverviewTabView.swift; tests",
+    "notes": "Review closure after bounded same-boundary UI follow-up.",
+    "recorded_at": "2026-07-02T07:44:55Z"
   },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-07-02-001-feat-ai-pod-diagnostics-plan.md",
-    "plan_signature": "71517baf643953a27144615f2663ae37a67c7ec6671d959955966de9b1db2cf1",
+    "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
+    "plan_signature": "c1ec9e5dd5a6c872a34bef00ab6873313a8518edd3fcc217d9f100d849c1a7db",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "The Pod Micro-Logs Drawer manually renders a safe AI diagnosis for its selected Pod.",
-        "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter PodLogStreamerTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "result": "`Overview` `Recent Warnings` manually renders a safe AI diagnosis from the latest 5 fresh matching Warning Events.",
+        "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
         "depends_on": [],
         "discovery_cache": [
           {
-            "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
-            "reason": "provider request/redaction pattern"
+            "path": "Kubebar/Views/OverviewTabView.swift",
+            "reason": "Overview Recent Warnings UI"
           },
           {
-            "path": "KubebarCore/Services/AIProviderCredentialStore.swift",
-            "reason": "Keychain protocol"
-          },
-          {
-            "path": "KubebarCore/Services/HTTPClient.swift",
-            "reason": "provider HTTP boundary"
-          },
-          {
-            "path": "KubebarCore/Services/PodLogStreamer.swift",
-            "reason": "kubectl logs context/kubeconfig pattern"
-          },
-          {
-            "path": "Kubebar/MenuBarViewModel.swift",
-            "reason": "Pod drawer lifecycle and AI settings callbacks"
-          },
-          {
-            "path": "Kubebar/Views/MenuBarRootView.swift",
-            "reason": "PodLogDrawerView"
-          },
-          {
-            "path": "Kubebar/Views/PodLogWindowPresenter.swift",
-            "reason": "log window host"
+            "path": "Kubebar/Views/WarningEventsView.swift",
+            "reason": "shared warning row view and Events-tab separation risk"
           },
           {
             "path": "KubebarCore/Models/MenuDisplayModel.swift",
-            "reason": "display-ready warnings and Pod rows"
+            "reason": "display-ready warnings and diagnostic target value"
+          },
+          {
+            "path": "KubebarCore/Services/HealthEvaluator.swift",
+            "reason": "warning grouping key"
+          },
+          {
+            "path": "KubebarCore/Services/KubectlClusterReader.swift",
+            "reason": "Warning Event kubectl decode/command pattern"
+          },
+          {
+            "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+            "reason": "provider validation pattern"
+          },
+          {
+            "path": "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+            "reason": "diagnostic requester/redaction pattern"
+          },
+          {
+            "path": "Kubebar/MenuBarViewModel.swift",
+            "reason": "transient AI state and app-owned config"
           },
           {
             "path": "docs/architecture/runtime-invariants.md",
@@ -154,14 +159,16 @@
         "parallel_probes": [],
         "agent_hint": null,
         "test_scenarios": [
-          "Pod AI action is only in the Pod log drawer",
-          "finite log request uses `--context`, `logs`, `--tail=50`, namespace, and pod name without `-f`",
-          "explicit kubeconfig paths flow into the finite log environment",
+          "Overview Recent Warnings exposes the AI action while Events tab rows do not",
+          "the diagnostic reader builds a fresh `kubectl --context <context> get events --all-namespaces --field-selector type=Warning -o json` style read with effective kubeconfig overrides",
+          "exact matching uses `namespace`, `objectKind`, `objectName`, and `reason` without substring fallback",
+          "provider input is sorted newest first and capped at 5 matching Warning Events",
+          "no matching fresh events produces a safe retryable failure",
+          "event messages are redacted before provider submission",
           "missing provider model/key/base URL returns safe local failure",
-          "diagnostic request body includes Pod status, 3 warning summaries, redacted last 50 log lines, and required Markdown headings",
-          "obvious secrets in logs are redacted before submission",
-          "provider/network errors never expose API keys/Bearer tokens/raw response body",
-          "report state supports loading, success, retryable failure, unavailable logs, and empty logs",
+          "provider/network errors never expose API keys/Bearer tokens/raw response bodies",
+          "request body includes structured event context and required Markdown instructions but no Pod logs, kubeconfig content, raw cluster JSON, or raw kubectl transcript",
+          "diagnosis state supports loading, success, retryable failure, unavailable configuration, and stale-display disclosure",
           "AI suggested commands remain text only and no mutation command is executed by Kubebar",
           "docs preserve Health category independence"
         ]
@@ -206,17 +213,51 @@
         "decision": "pass",
         "target_kind": "plan_step"
       }
+    },
+    {
+      "at": "2026-07-02T07:00:23Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
+        "plan_signature": "c1ec9e5dd5a6c872a34bef00ab6873313a8518edd3fcc217d9f100d849c1a7db",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-07-02T07:44:55Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-02T07:46:30Z",
+      "action": "finish_reset",
+      "details": {
+        "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md"
+      }
+    },
+    {
+      "at": "2026-07-02T07:46:58Z",
+      "action": "finish_reset",
+      "details": {
+        "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md"
+      }
     }
   ],
   "requires_replan": false,
   "runtime_status": "idle",
-  "plan_path": "docs/plans/2026-07-02-001-feat-ai-pod-diagnostics-plan.md",
-  "plan_summary": "Add a contextual, manually triggered `AI Diagnose this Pod` action to the Pod Micro-Logs Drawer that rereads the last 50 Pod log lines, sends bounded redacted context to the configured AI Provider, and renders a transient Markdown diagnosis.",
-  "plan_signature": "71517baf643953a27144615f2663ae37a67c7ec6671d959955966de9b1db2cf1",
-  "plan_last_validated_at": "2026-07-02T03:58:07Z",
+  "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
+  "plan_summary": "Add a manual AI diagnosis action only to `Overview` `Recent Warnings` rows that rereads fresh Warning Events through `kubectl`, filters by exact `namespace`, `objectKind`, `objectName`, and `reason`, sends the latest 5 matching events to the configured AI Provider, and renders a transient Markdown diagnosis.",
+  "plan_signature": "c1ec9e5dd5a6c872a34bef00ab6873313a8518edd3fcc217d9f100d849c1a7db",
+  "plan_last_validated_at": "2026-07-02T07:00:23Z",
   "completed_steps": [
     1
   ],
   "active_step": null,
-  "next_action": null
+  "next_action": null,
+  "reset_reason": "intentional_reset"
 }

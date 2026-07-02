@@ -1313,6 +1313,39 @@ struct MenuDisplayModelTests {
         #expect(display.warningEventSummaries.first?.summary == "BackOff api/pod/checkout 2m ago x4")
         #expect(display.warningEventSummaries.first?.message == "newest warning")
         #expect(display.warningEventSummaries.first?.secondaryText == "api/pod/checkout - newest warning")
+        #expect(display.warningEventSummaries.first?.diagnosticTarget == WarningEventDiagnosticTarget(
+            contextName: "prod",
+            namespace: "api",
+            objectKind: "Pod",
+            objectName: "checkout",
+            reason: "BackOff"
+        ))
+    }
+
+    @Test("warning rows without structured object target do not expose AI diagnostic target")
+    func warningRowsWithoutStructuredObjectTargetDoNotExposeDiagnosticTarget() {
+        let snapshot = ClusterSnapshot(
+            contextName: "prod",
+            nodesSection: .available(NodeSummary(ready: 3, total: 3)),
+            podsSection: .available(PodSummary(running: 12, total: 12)),
+            warningEventsSection: .available([
+                warningEvent(
+                    reason: "BackOff",
+                    namespace: nil,
+                    objectKind: nil,
+                    objectName: nil,
+                    observedAt: Date(timeIntervalSince1970: 100),
+                    count: 1
+                )
+            ]),
+            workloadsSection: .available([]),
+            capturedAt: Date(timeIntervalSince1970: 100)
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 220))
+
+        #expect(display.warningEventSummaries.first?.diagnosticTarget == nil)
+        #expect(display.overview.recentWarnings.first?.diagnosticTarget == nil)
     }
 
     @Test("warning summaries are capped at three rows")

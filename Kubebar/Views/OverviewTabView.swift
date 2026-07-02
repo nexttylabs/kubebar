@@ -3,8 +3,11 @@ import KubebarCore
 
 struct OverviewTabView: View {
     let display: MenuDisplayModel
+    let eventDiagnosis: EventDiagnosisPresentation?
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
+    let onDiagnoseWarningEvent: (WarningEventDiagnosticTarget) -> Void
+    let onDismissWarningEventDiagnosis: () -> Void
 
     private let columns = [
         GridItem(.flexible(), spacing: 8),
@@ -26,7 +29,12 @@ struct OverviewTabView: View {
                 }
             }
 
-            RecentWarningsOverviewView(display: display.overview)
+            RecentWarningsOverviewView(
+                display: display.overview,
+                eventDiagnosis: eventDiagnosis,
+                onDiagnoseWarningEvent: onDiagnoseWarningEvent,
+                onDismissWarningEventDiagnosis: onDismissWarningEventDiagnosis
+            )
         }
     }
 }
@@ -111,6 +119,9 @@ private struct OverviewCardView: View {
 
 private struct RecentWarningsOverviewView: View {
     let display: OverviewDisplay
+    let eventDiagnosis: EventDiagnosisPresentation?
+    let onDiagnoseWarningEvent: (WarningEventDiagnosticTarget) -> Void
+    let onDismissWarningEventDiagnosis: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -136,12 +147,49 @@ private struct RecentWarningsOverviewView: View {
                 readableText(display.recentWarningsEmptyMessage)
             } else {
                 ForEach(display.recentWarnings) { row in
-                    WarningEventRowView(row: row)
+                    recentWarningRow(row)
                 }
             }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilitySummary)
+    }
+
+    private func recentWarningRow(_ row: WarningEventDisplay) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                WarningEventRowView(row: row)
+
+                if let target = row.diagnosticTarget {
+                    Button {
+                        onDiagnoseWarningEvent(target)
+                    } label: {
+                        Label("AI Diagnose warning", systemImage: "sparkles")
+                            .labelStyle(.iconOnly)
+                    }
+                    .buttonStyle(.borderless)
+                    .controlSize(.small)
+                    .disabled(eventDiagnosis?.target == target && eventDiagnosis?.state.isLoading == true)
+                    .help(Text(aiDiagnosisHelp(for: row)))
+                    .accessibilityLabel(aiDiagnosisHelp(for: row))
+                }
+            }
+
+            if let eventDiagnosis, eventDiagnosis.target == row.diagnosticTarget {
+                EventDiagnosisPanel(
+                    diagnosis: eventDiagnosis,
+                    onRetry: {
+                        onDiagnoseWarningEvent(eventDiagnosis.target)
+                    },
+                    onDismiss: onDismissWarningEventDiagnosis
+                )
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func aiDiagnosisHelp(for row: WarningEventDisplay) -> String {
+        "AI Diagnose \(row.reason) warning for \(row.location)"
     }
 
     private func readableText(_ value: String) -> some View {
@@ -175,5 +223,80 @@ private struct RecentWarningsOverviewView: View {
         }
 
         return parts.joined(separator: ", ")
+    }
+}
+
+private struct EventDiagnosisPanel: View {
+    let diagnosis: EventDiagnosisPresentation
+    let onRetry: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Label("AI Diagnosis", systemImage: "sparkles")
+                        .font(.caption.weight(.semibold))
+
+                    Spacer()
+
+                    if diagnosis.state.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+
+                    Button {
+                        onDismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .controlSize(.small)
+                    .help(Text("Dismiss AI diagnosis"))
+                    .accessibilityLabel("Dismiss AI diagnosis")
+                }
+
+                Text("Manual action. Sends the latest 5 matching Warning Events to your configured AI Provider. Kubebar will not execute suggested commands.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                content
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch diagnosis.state {
+        case .idle:
+            Text("Click the sparkles button to generate a transient diagnosis.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .loading:
+            Text("Analyzing latest matching warning events...")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case let .failed(message):
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer()
+
+                Button("Retry", action: onRetry)
+                    .controlSize(.small)
+            }
+        case let .success(markdown):
+            ScrollView {
+                AIDiagnosisContentView(markdown: markdown)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+            .frame(maxHeight: 160)
+        }
     }
 }

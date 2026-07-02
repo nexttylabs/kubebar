@@ -23,6 +23,15 @@ struct PodLogDrawerPresentation: Identifiable, Equatable {
     }
 }
 
+struct EventDiagnosisPresentation: Identifiable, Equatable {
+    var target: WarningEventDiagnosticTarget
+    var state: AIEventDiagnosisState
+
+    var id: String {
+        target.id
+    }
+}
+
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     @Published private(set) var display: MenuDisplayModel
@@ -40,6 +49,7 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var isRefreshing: Bool
     @Published private(set) var k9sHandoffState: K9sHandoffLaunchState
     @Published private(set) var podLogDrawer: PodLogDrawerPresentation?
+    @Published private(set) var eventDiagnosis: EventDiagnosisPresentation?
     @Published var podLogSearchQuery: String = ""
 
     private let configStore: AppConfigStore
@@ -63,14 +73,17 @@ final class MenuBarViewModel: ObservableObject {
     private let networkReachability: any NetworkReachability
     private let podLogStreamer: any PodLogStreaming
     private let podDiagnosticLogReader: any PodDiagnosticLogReading
+    private let warningEventDiagnosticReader: any WarningEventDiagnosticReading
     private let aiCredentialStore: any AIProviderCredentialStoring
     private let aiConnectionTester: AIProviderConnectionTester?
     private let aiPodDiagnosticRequester: AIPodDiagnosticRequester?
+    private let aiEventDiagnosticRequester: AIEventDiagnosticRequester?
     private var isNetworkAvailable: Bool = true
     private var healthShiftAlertTracker: HealthShiftAlertTracker
     private var healthShiftAlertSettingsRequestGate: HealthShiftAlertSettingsRequestGate
     private var podLogStreamTask: Task<Void, Never>?
     private var podDiagnosisTask: Task<Void, Never>?
+    private var eventDiagnosisTask: Task<Void, Never>?
     private var activePodLogSession: PodLogStreamSession?
 
     /// Delay before resuming automatic refresh after network recovery.
@@ -91,12 +104,17 @@ final class MenuBarViewModel: ObservableObject {
         networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
         podLogStreamer: any PodLogStreaming = ProcessPodLogStreamer(),
         podDiagnosticLogReader: any PodDiagnosticLogReading = CommandPodDiagnosticLogReader(),
+        warningEventDiagnosticReader: any WarningEventDiagnosticReading = CommandWarningEventDiagnosticReader(),
         aiCredentialStore: any AIProviderCredentialStoring = KeychainAIProviderCredentialStore(),
         aiConnectionTester: AIProviderConnectionTester? = AIProviderConnectionTester(
             credentialStore: KeychainAIProviderCredentialStore(),
             httpClient: URLSessionHTTPClient()
         ),
         aiPodDiagnosticRequester: AIPodDiagnosticRequester? = AIPodDiagnosticRequester(
+            credentialStore: KeychainAIProviderCredentialStore(),
+            httpClient: URLSessionHTTPClient()
+        ),
+        aiEventDiagnosticRequester: AIEventDiagnosticRequester? = AIEventDiagnosticRequester(
             credentialStore: KeychainAIProviderCredentialStore(),
             httpClient: URLSessionHTTPClient()
         ),
@@ -113,9 +131,11 @@ final class MenuBarViewModel: ObservableObject {
         self.networkReachability = networkReachability
         self.podLogStreamer = podLogStreamer
         self.podDiagnosticLogReader = podDiagnosticLogReader
+        self.warningEventDiagnosticReader = warningEventDiagnosticReader
         self.aiCredentialStore = aiCredentialStore
         self.aiConnectionTester = aiConnectionTester
         self.aiPodDiagnosticRequester = aiPodDiagnosticRequester
+        self.aiEventDiagnosticRequester = aiEventDiagnosticRequester
 
         do {
             self.config = try configStore.load()
@@ -136,6 +156,7 @@ final class MenuBarViewModel: ObservableObject {
         self.activeContextName = config.selectedContext
         self.k9sHandoffState = .idle
         self.podLogDrawer = nil
+        self.eventDiagnosis = nil
         self.activePodLogSession = nil
         self.healthShiftAlertTracker = HealthShiftAlertTracker()
         self.healthShiftAlertSettingsRequestGate = HealthShiftAlertSettingsRequestGate()
@@ -166,6 +187,7 @@ final class MenuBarViewModel: ObservableObject {
         networkRecoveryTask?.cancel()
         podLogStreamTask?.cancel()
         podDiagnosisTask?.cancel()
+        eventDiagnosisTask?.cancel()
         networkReachability.stopMonitoring()
     }
 
@@ -638,6 +660,9 @@ final class MenuBarViewModel: ObservableObject {
         staleReason = nil
         k9sHandoffCoordinator.clear()
         healthShiftAlertTracker.reset()
+        eventDiagnosisTask?.cancel()
+        eventDiagnosisTask = nil
+        eventDiagnosis = nil
 
         if clearSnapshot {
             snapshot = nil
@@ -816,6 +841,57 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func dismissWarningEventDiagnosis() {
+        eventDiagnosisTask?.cancel()
+        eventDiagnosisTask = nil
+        eventDiagnosis = nil
+    }
+
+    func diagnoseWarningEventWithAI(_ target: WarningEventDiagnosticTarget) {
+        guard let requester = aiEventDiagnosticRequester else {
+            eventDiagnosis = EventDiagnosisPresentation(target: target, state: .failed("AI diagnosis is unavailable."))
+            return
+        }
+
+        eventDiagnosisTask?.cancel()
+
+        let request = WarningEventDiagnosticReadRequest(target: target, config: config)
+        let reader = warningEventDiagnosticReader
+        let provider = config.aiDiagnosticAssistant.provider
+        let aiConfig = config.aiDiagnosticAssistant
+        let isStale = display.state == .stale
+
+        eventDiagnosis = EventDiagnosisPresentation(target: target, state: .loading)
+
+        eventDiagnosisTask = Task { [weak self] in
+            do {
+                let records = try await reader.readEvents(for: request)
+                try Task.checkCancellation()
+                let context = AIEventDiagnosticContext(
+                    target: target,
+                    events: records.map(AIEventDiagnosticEvent.init(record:)),
+                    isStale: isStale
+                )
+                let result = await requester.diagnose(context: context, config: aiConfig, provider: provider)
+
+                await MainActor.run {
+                    self?.applyAIEventDiagnosticResult(result, for: target)
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    self?.clearAIEventDiagnosisTask(for: target)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.applyAIEventDiagnosticResult(
+                        .failed("Could not read recent warning events: \(Self.failureReason(from: error))"),
+                        for: target
+                    )
+                }
+            }
+        }
+    }
+
     private func resetK9sHandoffStateForCurrentDisplay() {
         guard let target = k9sHandoffCoordinator.state.target else {
             return
@@ -904,6 +980,29 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         podDiagnosisTask = nil
+    }
+
+    private func applyAIEventDiagnosticResult(_ result: AIEventDiagnosticResult, for target: WarningEventDiagnosticTarget) {
+        guard var presentation = eventDiagnosis, presentation.target == target else {
+            return
+        }
+
+        switch result {
+        case let .success(markdown):
+            presentation.state = .success(markdown: markdown)
+        case let .failed(message):
+            presentation.state = .failed(message)
+        }
+        eventDiagnosis = presentation
+        eventDiagnosisTask = nil
+    }
+
+    private func clearAIEventDiagnosisTask(for target: WarningEventDiagnosticTarget) {
+        guard eventDiagnosis?.target == target else {
+            return
+        }
+
+        eventDiagnosisTask = nil
     }
 
     private struct AIPodDiagnosticContextBase {

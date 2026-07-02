@@ -131,6 +131,13 @@ These are the rules Kubebar must keep true at runtime.
 - AI Pod diagnosis must not query Kubernetes Secrets, send kubeconfig content,
   send full raw command transcripts, send raw cluster JSON, expose provider raw
   response bodies, or automatically execute suggested `kubectl` commands.
+- AI Event diagnosis is manually triggered only from `Overview` `Recent Warnings`
+  in its first slice. It may send only a fresh, exact-key matched, latest-5
+  Warning Event payload to the configured AI Provider.
+- AI Event diagnosis must not read Pod logs, query Kubernetes Secrets, send
+  kubeconfig content, send full raw command transcripts, send raw cluster JSON,
+  expose provider raw response bodies, persist report history, feed
+  `HealthEvaluator`, or automatically execute suggested `kubectl` commands.
 - Events warning summaries are capped at 3. Overview `Recent Warnings` is capped
   at 2 visible rows by default so it cannot push the top status row or cards out
   of the first scan.

@@ -2,13 +2,13 @@ import Foundation
 import Testing
 @testable import KubebarCore
 
-@Suite("AI Pod diagnostic requester")
-struct AIPodDiagnosticRequesterTests {
+@Suite("AI Event diagnostic requester")
+struct AIEventDiagnosticRequesterTests {
     @Test("missing model ID returns safe local failure")
     func missingModelIDReturnsSafeLocalFailure() async {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
-        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: FakeHTTPClient())
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: FakeHTTPClient())
 
         let result = await requester.diagnose(
             context: Self.sampleContext(),
@@ -21,7 +21,7 @@ struct AIPodDiagnosticRequesterTests {
 
     @Test("missing API key returns safe local failure")
     func missingAPIKeyReturnsSafeLocalFailure() async {
-        let requester = AIPodDiagnosticRequester(
+        let requester = AIEventDiagnosticRequester(
             credentialStore: FakeAIProviderCredentialStore(),
             httpClient: FakeHTTPClient()
         )
@@ -35,34 +35,24 @@ struct AIPodDiagnosticRequesterTests {
         #expect(result == .failed(AIProviderConnectionTester.missingAPIKeyMessage))
     }
 
-    @Test("OpenAI-compatible missing base URL returns safe local failure")
-    func openAICompatibleMissingBaseURLReturnsSafeLocalFailure() async {
-        let store = FakeAIProviderCredentialStore()
-        try? store.saveAPIKey("sk-test-secret", for: .openAICompatible)
-        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: FakeHTTPClient())
-
-        let result = await requester.diagnose(
-            context: Self.sampleContext(),
-            config: AIDiagnosticAssistantConfig(provider: .openAICompatible, modelID: "gpt-4o-mini"),
-            provider: .openAICompatible
-        )
-
-        #expect(result == .failed(AIProviderConnectionTester.missingBaseURLMessage))
-    }
-
-    @Test("diagnostic request includes pod context warnings redacted logs and required headings")
-    func diagnosticRequestIncludesMinimalRedactedContext() async throws {
+    @Test("diagnostic request includes event context redacts messages and excludes pod logs")
+    func diagnosticRequestIncludesMinimalRedactedEventContext() async throws {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
-        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nOOMKilled\n\n## 🛠️ **Actionable fixes**\n```bash\nkubectl describe pod checkout-7f9d -n api\n```"))
-        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: http)
+        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nBackOff\n\n## 🛠️ **Actionable fixes**\n```bash\nkubectl describe pod checkout-7f9d -n api\n```"))
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: http)
 
         _ = await requester.diagnose(
-            context: Self.sampleContext(logLines: [
-                "starting checkout",
-                "Authorization: Bearer sk-live-token",
-                "password=super-secret",
-                "panic: heap exhausted"
+            context: Self.sampleContext(events: [
+                AIEventDiagnosticEvent(
+                    reason: "BackOff",
+                    namespace: "api",
+                    objectKind: "Pod",
+                    objectName: "checkout-7f9d",
+                    message: "Authorization: Bearer sk-live-token password=super-secret",
+                    observedAt: "2026-07-02T00:07:00Z",
+                    count: 7
+                )
             ]),
             config: AIDiagnosticAssistantConfig(provider: .openAI, modelID: "gpt-4o-mini"),
             provider: .openAI
@@ -74,49 +64,62 @@ struct AIPodDiagnosticRequesterTests {
         let body = try #require(request.httpBody)
         let jsonString = String(data: body, encoding: .utf8) ?? ""
 
+        #expect(jsonString.contains("Diagnose these Kubernetes Warning Events"))
         #expect(jsonString.contains("prod"))
         #expect(jsonString.contains("api"))
+        #expect(jsonString.contains("Pod"))
         #expect(jsonString.contains("checkout-7f9d"))
-        #expect(jsonString.contains("CrashLoopBackOff"))
         #expect(jsonString.contains("BackOff"))
-        #expect(jsonString.contains("panic: heap exhausted"))
+        #expect(jsonString.contains("2026-07-02T00:07:00Z"))
         #expect(jsonString.contains("🔍 **Possible causes**"))
         #expect(jsonString.contains("🛠️ **Actionable fixes**"))
         #expect(!jsonString.contains("sk-live-token"))
         #expect(!jsonString.contains("super-secret"))
         #expect(!jsonString.contains("Authorization: Bearer sk-live-token"))
+        #expect(!jsonString.contains("Last 50 log lines"))
+        #expect(!jsonString.contains("panic: heap exhausted"))
         #expect(!jsonString.contains("kubeconfig"))
         #expect(!jsonString.contains("Secret object"))
     }
 
-    @Test("diagnostic request limits logs to last fifty lines")
-    func diagnosticRequestLimitsLogsToLastFiftyLines() async throws {
+    @Test("diagnostic request limits event payload to latest five")
+    func diagnosticRequestLimitsEventsToLatestFive() async throws {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
         let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nCause\n\n## 🛠️ **Actionable fixes**\nFix"))
-        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: http)
-        let logLines = (1...60).map { "line-\($0)" }
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: http)
+        let events = (1...7).map { index in
+            AIEventDiagnosticEvent(
+                reason: "BackOff",
+                namespace: "api",
+                objectKind: "Pod",
+                objectName: "checkout-7f9d",
+                message: "event-\(index)",
+                observedAt: "2026-07-02T00:0\(index):00Z",
+                count: index
+            )
+        }
 
         _ = await requester.diagnose(
-            context: Self.sampleContext(logLines: logLines),
+            context: Self.sampleContext(events: events),
             config: AIDiagnosticAssistantConfig(provider: .openAI, modelID: "gpt-4o-mini"),
             provider: .openAI
         )
 
         let body = try #require(http.lastRequest?.httpBody)
         let jsonString = String(data: body, encoding: .utf8) ?? ""
-        #expect(!jsonString.contains("line-9"))
-        #expect(!jsonString.contains("line-10"))
-        #expect(jsonString.contains("line-11"))
-        #expect(jsonString.contains("line-60"))
+        #expect(!jsonString.contains("event-1"))
+        #expect(!jsonString.contains("event-2"))
+        #expect(jsonString.contains("event-3"))
+        #expect(jsonString.contains("event-7"))
     }
 
     @Test("HTTP and transport failures redact secrets")
     func failuresRedactSecrets() async {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
-        let http = FakeHTTPClient(throwError: LocalTestError("Authorization: Bearer sk-test-secret failed"))
-        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: http)
+        let http = FakeHTTPClient(throwError: LocalAIEventTestError("Authorization: Bearer sk-test-secret failed"))
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: http)
 
         let result = await requester.diagnose(
             context: Self.sampleContext(),
@@ -128,7 +131,7 @@ struct AIPodDiagnosticRequesterTests {
             Issue.record("Expected failure")
             return
         }
-        #expect(message == AIPodDiagnosticRequester.transportFailureMessage)
+        #expect(message == AIEventDiagnosticRequester.transportFailureMessage)
         #expect(!message.contains("sk-test-secret"))
         #expect(!message.contains("Bearer"))
     }
@@ -137,8 +140,8 @@ struct AIPodDiagnosticRequesterTests {
     func successfulProviderResponseReturnsMarkdownDiagnosis() async {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
-        let markdown = "## 🔍 **Possible causes**\nLikely OOMKilled.\n\n## 🛠️ **Actionable fixes**\n```bash\nkubectl describe pod checkout-7f9d -n api\n```"
-        let requester = AIPodDiagnosticRequester(
+        let markdown = "## 🔍 **Possible causes**\nLikely image pull backoff.\n\n## 🛠️ **Actionable fixes**\n```bash\nkubectl describe pod checkout-7f9d -n api\n```"
+        let requester = AIEventDiagnosticRequester(
             credentialStore: store,
             httpClient: FakeHTTPClient(statusCode: 200, body: Self.openAIResponse(markdown))
         )
@@ -152,24 +155,22 @@ struct AIPodDiagnosticRequesterTests {
         #expect(result == .success(markdown: markdown))
     }
 
-    @Test("reasoning think blocks are stripped before reaching the UI")
-    func reasoningThinkBlocksAreStripped() async {
+    @Test("reasoning think blocks are stripped from event diagnosis")
+    func eventReasoningThinkBlocksAreStripped() async {
         let store = FakeAIProviderCredentialStore()
         try? store.saveAPIKey("sk-test-secret", for: .openAI)
         let raw = """
-         <think>
-        The exit code 137 suggests an OOMKill. I should mention memory limits.
-         </think>
+        <think>The image pull is failing, so the pod stays in BackOff.</think>
 
         ## 🔍 **Possible causes**
-        - OOMKilled: container exceeded its memory limit.
+        - ImagePullBackOff: registry credentials or tag mismatch.
 
         ## 🛠️ **Actionable fixes**
         ```bash
         kubectl describe pod checkout-7f9d -n api
         ```
         """
-        let requester = AIPodDiagnosticRequester(
+        let requester = AIEventDiagnosticRequester(
             credentialStore: store,
             httpClient: FakeHTTPClient(statusCode: 200, body: Self.openAIResponse(raw))
         )
@@ -184,49 +185,34 @@ struct AIPodDiagnosticRequesterTests {
             Issue.record("Expected success")
             return
         }
-        #expect(!markdown.contains(" <think>"))
-        #expect(!markdown.contains("I should mention memory limits"))
+        #expect(!markdown.contains("<think>"))
+        #expect(!markdown.contains("image pull is failing, so the pod"))
         #expect(markdown.contains("## 🔍 **Possible causes**"))
         #expect(markdown.contains("kubectl describe pod checkout-7f9d -n api"))
     }
 
-    @Test("response that is only reasoning returns an unreadable failure")
-    func responseThatIsOnlyReasoningReturnsUnreadableFailure() async {
-        let store = FakeAIProviderCredentialStore()
-        try? store.saveAPIKey("sk-test-secret", for: .openAI)
-        let raw = " <think>The pod is crashing but I never produced a final answer."
-        let requester = AIPodDiagnosticRequester(
-            credentialStore: store,
-            httpClient: FakeHTTPClient(statusCode: 200, body: Self.openAIResponse(raw))
-        )
-
-        let result = await requester.diagnose(
-            context: Self.sampleContext(),
-            config: AIDiagnosticAssistantConfig(provider: .openAI, modelID: "deepseek-reasoner"),
-            provider: .openAI
-        )
-
-        #expect(result == .failed(AIPodDiagnosticRequester.unreadableResponseMessage))
-    }
-
-    private static func sampleContext(logLines: [String] = ["panic: heap exhausted"]) -> AIPodDiagnosticContext {
-        AIPodDiagnosticContext(
-            target: PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout-7f9d"),
-            podStatus: AIPodStatusContext(
-                state: "Bad",
-                ready: "0/1 ready",
-                reason: "CrashLoopBackOff",
-                detail: "Container terminated with exit code 137"
+    private static func sampleContext(
+        events: [AIEventDiagnosticEvent] = [
+            AIEventDiagnosticEvent(
+                reason: "BackOff",
+                namespace: "api",
+                objectKind: "Pod",
+                objectName: "checkout-7f9d",
+                message: "Back-off restarting failed container",
+                observedAt: "2026-07-02T00:07:00Z",
+                count: 7
+            )
+        ]
+    ) -> AIEventDiagnosticContext {
+        AIEventDiagnosticContext(
+            target: WarningEventDiagnosticTarget(
+                contextName: "prod",
+                namespace: "api",
+                objectKind: "Pod",
+                objectName: "checkout-7f9d",
+                reason: "BackOff"
             ),
-            warnings: [
-                AIPodWarningContext(
-                    reason: "BackOff",
-                    location: "api/pod/checkout-7f9d",
-                    age: "2m ago",
-                    message: "Back-off restarting failed container"
-                )
-            ],
-            logLines: logLines,
+            events: events,
             isStale: false
         )
     }
@@ -239,7 +225,7 @@ struct AIPodDiagnosticRequesterTests {
     }
 }
 
-private struct LocalTestError: Error {
+private struct LocalAIEventTestError: Error {
     let message: String
     init(_ message: String) { self.message = message }
 }

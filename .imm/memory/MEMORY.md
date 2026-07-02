@@ -1,9 +1,9 @@
 # Immune-Brain Summary
 
 ## 当前状态
-- **最新摘要**: Closed: captured reusable architecture guidance for focusable Pod log windows and native read-only log text surfaces.
-- **待办事项**: Next: work is closed; optional next step is to review docs/solutions/architecture/pod-log-focus-window-2026-06-22.md or start a new scoped task.
-- **最后同步**: 2026-06-22 15:58:45
+- **最新摘要**: Closed: implemented Overview Recent Warnings AI Event diagnostics and captured reusable explicit-warning-target/fresh-event-read architecture guidance.
+- **待办事项**: Next: work is closed; optional next step is code owner review or manual app smoke of the Overview warning AI action.
+- **最后同步**: 2026-07-02 07:40:00
 
 ## Knowledge Index
 
@@ -19,6 +19,10 @@
   reusable pattern for menu-launched troubleshooting surfaces that need a
   focusable app-owned macOS window, ViewModel-owned side effects, and native
   read-only text behavior for live logs.
+- `docs/solutions/architecture/ai-event-diagnostics-overview-entry-2026-07-02.md`:
+  reusable pattern for AI diagnostic actions that need explicit display-model
+  targets, fresh app-owned `kubectl` reads, event-only provider payloads, and
+  transient menu UI state.
 - `docs/solutions/app-settings/start-at-login-boundary-2026-05-19.md`:
   reusable pattern for macOS-only settings that mutate system state through an
   app-target boundary while keeping state transitions testable in KubebarCore.

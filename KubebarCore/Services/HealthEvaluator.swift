@@ -89,12 +89,14 @@ public struct HealthEvaluator: Sendable {
         let pinnedWarningIDs = pinnedWarningIDs(from: snapshot.trackedItems)
         let warningEventSummaries = makeWarningEventSummaries(
             from: snapshot.warningEventsSection.value ?? [],
+            contextName: snapshot.contextName,
             now: now,
             pinnedWarningIDs: [],
             limit: warningEventSummaryLimit
         )
         let overviewWarningRows = makeWarningEventSummaries(
             from: snapshot.warningEventsSection.value ?? [],
+            contextName: snapshot.contextName,
             now: now,
             pinnedWarningIDs: pinnedWarningIDs,
             limit: Int.max
@@ -1175,7 +1177,7 @@ public struct HealthEvaluator: Sendable {
                 reason: item.reason,
                 affectedPodCount: item.affectedPodCount,
                 examplePodNames: Array(item.examplePodNames.prefix(3)),
-                latestWarning: item.latestWarning.map { makeWarningEventDisplay(from: $0, now: now) }
+                latestWarning: item.latestWarning.map { makeWarningEventDisplay(from: $0, contextName: contextName, now: now) }
             ),
             k9sHandoff: resourceHandoff(
                 contextName: contextName,
@@ -1196,6 +1198,7 @@ public struct HealthEvaluator: Sendable {
 
     private func makeWarningEventSummaries(
         from warningEvents: [WarningEventRecord],
+        contextName: String,
         now: Date,
         pinnedWarningIDs: Set<String>,
         limit: Int
@@ -1248,7 +1251,14 @@ public struct HealthEvaluator: Sendable {
                     occurrenceCount: group.occurrenceCount,
                     message: shortenedWarningMessage(fullMessage),
                     fullMessage: fullMessage,
-                    isTracked: isTracked
+                    isTracked: isTracked,
+                    diagnosticTarget: WarningEventDiagnosticTarget.make(
+                        contextName: contextName,
+                        namespace: group.key.namespace,
+                        objectKind: group.key.objectKind,
+                        objectName: group.key.objectName,
+                        reason: group.reason
+                    )
                 )
             }
     }
@@ -1259,7 +1269,7 @@ public struct HealthEvaluator: Sendable {
         })
     }
 
-    private func makeWarningEventDisplay(from event: WarningEventRecord, now: Date) -> WarningEventDisplay {
+    private func makeWarningEventDisplay(from event: WarningEventRecord, contextName: String, now: Date) -> WarningEventDisplay {
         WarningEventDisplay(
             id: WarningEventGroupKey(event: event).id,
             reason: event.reason,
@@ -1271,7 +1281,14 @@ public struct HealthEvaluator: Sendable {
             age: warningAge(from: event.observedAt, to: now),
             occurrenceCount: max(1, event.count),
             message: shortenedWarningMessage(event.message),
-            fullMessage: normalizedText(event.message)
+            fullMessage: normalizedText(event.message),
+            diagnosticTarget: WarningEventDiagnosticTarget.make(
+                contextName: contextName,
+                namespace: event.namespace,
+                objectKind: event.objectKind,
+                objectName: event.objectName,
+                reason: event.reason
+            )
         )
     }
 

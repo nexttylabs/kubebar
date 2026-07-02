@@ -20,9 +20,9 @@
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
 - **AI Diagnostic Assistant**: an optional app-wide feature for manually testing
-  a configured AI provider and, from a Pod troubleshooting surface, explaining
-  user-approved Pod diagnostic context. It is display/help behavior only and
-  must not change `Health category`.
+  a configured AI provider and, from explicit troubleshooting surfaces,
+  explaining user-approved Kubernetes diagnostic context. It is display/help
+  behavior only and must not change `Health category`.
 - **AI Provider configuration**: non-secret app-wide provider metadata such as
   provider kind, `Model ID`, and an `OpenAI-compatible` `Base URL`. It belongs
   in App Settings and may be persisted in local app config.
@@ -38,6 +38,13 @@
   redacted `kubectl logs --tail=50` sample. It does not include Kubernetes
   Secrets, kubeconfig content, raw cluster JSON, full command transcripts, or
   automatically executed remediation.
+- **AI Event diagnostic input**: a manually submitted AI diagnostic payload from
+  `Overview` `Recent Warnings`. It is limited to a fresh `kubectl get events`
+  read through Kubebar's app-owned context, exact matching by `namespace`,
+  `objectKind`, `objectName`, and `reason`, and the latest 5 matching redacted
+  Warning Events. It does not include Pod logs, Kubernetes Secrets, kubeconfig
+  content, raw cluster JSON, full command transcripts, or automatically
+  executed remediation.
 - **Pod Micro-Logs Drawer**: a user-opened focusable log window for a single
   `Bad` Pod row that streams a bounded `kubectl logs --tail=100 -f` view
   through Kubebar's app-owned context and kubeconfig. It is temporary
@@ -116,3 +123,13 @@ explicitly changes that scope.
   plus `Kubebar/Views/MenuBarRootView.swift` own the row entry point and
   focusable log window UI. The log body should be hosted by a Read-only log
   text view rather than a hand-built text scroller.
+- AI Event diagnostics: `KubebarCore/Models/MenuDisplayModel.swift` carries an
+  explicit `WarningEventDiagnosticTarget` for structured warning groups,
+  `KubebarCore/Services/HealthEvaluator.swift` derives that target from Warning
+  Event records, `KubebarCore/Services/WarningEventDiagnosticReader.swift` owns
+  fresh latest-5 event reads, `KubebarCore/Services/AIEventDiagnosticRequester.swift`
+  owns provider diagnostic requests, `Kubebar/MenuBarViewModel.swift` owns
+  transient diagnosis lifecycle, and `Kubebar/Views/OverviewTabView.swift` owns
+  the `Overview` `Recent Warnings` entry point. `Kubebar/Views/WarningEventsView.swift`
+  remains a shared row renderer and must not infer diagnostic targets in the
+  Events tab.
