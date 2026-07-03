@@ -24,6 +24,64 @@ struct PodLogStreamerTests {
         #expect(request.command.environmentOverrides == ["KUBECONFIG": "/tmp/dev.yaml:/tmp/prod.yaml"])
     }
 
+    @Test("builds finite diagnostic logs request without follow and with kubeconfig")
+    func buildsFiniteDiagnosticLogsRequest() {
+        let target = PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout-7f9d")
+        let request = PodDiagnosticLogReadRequest(
+            target: target,
+            config: AppConfig(kubeconfigPaths: ["/tmp/dev.yaml", "/tmp/prod.yaml"])
+        )
+
+        #expect(request.command.executable == "kubectl")
+        #expect(request.command.arguments == [
+            "--context", "prod",
+            "logs",
+            "--tail=50",
+            "-n", "api",
+            "checkout-7f9d"
+        ])
+        #expect(!request.command.arguments.contains("-f"))
+        #expect(request.command.environmentOverrides == ["KUBECONFIG": "/tmp/dev.yaml:/tmp/prod.yaml"])
+    }
+
+    @Test("finite diagnostic log reader keeps last fifty stdout lines")
+    func finiteDiagnosticLogReaderKeepsLastFiftyStdoutLines() async throws {
+        let runner = FakeCommandRunner(result: CommandResult(
+            stdout: (1...60).map { "line-\($0)" }.joined(separator: "\n"),
+            stderr: "",
+            exitCode: 0
+        ))
+        let reader = CommandPodDiagnosticLogReader(runner: runner)
+        let request = PodDiagnosticLogReadRequest(
+            target: PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout"),
+            command: CommandRequest(executable: "/bin/echo", arguments: [])
+        )
+
+        let lines = try await reader.readLogs(for: request)
+
+        #expect(lines.count == 50)
+        #expect(lines.first == "line-11")
+        #expect(lines.last == "line-60")
+    }
+
+    @Test("finite diagnostic log reader reports safe stderr on failure")
+    func finiteDiagnosticLogReaderReportsSafeStderrOnFailure() async throws {
+        let runner = FakeCommandRunner(result: CommandResult(
+            stdout: "",
+            stderr: "Error from server (BadRequest): container required",
+            exitCode: 2
+        ))
+        let reader = CommandPodDiagnosticLogReader(runner: runner)
+        let request = PodDiagnosticLogReadRequest(
+            target: PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout"),
+            command: CommandRequest(executable: "/bin/echo", arguments: [])
+        )
+
+        await #expect(throws: PodDiagnosticLogReadError.commandFailed("container required")) {
+            _ = try await reader.readLogs(for: request)
+        }
+    }
+
     @Test("stream session separates repeated opens for the same pod target")
     func streamSessionSeparatesRepeatedOpensForSamePodTarget() {
         let target = PodLogTarget(contextName: "prod", namespace: "api", podName: "checkout")
@@ -175,5 +233,17 @@ struct PodLogStreamerTests {
         }
 
         #expect((try? String(contentsOf: marker, encoding: .utf8)) == "terminated")
+    }
+}
+
+private final class FakeCommandRunner: CommandRunning, @unchecked Sendable {
+    private let result: CommandResult
+
+    init(result: CommandResult) {
+        self.result = result
+    }
+
+    func run(_ request: CommandRequest) throws -> CommandResult {
+        result
     }
 }

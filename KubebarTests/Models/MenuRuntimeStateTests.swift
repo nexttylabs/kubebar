@@ -464,7 +464,9 @@ struct MenuRuntimeStateTests {
                 aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
                     provider: .openAICompatible,
                     modelID: "gpt-4o-mini",
-                    baseURL: "https://example.test/v1"
+                    baseURL: "https://example.test/v1",
+                    podPromptInstructions: "Custom Pod instructions",
+                    eventPromptInstructions: "Custom Event instructions"
                 )
             )
         )
@@ -475,6 +477,8 @@ struct MenuRuntimeStateTests {
         #expect(config.aiDiagnosticAssistant.provider == .openAICompatible)
         #expect(config.aiDiagnosticAssistant.modelID == "gpt-4o")
         #expect(config.aiDiagnosticAssistant.baseURL == "https://example.test/v1")
+        #expect(config.aiDiagnosticAssistant.podPromptInstructions == "Custom Pod instructions")
+        #expect(config.aiDiagnosticAssistant.eventPromptInstructions == "Custom Event instructions")
     }
 
     @Test("changed ai diagnostic assistant config marks settings unsaved")
@@ -494,6 +498,21 @@ struct MenuRuntimeStateTests {
         state.prepareSettings(config: savedConfig)
 
         #expect(state.setupState.aiDiagnosticAssistant.config.modelID == "gpt-4o")
+    }
+
+    @Test("changed ai prompt instructions mark settings unsaved")
+    func changedAIPromptInstructionsMarkSettingsUnsaved() {
+        let savedConfig = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")],
+            aiDiagnosticAssistant: AIDiagnosticAssistantConfig(provider: .openAI, modelID: "gpt-4o-mini")
+        )
+        var state = MenuRuntimeState(config: savedConfig)
+        state.setupState.updateAIPodDiagnosticPromptInstructions("Custom Pod instructions")
+
+        state.prepareSettings(config: savedConfig)
+
+        #expect(state.setupState.aiDiagnosticAssistant.config.podPromptInstructions == "Custom Pod instructions")
     }
 
     @Test("replacing available contexts hides missing context tabs without dropping saved watchlists")

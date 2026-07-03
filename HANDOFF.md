@@ -1,39 +1,41 @@
 # Kubebar Handoff
 
-**Last updated**: 2026-07-01T11:00:00Z
+**Last updated**: 2026-07-03T15:15:00Z
 
 ## Current State
 
-- Plan: `docs/plans/2026-07-01-002-refactor-settings-sidebar-layout-plan.md`
-- Summary: Settings redesigned from a stacked TabView into a sidebar/detail layout with a dedicated AI Assistant page; UI polish applied.
-- Status: complete with post-review polish.
+- Plan: `docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md`
+- Summary: `AI Assistant` Settings now supports separate custom prompt instructions for Pod diagnosis and Warning Event diagnosis. Each editor starts from the built-in default and can reset by clearing the custom override. Requesters keep fixed safety/system prompts and code-owned bounded diagnostic context.
+- Status: complete; Step U1 passed QA.
 - Completed steps:
-  - U1 (closed): Settings state exposes page-oriented navigation while preserving completed configuration behavior.
-  - U2 (closed): Settings renders a sidebar/detail layout with AI Assistant as a focused App page.
+  - U1 (closed): `AI Assistant` Settings supports safe prompt customization/reset for Pod/Event diagnosis.
 - Active step: none.
+- Known blockers: none.
 
 ## Verification
 
-- `swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests` passed.
+- `swift test --filter AIPodDiagnosticRequesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter AppConfigTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIProviderConnectionTesterTests` passed.
 - `swift build` passed.
-- `./scripts/swift-quality-gate.sh local` passed (318 tests, 31 suites, BUILD SUCCEEDED, TEST SUCCEEDED).
+- `./scripts/swift-quality-gate.sh local` passed.
 - `rtk git diff --check` clean.
-- App launches cleanly via `./scripts/compile-and-run.sh`.
-
-## UI Polish Applied
-
-- Replaced invalid `k.stack` SF Symbol with `square.3.layers.3d`.
-- Added keyboard shortcuts `Cmd+1`..`Cmd+4` for App pages.
-- Merged AI Assistant sections into "Provider configuration" and "Connection".
-- Base URL hidden unless provider is `OpenAI-compatible`.
-- App pages show descriptive subtitles instead of active context.
-- Removed unnecessary `maxHeight: .infinity` from detail pane.
-- Widened `SettingsRow` content area to 360pt.
-- Raised window height to 620pt.
-- Added warning icon for contexts with no watchlist selected.
-- Unified sidebar row style: both App pages and Contexts use the same `HStack` helper with a fixed 20pt icon width, identical spacing, and optional trailing warning icon, so icons and text align consistently across the App and Contexts sections.
 
 ## Notes
 
-- No automated SwiftUI snapshot tests exist; layout quality is HITL.
-- Native macOS app screenshots require Accessibility consent (not available in this environment).
+- Prompt overrides are non-secret local `AppConfig` fields; API keys remain Keychain-only.
+- Reset to default clears the override instead of persisting a copied default prompt.
+- Custom instructions do not replace the fixed safety prompt and do not expand submitted Pod/Event diagnostic data.
+- Test Connection remains a provider ping and sends no custom prompts or Kubernetes data.
+
+## Compaction Handoff
+
+- Active plan: `docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md`
+- Active Step ID plus Result: none active; U1 passed — `AI Assistant` Settings supports safe prompt customization/reset for Pod/Event diagnosis.
+- Priority files for reload:
+  - `KubebarCore/Models/AIDiagnosticAssistantConfig.swift`
+  - `Kubebar/Views/SetupView.swift`
+  - `KubebarCore/Services/AIPodDiagnosticRequester.swift`
+  - `KubebarCore/Services/AIEventDiagnosticRequester.swift`
+  - `docs/architecture/runtime-invariants.md`
+- Uncommitted work summary: AI diagnostic prompt customization implementation, docs/spec/plan/changelog, runtime state, handoff update, and focused tests are uncommitted.
+- Session decisions: Pod and Warning Event prompts are separate; reset clears overrides; fixed safety/system prompt and bounded diagnostic context remain code-owned.
+- Next boundary skill: none required unless user asks for follow-up; otherwise ready for review/commit.

@@ -63,6 +63,56 @@ struct AppConfigTests {
 
         #expect(config.aiDiagnosticAssistant == AIDiagnosticAssistantConfig())
         #expect(config.aiDiagnosticAssistant.modelID.isEmpty)
+        #expect(config.aiDiagnosticAssistant.podPromptInstructions == nil)
+        #expect(config.aiDiagnosticAssistant.eventPromptInstructions == nil)
+        #expect(config.aiDiagnosticAssistant.effectivePodPromptInstructions == AIDiagnosticAssistantConfig.defaultPodPromptInstructions)
+        #expect(config.aiDiagnosticAssistant.effectiveEventPromptInstructions == AIDiagnosticAssistantConfig.defaultEventPromptInstructions)
+    }
+
+    @Test("existing config without prompts decodes defaults")
+    func existingConfigWithoutPromptsDecodesDefaults() throws {
+        let json = """
+        {
+          "selectedContext": "prod",
+          "watchTargets": [{ "namespace": { "_0": "api" } }],
+          "aiDiagnosticAssistant": {
+            "provider": "openAI",
+            "modelID": "gpt-4o-mini"
+          }
+        }
+        """
+
+        let config = try JSONDecoder().decode(AppConfig.self, from: Data(json.utf8))
+
+        #expect(config.aiDiagnosticAssistant.podPromptInstructions == nil)
+        #expect(config.aiDiagnosticAssistant.eventPromptInstructions == nil)
+        #expect(config.aiDiagnosticAssistant.effectivePodPromptInstructions == AIDiagnosticAssistantConfig.defaultPodPromptInstructions)
+        #expect(config.aiDiagnosticAssistant.effectiveEventPromptInstructions == AIDiagnosticAssistantConfig.defaultEventPromptInstructions)
+    }
+
+    @Test("custom prompt overrides round trip without api key")
+    func customPromptOverridesRoundTripWithoutAPIKey() throws {
+        let config = AppConfig(
+            selectedContext: "prod",
+            watchTargets: [.namespace("api")],
+            aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                podPromptInstructions: "Custom Pod instructions",
+                eventPromptInstructions: "Custom Event instructions"
+            )
+        )
+
+        let data = try JSONEncoder().encode(config)
+        let json = String(data: data, encoding: .utf8) ?? ""
+        let decoded = try JSONDecoder().decode(AppConfig.self, from: data)
+
+        #expect(decoded.aiDiagnosticAssistant.podPromptInstructions == "Custom Pod instructions")
+        #expect(decoded.aiDiagnosticAssistant.eventPromptInstructions == "Custom Event instructions")
+        #expect(json.contains("Custom Pod instructions"))
+        #expect(json.contains("Custom Event instructions"))
+        #expect(!json.contains("apiKey"))
+        #expect(!json.contains("sk-test-secret"))
     }
 
     @Test("selecting context preserves ai diagnostic assistant config")
@@ -90,7 +140,8 @@ struct AppConfigTests {
             aiDiagnosticAssistant: AIDiagnosticAssistantConfig(
                 provider: .openAICompatible,
                 modelID: "gpt-4o-mini",
-                baseURL: "https://example.test/v1"
+                baseURL: "https://example.test/v1",
+                podPromptInstructions: "Secret-free custom instructions"
             )
         )
 

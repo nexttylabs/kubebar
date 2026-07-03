@@ -19,22 +19,37 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
-- **AI Diagnostic Assistant**: an optional app-wide Settings feature for
-  manually testing a configured AI provider and, in a later diagnostic slice,
-  explaining user-approved warning text. It is display/help behavior only and
-  must not change `Health category`.
+- **AI Diagnostic Assistant**: an optional app-wide feature for manually testing
+  a configured AI provider and, from explicit troubleshooting surfaces,
+  explaining user-approved Kubernetes diagnostic context. It is display/help
+  behavior only and must not change `Health category`.
 - **AI Provider configuration**: non-secret app-wide provider metadata such as
-  provider kind, `Model ID`, and an `OpenAI-compatible` `Base URL`. It belongs
-  in App Settings and may be persisted in local app config.
+  provider kind, `Model ID`, an `OpenAI-compatible` `Base URL`, and custom AI
+  diagnostic prompt instructions. It belongs in App Settings and may be
+  persisted in local app config.
+- **AI diagnostic prompt instructions**: optional user-authored Pod/Event
+  diagnosis instructions edited in `AI Assistant` Settings. They start from
+  built-in defaults, reset by clearing the custom override, and cannot replace
+  Kubebar's fixed safety prompt or code-owned diagnostic context payload.
 - **AI Provider API key**: the secret credential for an AI provider. It must be
   stored in macOS Keychain, never in `AppConfig`, command output, diagnostics,
   or visible raw error text.
 - **OpenAI-compatible provider**: a custom endpoint that uses only `Bearer` API
   key authentication, `Base URL`, and `Model ID` in the first version. Custom
   headers are out of scope.
-- **Warning text diagnostic input**: a future manually submitted AI diagnostic
-  payload limited to warning summary text. It does not include Pod logs,
-  Kubernetes Secrets, raw `kubectl` output, kubeconfig content, or cluster JSON.
+- **AI Pod diagnostic input**: a manually submitted AI diagnostic payload from
+  the Pod Micro-Logs Drawer. It is limited to the selected Pod's display-ready
+  status, up to 3 related warning summaries, and a freshly read, bounded,
+  redacted `kubectl logs --tail=50` sample. It does not include Kubernetes
+  Secrets, kubeconfig content, raw cluster JSON, full command transcripts, or
+  automatically executed remediation.
+- **AI Event diagnostic input**: a manually submitted AI diagnostic payload from
+  `Overview` `Recent Warnings`. It is limited to a fresh `kubectl get events`
+  read through Kubebar's app-owned context, exact matching by `namespace`,
+  `objectKind`, `objectName`, and `reason`, and the latest 5 matching redacted
+  Warning Events. It does not include Pod logs, Kubernetes Secrets, kubeconfig
+  content, raw cluster JSON, full command transcripts, or automatically
+  executed remediation.
 - **Pod Micro-Logs Drawer**: a user-opened focusable log window for a single
   `Bad` Pod row that streams a bounded `kubectl logs --tail=100 -f` view
   through Kubebar's app-owned context and kubeconfig. It is temporary
@@ -106,8 +121,26 @@ explicitly changes that scope.
 - Pod Micro-Logs Drawer: `KubebarCore/Models/MenuDisplayModel.swift` carries
   display-ready Pod row identity, `KubebarCore/Services/HealthEvaluator.swift`
   maps `PodDetail` into `PodItemDisplay`, `KubebarCore/Services/CommandRunner.swift`
-  owns process-launch environment behavior, `Kubebar/MenuBarViewModel.swift`
-  owns app-owned context and lifecycle cancellation, and
-  `Kubebar/Views/PodsTabView.swift` plus `Kubebar/Views/MenuBarRootView.swift`
-  own the row entry point and focusable log window UI. The log body should be
-  hosted by a Read-only log text view rather than a hand-built text scroller.
+  owns process-launch environment behavior, `KubebarCore/Services/PodDiagnosticLogReader.swift`
+  owns finite AI diagnostic log reads, `KubebarCore/Services/AIPodDiagnosticRequester.swift`
+  owns provider diagnostic requests, `Kubebar/MenuBarViewModel.swift` owns
+  app-owned context and lifecycle cancellation, and `Kubebar/Views/PodsTabView.swift`
+  plus `Kubebar/Views/MenuBarRootView.swift` own the row entry point and
+  focusable log window UI. The log body should be hosted by a Read-only log
+  text view rather than a hand-built text scroller.
+- AI Event diagnostics: `KubebarCore/Models/MenuDisplayModel.swift` carries an
+  explicit `WarningEventDiagnosticTarget` for structured warning groups,
+  `KubebarCore/Services/HealthEvaluator.swift` derives that target from Warning
+  Event records, `KubebarCore/Services/WarningEventDiagnosticReader.swift` owns
+  fresh latest-5 event reads, `KubebarCore/Services/AIEventDiagnosticRequester.swift`
+  owns provider diagnostic requests, `Kubebar/MenuBarViewModel.swift` owns
+  transient diagnosis lifecycle, and `Kubebar/Views/OverviewTabView.swift` owns
+  the `Overview` `Recent Warnings` entry point. `Kubebar/Views/WarningEventsView.swift`
+  remains a shared row renderer and must not infer diagnostic targets in the
+  Events tab.
+- AI diagnostic prompt customization: `KubebarCore/Models/AIDiagnosticAssistantConfig.swift`
+  owns non-secret Pod/Event prompt overrides plus built-in defaults,
+  `KubebarCore/Models/SetupFlowState.swift` owns Settings mutations/reset,
+  `Kubebar/Views/SetupView.swift` owns the editors, and the Pod/Event
+  diagnostic requesters combine effective prompt instructions with code-owned
+  safety prompts and bounded diagnostic context.

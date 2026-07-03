@@ -4,6 +4,7 @@ import KubebarCore
 
 struct MenuBarRootView: View {
     let display: MenuDisplayModel
+    let eventDiagnosis: EventDiagnosisPresentation?
     let activeContextName: String?
     let contextSelectorContexts: [String]
     let isShowingSetup: Bool
@@ -15,6 +16,8 @@ struct MenuBarRootView: View {
     let k9sHandoffState: K9sHandoffLaunchState
     let onOpenK9sHandoff: (OverviewK9sHandoff) -> Void
     let onOpenPodLogs: (PodLogTarget) -> Void
+    let onDiagnoseWarningEvent: (WarningEventDiagnosticTarget) -> Void
+    let onDismissWarningEventDiagnosis: () -> Void
     let onQuit: () -> Void
     @Environment(\.openSettings) private var openSettings
     @State private var selectedTab: MenuTab = .overview
@@ -133,8 +136,11 @@ struct MenuBarRootView: View {
         case .overview:
             OverviewTabView(
                 display: display,
+                eventDiagnosis: eventDiagnosis,
                 k9sHandoffState: k9sHandoffState,
-                onOpenK9sHandoff: onOpenK9sHandoff
+                onOpenK9sHandoff: onOpenK9sHandoff,
+                onDiagnoseWarningEvent: onDiagnoseWarningEvent,
+                onDismissWarningEventDiagnosis: onDismissWarningEventDiagnosis
             )
         case .nodes:
             NodesTabView(
@@ -239,6 +245,7 @@ struct PodLogDrawerView: View {
     let drawer: PodLogDrawerPresentation
     @Binding var searchQuery: String
     let onCopyLogs: () -> Void
+    let onDiagnoseWithAI: () -> Void
 
     private var matchCount: Int {
         drawer.matchCount(for: searchQuery)
@@ -249,9 +256,10 @@ struct PodLogDrawerView: View {
             header
             controls
             logText
+            aiDiagnosisPanel
         }
         .padding(16)
-        .frame(width: 640, height: 480)
+        .frame(width: 680, height: 620)
     }
 
     private var header: some View {
@@ -302,6 +310,16 @@ struct PodLogDrawerView: View {
             .disabled(drawer.visibleText.isEmpty)
             .help(Text("Copy logs"))
             .accessibilityLabel("Copy logs")
+
+            Button {
+                onDiagnoseWithAI()
+            } label: {
+                Label("AI Diagnose this Pod", systemImage: "sparkles")
+                    .labelStyle(.iconOnly)
+            }
+            .disabled(drawer.aiDiagnosis.isLoading)
+            .help(Text("AI Diagnose this Pod"))
+            .accessibilityLabel("AI Diagnose this Pod")
         }
     }
 
@@ -311,10 +329,70 @@ struct PodLogDrawerView: View {
             placeholder: placeholderText,
             isPlaceholder: drawer.visibleText.isEmpty
         )
+        .frame(minHeight: 240)
         .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
         .overlay {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color.secondary.opacity(0.18))
+        }
+    }
+
+    private var aiDiagnosisPanel: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Label("AI Diagnosis", systemImage: "sparkles")
+                        .font(.caption.weight(.semibold))
+
+                    Spacer()
+
+                    if drawer.aiDiagnosis.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
+
+                Text("Manual action. Sends this Pod status, latest related warnings, and a fresh `kubectl logs --tail=50` sample to your configured AI Provider.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                aiDiagnosisContent
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var aiDiagnosisContent: some View {
+        switch drawer.aiDiagnosis {
+        case .idle:
+            Text("Click the sparkles button to generate a transient diagnosis. Kubebar will not execute suggested commands.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .loading:
+            Text("Analyzing last 50 log lines...")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case let .failed(message):
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer()
+
+                Button("Retry", action: onDiagnoseWithAI)
+                    .controlSize(.small)
+            }
+        case let .success(markdown):
+            ScrollView {
+                AIDiagnosisContentView(markdown: markdown)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+            .frame(maxHeight: 160)
         }
     }
 

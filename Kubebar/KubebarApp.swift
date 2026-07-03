@@ -33,6 +33,10 @@ struct KubebarApp: App {
                 onUpdateAIModelID: viewModel.updateAIModelID,
                 onUpdateAIBaseURL: viewModel.updateAIBaseURL,
                 onUpdateAIAPIKeyDraft: viewModel.updateAIAPIKeyDraft,
+                onUpdateAIPodPromptInstructions: viewModel.updateAIPodPromptInstructions,
+                onResetAIPodPromptInstructions: viewModel.resetAIPodPromptInstructions,
+                onUpdateAIEventPromptInstructions: viewModel.updateAIEventPromptInstructions,
+                onResetAIEventPromptInstructions: viewModel.resetAIEventPromptInstructions,
                 onTestAIConnection: viewModel.testAIConnection
             )
         }
@@ -80,6 +84,7 @@ struct KubebarApp: App {
     private var liveMenuRootView: some View {
         MenuBarRootView(
             display: viewModel.display,
+            eventDiagnosis: viewModel.eventDiagnosis,
             activeContextName: viewModel.activeContextName,
             contextSelectorContexts: viewModel.contextSelectorContexts,
             isShowingSetup: viewModel.isShowingSetup,
@@ -91,6 +96,8 @@ struct KubebarApp: App {
             k9sHandoffState: viewModel.k9sHandoffState,
             onOpenK9sHandoff: viewModel.openK9sHandoff,
             onOpenPodLogs: viewModel.openPodLogDrawer,
+            onDiagnoseWarningEvent: viewModel.diagnoseWarningEventWithAI,
+            onDismissWarningEventDiagnosis: viewModel.dismissWarningEventDiagnosis,
             onQuit: { NSApplication.shared.terminate(nil) }
         )
         .onAppear {
@@ -136,6 +143,7 @@ private struct QAFixtureMenuRootView: View {
     var body: some View {
         MenuBarRootView(
             display: fixture.display,
+            eventDiagnosis: nil,
             activeContextName: fixture.display.contextName,
             contextSelectorContexts: [fixture.display.contextName],
             isShowingSetup: fixture.isShowingSetup,
@@ -147,6 +155,8 @@ private struct QAFixtureMenuRootView: View {
             k9sHandoffState: .idle,
             onOpenK9sHandoff: { _ in },
             onOpenPodLogs: { _ in },
+            onDiagnoseWarningEvent: { _ in },
+            onDismissWarningEventDiagnosis: {},
             onQuit: { NSApplication.shared.terminate(nil) }
         )
     }

@@ -422,6 +422,77 @@ struct SetupFlowStateTests {
         #expect(state.configurationMessage == nil)
     }
 
+    @Test("updating ai prompt instructions stores custom overrides")
+    func updatingAIPromptInstructionsStoresCustomOverrides() {
+        var state = SetupFlowState(
+            configurationMessage: "Could not save settings. Try again."
+        )
+
+        state.updateAIPodDiagnosticPromptInstructions("Custom Pod instructions")
+        state.updateAIEventDiagnosticPromptInstructions("Custom Event instructions")
+
+        #expect(state.aiDiagnosticAssistant.config.podPromptInstructions == "Custom Pod instructions")
+        #expect(state.aiDiagnosticAssistant.config.eventPromptInstructions == "Custom Event instructions")
+        #expect(state.configurationMessage == nil)
+    }
+
+    @Test("blank ai prompt instructions fall back to default")
+    func blankAIPromptInstructionsFallBackToDefault() {
+        var state = SetupFlowState()
+
+        state.updateAIPodDiagnosticPromptInstructions("   \n  ")
+        state.updateAIEventDiagnosticPromptInstructions("")
+
+        #expect(state.aiDiagnosticAssistant.config.podPromptInstructions == nil)
+        #expect(state.aiDiagnosticAssistant.config.eventPromptInstructions == nil)
+        #expect(state.aiDiagnosticAssistant.config.effectivePodPromptInstructions == AIDiagnosticAssistantConfig.defaultPodPromptInstructions)
+        #expect(state.aiDiagnosticAssistant.config.effectiveEventPromptInstructions == AIDiagnosticAssistantConfig.defaultEventPromptInstructions)
+    }
+
+    @Test("resetting ai prompts clears overrides")
+    func resettingAIPromptsClearsOverrides() {
+        var state = SetupFlowState(
+            aiDiagnosticAssistant: AIDiagnosticAssistantState(
+                config: AIDiagnosticAssistantConfig(
+                    provider: .openAI,
+                    modelID: "gpt-4o-mini",
+                    podPromptInstructions: "Custom Pod instructions",
+                    eventPromptInstructions: "Custom Event instructions"
+                )
+            )
+        )
+
+        state.resetAIPodDiagnosticPromptInstructions()
+        state.resetAIEventDiagnosticPromptInstructions()
+
+        #expect(state.aiDiagnosticAssistant.config.podPromptInstructions == nil)
+        #expect(state.aiDiagnosticAssistant.config.eventPromptInstructions == nil)
+        #expect(state.aiDiagnosticAssistant.config.effectivePodPromptInstructions == AIDiagnosticAssistantConfig.defaultPodPromptInstructions)
+        #expect(state.aiDiagnosticAssistant.config.effectiveEventPromptInstructions == AIDiagnosticAssistantConfig.defaultEventPromptInstructions)
+    }
+
+    @Test("updating ai provider preserves prompt overrides")
+    func updatingAIProviderPreservesPromptOverrides() {
+        var state = SetupFlowState(
+            aiDiagnosticAssistant: AIDiagnosticAssistantState(
+                config: AIDiagnosticAssistantConfig(
+                    provider: .openAI,
+                    modelID: "gpt-4o-mini",
+                    podPromptInstructions: "Custom Pod instructions",
+                    eventPromptInstructions: "Custom Event instructions"
+                ),
+                testConnectionResult: .success
+            )
+        )
+
+        state.updateAIDiagnosticAssistant(provider: .anthropic)
+
+        #expect(state.aiDiagnosticAssistant.config.provider == .anthropic)
+        #expect(state.aiDiagnosticAssistant.config.podPromptInstructions == "Custom Pod instructions")
+        #expect(state.aiDiagnosticAssistant.config.eventPromptInstructions == "Custom Event instructions")
+        #expect(state.aiDiagnosticAssistant.testConnectionResult == nil)
+    }
+
     @Test("updating ai provider clears test connection result")
     func updatingAIProviderClearsTestConnectionResult() {
         var state = SetupFlowState(

@@ -8,6 +8,7 @@ struct PodLogDrawerPresentation: Identifiable, Equatable {
     var target: PodLogTarget
     var state: PodLogDrawerState
     var buffer: PodLogBuffer
+    var aiDiagnosis: AIPodDiagnosisState
 
     var id: String {
         target.id
@@ -19,6 +20,15 @@ struct PodLogDrawerPresentation: Identifiable, Equatable {
 
     func matchCount(for query: String) -> Int {
         buffer.matchCount(for: query)
+    }
+}
+
+struct EventDiagnosisPresentation: Identifiable, Equatable {
+    var target: WarningEventDiagnosticTarget
+    var state: AIEventDiagnosisState
+
+    var id: String {
+        target.id
     }
 }
 
@@ -39,6 +49,7 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var isRefreshing: Bool
     @Published private(set) var k9sHandoffState: K9sHandoffLaunchState
     @Published private(set) var podLogDrawer: PodLogDrawerPresentation?
+    @Published private(set) var eventDiagnosis: EventDiagnosisPresentation?
     @Published var podLogSearchQuery: String = ""
 
     private let configStore: AppConfigStore
@@ -61,12 +72,18 @@ final class MenuBarViewModel: ObservableObject {
     private let healthShiftAlertNotifier: any HealthShiftAlertNotifying
     private let networkReachability: any NetworkReachability
     private let podLogStreamer: any PodLogStreaming
+    private let podDiagnosticLogReader: any PodDiagnosticLogReading
+    private let warningEventDiagnosticReader: any WarningEventDiagnosticReading
     private let aiCredentialStore: any AIProviderCredentialStoring
     private let aiConnectionTester: AIProviderConnectionTester?
+    private let aiPodDiagnosticRequester: AIPodDiagnosticRequester?
+    private let aiEventDiagnosticRequester: AIEventDiagnosticRequester?
     private var isNetworkAvailable: Bool = true
     private var healthShiftAlertTracker: HealthShiftAlertTracker
     private var healthShiftAlertSettingsRequestGate: HealthShiftAlertSettingsRequestGate
     private var podLogStreamTask: Task<Void, Never>?
+    private var podDiagnosisTask: Task<Void, Never>?
+    private var eventDiagnosisTask: Task<Void, Never>?
     private var activePodLogSession: PodLogStreamSession?
 
     /// Delay before resuming automatic refresh after network recovery.
@@ -86,8 +103,18 @@ final class MenuBarViewModel: ObservableObject {
         healthShiftAlertNotifier: any HealthShiftAlertNotifying = SystemHealthShiftAlertNotifier(),
         networkReachability: any NetworkReachability = NetworkReachabilityMonitor(),
         podLogStreamer: any PodLogStreaming = ProcessPodLogStreamer(),
+        podDiagnosticLogReader: any PodDiagnosticLogReading = CommandPodDiagnosticLogReader(),
+        warningEventDiagnosticReader: any WarningEventDiagnosticReading = CommandWarningEventDiagnosticReader(),
         aiCredentialStore: any AIProviderCredentialStoring = KeychainAIProviderCredentialStore(),
         aiConnectionTester: AIProviderConnectionTester? = AIProviderConnectionTester(
+            credentialStore: KeychainAIProviderCredentialStore(),
+            httpClient: URLSessionHTTPClient()
+        ),
+        aiPodDiagnosticRequester: AIPodDiagnosticRequester? = AIPodDiagnosticRequester(
+            credentialStore: KeychainAIProviderCredentialStore(),
+            httpClient: URLSessionHTTPClient()
+        ),
+        aiEventDiagnosticRequester: AIEventDiagnosticRequester? = AIEventDiagnosticRequester(
             credentialStore: KeychainAIProviderCredentialStore(),
             httpClient: URLSessionHTTPClient()
         ),
@@ -103,8 +130,12 @@ final class MenuBarViewModel: ObservableObject {
         self.healthShiftAlertNotifier = healthShiftAlertNotifier
         self.networkReachability = networkReachability
         self.podLogStreamer = podLogStreamer
+        self.podDiagnosticLogReader = podDiagnosticLogReader
+        self.warningEventDiagnosticReader = warningEventDiagnosticReader
         self.aiCredentialStore = aiCredentialStore
         self.aiConnectionTester = aiConnectionTester
+        self.aiPodDiagnosticRequester = aiPodDiagnosticRequester
+        self.aiEventDiagnosticRequester = aiEventDiagnosticRequester
 
         do {
             self.config = try configStore.load()
@@ -125,6 +156,7 @@ final class MenuBarViewModel: ObservableObject {
         self.activeContextName = config.selectedContext
         self.k9sHandoffState = .idle
         self.podLogDrawer = nil
+        self.eventDiagnosis = nil
         self.activePodLogSession = nil
         self.healthShiftAlertTracker = HealthShiftAlertTracker()
         self.healthShiftAlertSettingsRequestGate = HealthShiftAlertSettingsRequestGate()
@@ -154,6 +186,8 @@ final class MenuBarViewModel: ObservableObject {
         watchTargetLoadTask?.cancel()
         networkRecoveryTask?.cancel()
         podLogStreamTask?.cancel()
+        podDiagnosisTask?.cancel()
+        eventDiagnosisTask?.cancel()
         networkReachability.stopMonitoring()
     }
 
@@ -346,6 +380,26 @@ final class MenuBarViewModel: ObservableObject {
 
     func updateAIAPIKeyDraft(_ draft: String) {
         runtimeState.setupState.updateAIDiagnosticAssistantAPIKeyDraft(draft)
+        publishRuntimeState()
+    }
+
+    func updateAIPodPromptInstructions(_ instructions: String) {
+        runtimeState.setupState.updateAIPodDiagnosticPromptInstructions(instructions)
+        publishRuntimeState()
+    }
+
+    func resetAIPodPromptInstructions() {
+        runtimeState.setupState.resetAIPodDiagnosticPromptInstructions()
+        publishRuntimeState()
+    }
+
+    func updateAIEventPromptInstructions(_ instructions: String) {
+        runtimeState.setupState.updateAIEventDiagnosticPromptInstructions(instructions)
+        publishRuntimeState()
+    }
+
+    func resetAIEventPromptInstructions() {
+        runtimeState.setupState.resetAIEventDiagnosticPromptInstructions()
         publishRuntimeState()
     }
 
@@ -626,6 +680,9 @@ final class MenuBarViewModel: ObservableObject {
         staleReason = nil
         k9sHandoffCoordinator.clear()
         healthShiftAlertTracker.reset()
+        eventDiagnosisTask?.cancel()
+        eventDiagnosisTask = nil
+        eventDiagnosis = nil
 
         if clearSnapshot {
             snapshot = nil
@@ -703,7 +760,8 @@ final class MenuBarViewModel: ObservableObject {
             session: session,
             target: target,
             state: .loading,
-            buffer: PodLogBuffer()
+            buffer: PodLogBuffer(),
+            aiDiagnosis: .idle
         )
 
         podLogStreamTask = Task { [weak self] in
@@ -732,7 +790,9 @@ final class MenuBarViewModel: ObservableObject {
 
     func closePodLogDrawer() {
         podLogStreamTask?.cancel()
+        podDiagnosisTask?.cancel()
         podLogStreamTask = nil
+        podDiagnosisTask = nil
         activePodLogSession = nil
         podLogDrawer = nil
         podLogSearchQuery = ""
@@ -745,6 +805,111 @@ final class MenuBarViewModel: ObservableObject {
 
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    func diagnoseCurrentPodWithAI() {
+        guard var drawer = podLogDrawer else {
+            return
+        }
+
+        guard let requester = aiPodDiagnosticRequester else {
+            drawer.aiDiagnosis = .failed("AI diagnosis is unavailable.")
+            podLogDrawer = drawer
+            return
+        }
+
+        podDiagnosisTask?.cancel()
+
+        let target = drawer.target
+        let request = PodDiagnosticLogReadRequest(target: target, config: config)
+        let logReader = podDiagnosticLogReader
+        let provider = config.aiDiagnosticAssistant.provider
+        let aiConfig = config.aiDiagnosticAssistant
+        let contextBase = podDiagnosticContextBase(for: target)
+
+        drawer.aiDiagnosis = .loading
+        podLogDrawer = drawer
+
+        podDiagnosisTask = Task { [weak self] in
+            do {
+                let logLines = try await logReader.readLogs(for: request)
+                try Task.checkCancellation()
+                let context = AIPodDiagnosticContext(
+                    target: target,
+                    podStatus: contextBase.podStatus,
+                    warnings: contextBase.warnings,
+                    logLines: logLines,
+                    isStale: contextBase.isStale
+                )
+                let result = await requester.diagnose(context: context, config: aiConfig, provider: provider)
+
+                await MainActor.run {
+                    self?.applyAIPodDiagnosticResult(result, for: target)
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    self?.clearAIPodDiagnosisTask(for: target)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.applyAIPodDiagnosticResult(
+                        .failed("Could not read recent logs: \(Self.failureReason(from: error))"),
+                        for: target
+                    )
+                }
+            }
+        }
+    }
+
+    func dismissWarningEventDiagnosis() {
+        eventDiagnosisTask?.cancel()
+        eventDiagnosisTask = nil
+        eventDiagnosis = nil
+    }
+
+    func diagnoseWarningEventWithAI(_ target: WarningEventDiagnosticTarget) {
+        guard let requester = aiEventDiagnosticRequester else {
+            eventDiagnosis = EventDiagnosisPresentation(target: target, state: .failed("AI diagnosis is unavailable."))
+            return
+        }
+
+        eventDiagnosisTask?.cancel()
+
+        let request = WarningEventDiagnosticReadRequest(target: target, config: config)
+        let reader = warningEventDiagnosticReader
+        let provider = config.aiDiagnosticAssistant.provider
+        let aiConfig = config.aiDiagnosticAssistant
+        let isStale = display.state == .stale
+
+        eventDiagnosis = EventDiagnosisPresentation(target: target, state: .loading)
+
+        eventDiagnosisTask = Task { [weak self] in
+            do {
+                let records = try await reader.readEvents(for: request)
+                try Task.checkCancellation()
+                let context = AIEventDiagnosticContext(
+                    target: target,
+                    events: records.map(AIEventDiagnosticEvent.init(record:)),
+                    isStale: isStale
+                )
+                let result = await requester.diagnose(context: context, config: aiConfig, provider: provider)
+
+                await MainActor.run {
+                    self?.applyAIEventDiagnosticResult(result, for: target)
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    self?.clearAIEventDiagnosisTask(for: target)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.applyAIEventDiagnosticResult(
+                        .failed("Could not read recent warning events: \(Self.failureReason(from: error))"),
+                        for: target
+                    )
+                }
+            }
+        }
     }
 
     private func resetK9sHandoffStateForCurrentDisplay() {
@@ -812,6 +977,97 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         return drawer
+    }
+
+    private func applyAIPodDiagnosticResult(_ result: AIPodDiagnosticResult, for target: PodLogTarget) {
+        guard var drawer = podLogDrawer, drawer.target == target else {
+            return
+        }
+
+        switch result {
+        case let .success(markdown):
+            drawer.aiDiagnosis = .success(markdown: markdown)
+        case let .failed(message):
+            drawer.aiDiagnosis = .failed(message)
+        }
+        podLogDrawer = drawer
+        podDiagnosisTask = nil
+    }
+
+    private func clearAIPodDiagnosisTask(for target: PodLogTarget) {
+        guard podLogDrawer?.target == target else {
+            return
+        }
+
+        podDiagnosisTask = nil
+    }
+
+    private func applyAIEventDiagnosticResult(_ result: AIEventDiagnosticResult, for target: WarningEventDiagnosticTarget) {
+        guard var presentation = eventDiagnosis, presentation.target == target else {
+            return
+        }
+
+        switch result {
+        case let .success(markdown):
+            presentation.state = .success(markdown: markdown)
+        case let .failed(message):
+            presentation.state = .failed(message)
+        }
+        eventDiagnosis = presentation
+        eventDiagnosisTask = nil
+    }
+
+    private func clearAIEventDiagnosisTask(for target: WarningEventDiagnosticTarget) {
+        guard eventDiagnosis?.target == target else {
+            return
+        }
+
+        eventDiagnosisTask = nil
+    }
+
+    private struct AIPodDiagnosticContextBase {
+        let podStatus: AIPodStatusContext
+        let warnings: [AIPodWarningContext]
+        let isStale: Bool
+    }
+
+    private func podDiagnosticContextBase(for target: PodLogTarget) -> AIPodDiagnosticContextBase {
+        let pod = podItem(for: target)
+        return AIPodDiagnosticContextBase(
+            podStatus: AIPodStatusContext(
+                state: pod?.state.label ?? "Unknown",
+                ready: pod?.readyLabel ?? "unknown",
+                reason: pod?.issueText,
+                detail: pod?.helpText
+            ),
+            warnings: relatedWarnings(for: target),
+            isStale: display.state == .stale
+        )
+    }
+
+    private func podItem(for target: PodLogTarget) -> PodItemDisplay? {
+        display.podTab.sections
+            .first { $0.namespace == target.namespace }?
+            .rows
+            .first { $0.name == target.podName }
+    }
+
+    private func relatedWarnings(for target: PodLogTarget) -> [AIPodWarningContext] {
+        display.eventsTab.rows
+            .filter { row in
+                row.location.contains(target.podName) ||
+                    row.helpText.contains(target.podName) ||
+                    row.accessibilityLabel.contains(target.podName)
+            }
+            .prefix(3)
+            .map { row in
+                AIPodWarningContext(
+                    reason: row.reason,
+                    location: row.location,
+                    age: row.age,
+                    message: row.fullMessage
+                )
+            }
     }
 
     private func scheduleFreshnessTimer(now: Date = Date()) {

@@ -101,7 +101,8 @@ private struct PodLogWindowContent: View {
             PodLogDrawerView(
                 drawer: drawer,
                 searchQuery: $viewModel.podLogSearchQuery,
-                onCopyLogs: viewModel.copyCurrentPodLogs
+                onCopyLogs: viewModel.copyCurrentPodLogs,
+                onDiagnoseWithAI: viewModel.diagnoseCurrentPodWithAI
             )
         }
     }

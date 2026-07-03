@@ -16,6 +16,18 @@
 		A2000000000000000000000D /* AIProviderConnectionTesterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */; };
 		A2000000000000000000000F /* KeychainAIProviderCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* KeychainAIProviderCredentialStore.swift */; };
 		A20000000000000000000011 /* URLSessionHTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* URLSessionHTTPClient.swift */; };
+		A30000000000000000000001 /* AIPodDiagnosis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000002 /* AIPodDiagnosis.swift */; };
+		A30000000000000000000003 /* AIPodDiagnosticRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000004 /* AIPodDiagnosticRequester.swift */; };
+		A30000000000000000000005 /* PodDiagnosticLogReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000006 /* PodDiagnosticLogReader.swift */; };
+		A30000000000000000000007 /* AIPodDiagnosticRequesterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000008 /* AIPodDiagnosticRequesterTests.swift */; };
+		A40000000000000000000001 /* AIEventDiagnosis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40000000000000000000002 /* AIEventDiagnosis.swift */; };
+		A40000000000000000000003 /* AIEventDiagnosticRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40000000000000000000004 /* AIEventDiagnosticRequester.swift */; };
+		A5FF000000000000000B0001 /* AIDiagnosticResponseFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FF000000000000000B0002 /* AIDiagnosticResponseFormatter.swift */; };
+		A5FF000000000000000B0003 /* AIDiagnosisContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FF000000000000000B0004 /* AIDiagnosisContentView.swift */; };
+		A5FF000000000000000B0005 /* AIDiagnosticResponseFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FF000000000000000B0006 /* AIDiagnosticResponseFormatterTests.swift */; };
+		A40000000000000000000005 /* WarningEventDiagnosticReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40000000000000000000006 /* WarningEventDiagnosticReader.swift */; };
+		A40000000000000000000007 /* AIEventDiagnosticRequesterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40000000000000000000008 /* AIEventDiagnosticRequesterTests.swift */; };
+		A40000000000000000000009 /* WarningEventDiagnosticReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4000000000000000000000A /* WarningEventDiagnosticReaderTests.swift */; };
 		0ABC7D9044D83EA481BBB112 /* WatchTargetCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD651CCDAAD62B4E7C090D6F /* WatchTargetCatalog.swift */; };
 		0C5D3D56CEDAB47E9528A4F6 /* WatchlistCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41CF64AA3581163BEA218DFB /* WatchlistCandidate.swift */; };
 		0D127D20E9DEDC847D33AE77 /* MenuDisplayModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27036F7AEDEFA527AF44A619 /* MenuDisplayModelTests.swift */; };
@@ -152,6 +164,18 @@
 		A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConnectionTesterTests.swift; sourceTree = "<group>"; };
 		A20000000000000000000010 /* KeychainAIProviderCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAIProviderCredentialStore.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* URLSessionHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionHTTPClient.swift; sourceTree = "<group>"; };
+		A30000000000000000000002 /* AIPodDiagnosis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPodDiagnosis.swift; sourceTree = "<group>"; };
+		A30000000000000000000004 /* AIPodDiagnosticRequester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPodDiagnosticRequester.swift; sourceTree = "<group>"; };
+		A30000000000000000000006 /* PodDiagnosticLogReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodDiagnosticLogReader.swift; sourceTree = "<group>"; };
+		A30000000000000000000008 /* AIPodDiagnosticRequesterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPodDiagnosticRequesterTests.swift; sourceTree = "<group>"; };
+		A40000000000000000000002 /* AIEventDiagnosis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEventDiagnosis.swift; sourceTree = "<group>"; };
+		A40000000000000000000004 /* AIEventDiagnosticRequester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEventDiagnosticRequester.swift; sourceTree = "<group>"; };
+		A5FF000000000000000B0002 /* AIDiagnosticResponseFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDiagnosticResponseFormatter.swift; sourceTree = "<group>"; };
+		A5FF000000000000000B0004 /* AIDiagnosisContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDiagnosisContentView.swift; sourceTree = "<group>"; };
+		A5FF000000000000000B0006 /* AIDiagnosticResponseFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDiagnosticResponseFormatterTests.swift; sourceTree = "<group>"; };
+		A40000000000000000000006 /* WarningEventDiagnosticReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarningEventDiagnosticReader.swift; sourceTree = "<group>"; };
+		A40000000000000000000008 /* AIEventDiagnosticRequesterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEventDiagnosticRequesterTests.swift; sourceTree = "<group>"; };
+		A4000000000000000000000A /* WarningEventDiagnosticReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarningEventDiagnosticReaderTests.swift; sourceTree = "<group>"; };
 		039D4A0BD680E236E953D7EF /* StatusSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusSummaryView.swift; sourceTree = "<group>"; };
 		03C2110AF1395713CD29D1E3 /* MenuBarStatusPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusPresentationTests.swift; sourceTree = "<group>"; };
 		044436EFC75907A7253A3A7A /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
@@ -286,6 +310,7 @@
 				F0A043426B709BACA5F1E0AD /* NodeDetailsView.swift */,
 				4602F3AD3687ABB356E1C266 /* NodesTabView.swift */,
 				66841095D9A2044E6C8AF517 /* OverviewTabView.swift */,
+				A5FF000000000000000B0004 /* AIDiagnosisContentView.swift */,
 				8E2F5A64A72F45C7A7E95A46 /* PodLogWindowPresenter.swift */,
 				BE870F98B15D0AD4D10E4031 /* PodsTabView.swift */,
 				8E2F5A66A72F45C7A7E95A46 /* ReadOnlyLogTextView.swift */,
@@ -330,6 +355,9 @@
 				684455D1430321334848EB7F /* AppConfigStoreTests.swift */,
 				A2000000000000000000000C /* AIProviderCredentialStoreTests.swift */,
 				A2000000000000000000000E /* AIProviderConnectionTesterTests.swift */,
+				A30000000000000000000008 /* AIPodDiagnosticRequesterTests.swift */,
+				A40000000000000000000008 /* AIEventDiagnosticRequesterTests.swift */,
+				A5FF000000000000000B0006 /* AIDiagnosticResponseFormatterTests.swift */,
 				B29566B59D491F95C0EE5504 /* CommandRunnerTests.swift */,
 				8727736B73E1A28F6DC70C66 /* ContextCatalogTests.swift */,
 				BEC71932B945E1D6592AA77E /* FreshnessDisplayScheduleTests.swift */,
@@ -343,6 +371,7 @@
 				A10000000000000000000008 /* StartAtLoginSettingsCoordinatorTests.swift */,
 				A1000000000000000000000F /* NetworkReachabilityTests.swift */,
 				68E80FACFC916D53A5004BFF /* WatchTargetCatalogTests.swift */,
+				A4000000000000000000000A /* WarningEventDiagnosticReaderTests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -352,6 +381,8 @@
 			children = (
 				A20000000000000000000002 /* AIDiagnosticAssistantConfig.swift */,
 				A20000000000000000000004 /* AIDiagnosticAssistantState.swift */,
+				A30000000000000000000002 /* AIPodDiagnosis.swift */,
+				A40000000000000000000002 /* AIEventDiagnosis.swift */,
 				256B0E761A99ACDD9110BC8E /* ClusterHealthState.swift */,
 				7BF8969BAFC7CADA85C406E9 /* ClusterSnapshot.swift */,
 				E4EFC03EAA7FF0C71200678B /* MenuBarStatusPresentation.swift */,
@@ -374,6 +405,9 @@
 				E3CFEB46C82EDA2D094BDDF0 /* AppConfigStore.swift */,
 				A20000000000000000000006 /* AIProviderCredentialStore.swift */,
 				A20000000000000000000008 /* AIProviderConnectionTester.swift */,
+				A30000000000000000000004 /* AIPodDiagnosticRequester.swift */,
+				A40000000000000000000004 /* AIEventDiagnosticRequester.swift */,
+				A5FF000000000000000B0002 /* AIDiagnosticResponseFormatter.swift */,
 				A2000000000000000000000A /* HTTPClient.swift */,
 				A59D91E3E139CA91BC232D40 /* CommandRunner.swift */,
 				16B80AFB0373C83CDF78D0BE /* ContextCatalog.swift */,
@@ -384,6 +418,8 @@
 				09E8C7051DD3BC07BF86A950 /* KubectlClusterReader.swift */,
 				689EC8218395797C0788B282 /* MenuLayoutSizing.swift */,
 				79D6D8313F4347E9ABFE8701 /* PodLogStreamer.swift */,
+				A30000000000000000000006 /* PodDiagnosticLogReader.swift */,
+				A40000000000000000000006 /* WarningEventDiagnosticReader.swift */,
 				B1ABF4BE1D5A8A8B7E474CBD /* RefreshCoordinator.swift */,
 				A1F687524DAA74E9F5F64CFC /* RefreshGate.swift */,
 				A10000000000000000000006 /* StartAtLoginSettingsCoordinator.swift */,
@@ -576,6 +612,9 @@
 				3A2ABB50330CBD164F187074 /* AppConfigStoreTests.swift in Sources */,
 				A2000000000000000000000B /* AIProviderCredentialStoreTests.swift in Sources */,
 				A2000000000000000000000D /* AIProviderConnectionTesterTests.swift in Sources */,
+				A30000000000000000000007 /* AIPodDiagnosticRequesterTests.swift in Sources */,
+				A40000000000000000000007 /* AIEventDiagnosticRequesterTests.swift in Sources */,
+				A5FF000000000000000B0005 /* AIDiagnosticResponseFormatterTests.swift in Sources */,
 				495D556A6DF84C8C22BB9D63 /* ClusterHealthStateTests.swift in Sources */,
 				2673AA6352855DBB0B87599A /* CommandRunnerTests.swift in Sources */,
 				1956982E5C1832CD17224A14 /* ContextCatalogTests.swift in Sources */,
@@ -596,6 +635,7 @@
 				A10000000000000000000004 /* StartAtLoginSettingsCoordinatorTests.swift in Sources */,
 				A1000000000000000000000C /* NetworkReachabilityTests.swift in Sources */,
 				4C818D44CA17CB017E0A5379 /* WatchTargetCatalogTests.swift in Sources */,
+				A40000000000000000000009 /* WarningEventDiagnosticReaderTests.swift in Sources */,
 				EA3A58433537560B8EFFE763 /* WatchTargetTests.swift in Sources */,
 				9B671EDA20D6DF7D94CF39C5 /* WatchlistSelectionStateTests.swift in Sources */,
 			);
@@ -608,8 +648,13 @@
 				279114E96D410FFB2622B97E /* AppConfigStore.swift in Sources */,
 				A20000000000000000000001 /* AIDiagnosticAssistantConfig.swift in Sources */,
 				A20000000000000000000003 /* AIDiagnosticAssistantState.swift in Sources */,
+				A30000000000000000000001 /* AIPodDiagnosis.swift in Sources */,
+				A40000000000000000000001 /* AIEventDiagnosis.swift in Sources */,
 				A20000000000000000000005 /* AIProviderCredentialStore.swift in Sources */,
 				A20000000000000000000007 /* AIProviderConnectionTester.swift in Sources */,
+				A30000000000000000000003 /* AIPodDiagnosticRequester.swift in Sources */,
+				A40000000000000000000003 /* AIEventDiagnosticRequester.swift in Sources */,
+				A5FF000000000000000B0001 /* AIDiagnosticResponseFormatter.swift in Sources */,
 				A20000000000000000000009 /* HTTPClient.swift in Sources */,
 				43A2E812863B312A3F47C289 /* ClusterHealthState.swift in Sources */,
 				DC3D760FA2EF2E5789C6CD21 /* ClusterSnapshot.swift in Sources */,
@@ -626,6 +671,8 @@
 				43A6EE04D05E8CCF4CAD47D1 /* MenuRuntimeState.swift in Sources */,
 				EA0C0E575B5F1256F7E02BA5 /* MenuStateFixtureCatalog.swift in Sources */,
 				79D6D8323F4347E9ABFE8701 /* PodLogStreamer.swift in Sources */,
+				A30000000000000000000005 /* PodDiagnosticLogReader.swift in Sources */,
+				A40000000000000000000005 /* WarningEventDiagnosticReader.swift in Sources */,
 				A6FCE353AEC1C8483F645A4C /* RefreshCadence.swift in Sources */,
 				F11947BC8E49AFFF882FE036 /* RefreshCoordinator.swift in Sources */,
 				C37388D088AFEA095E3E172E /* RefreshGate.swift in Sources */,
@@ -661,6 +708,7 @@
 				0DF4C90F99F2163FADFDD4B4 /* NodeDetailsView.swift in Sources */,
 				9D2AA2BB55D09D9AFDDE7202 /* NodesTabView.swift in Sources */,
 				55F321A04D2EA4B27B1BFD9D /* OverviewTabView.swift in Sources */,
+				A5FF000000000000000B0003 /* AIDiagnosisContentView.swift in Sources */,
 				8E2F5A65A72F45C7A7E95A46 /* PodLogWindowPresenter.swift in Sources */,
 				D343AF9AAD2DB31A718A3396 /* PodsTabView.swift in Sources */,
 				8E2F5A67A72F45C7A7E95A46 /* ReadOnlyLogTextView.swift in Sources */,
