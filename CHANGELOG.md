@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.6.0] - 2026-07-03
+
+### Added
+- Add an AI Diagnostic Assistant page in Settings with provider configuration (OpenAI, Anthropic, Gemini, OpenAI-compatible) and Keychain-backed API key storage.
+- Add a manual Test Connection action that probes the configured provider without sending Kubernetes data.
+- ---
+- type: added
+- module: ai-diagnostic-assistant
+- ---
+- Add Pod and Warning Event AI diagnostic prompt customization with reset-to-default controls while preserving fixed safety prompts and bounded diagnostic context.
+- Added a manual AI diagnosis action to Overview Recent Warnings that sends the latest five matching Warning Events to the configured AI Provider.
+- Add a manual `AI Diagnose this Pod` action to the Pod Micro-Logs Drawer that sends bounded, redacted Pod status, warning summaries, and last 50 log lines to the configured AI Provider and renders a transient Markdown diagnosis.
+
+### Changed
+- Redesign Settings from a stacked TabView into a macOS-style sidebar/detail layout with General, Kubernetes, Notifications, and AI Assistant pages plus a Contexts section.
+- Add keyboard shortcuts (Cmd+1–Cmd+4) for App Settings pages and warning icons for contexts with no watchlist selected.
+
 ## [0.5.0] - 2026-06-22
 
 ### Added
