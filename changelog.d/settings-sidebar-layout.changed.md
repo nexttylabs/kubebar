@@ -1,2 +1,0 @@
-- Redesign Settings from a stacked TabView into a macOS-style sidebar/detail layout with General, Kubernetes, Notifications, and AI Assistant pages plus a Contexts section.
-- Add keyboard shortcuts (Cmd+1–Cmd+4) for App Settings pages and warning icons for contexts with no watchlist selected.

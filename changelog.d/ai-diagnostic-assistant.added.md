@@ -1,2 +1,0 @@
-- Add an AI Diagnostic Assistant page in Settings with provider configuration (OpenAI, Anthropic, Gemini, OpenAI-compatible) and Keychain-backed API key storage.
-- Add a manual Test Connection action that probes the configured provider without sending Kubernetes data.

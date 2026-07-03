@@ -1,1 +1,0 @@
-- Add a manual `AI Diagnose this Pod` action to the Pod Micro-Logs Drawer that sends bounded, redacted Pod status, warning summaries, and last 50 log lines to the configured AI Provider and renders a transient Markdown diagnosis.
