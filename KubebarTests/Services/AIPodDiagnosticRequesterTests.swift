@@ -89,6 +89,54 @@ struct AIPodDiagnosticRequesterTests {
         #expect(!jsonString.contains("Secret object"))
     }
 
+    @Test("custom pod prompt instructions are included with fixed safety context")
+    func customPodPromptInstructionsAreIncludedWithFixedSafetyContext() async throws {
+        let store = FakeAIProviderCredentialStore()
+        try? store.saveAPIKey("sk-test-secret", for: .openAI)
+        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nCause\n\n## 🛠️ **Actionable fixes**\nFix"))
+        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: http)
+
+        _ = await requester.diagnose(
+            context: Self.sampleContext(),
+            config: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                podPromptInstructions: "Custom Pod instructions: answer in one paragraph."
+            ),
+            provider: .openAI
+        )
+
+        let body = try #require(http.lastRequest?.httpBody)
+        let jsonString = String(data: body, encoding: .utf8) ?? ""
+        #expect(jsonString.contains("Custom Pod instructions: answer in one paragraph."))
+        #expect(!jsonString.contains("Diagnose this Kubernetes Pod for a human operator."))
+        #expect(jsonString.contains("Use only the provided context"))
+        #expect(jsonString.contains("Last 50 log lines, redacted before submission"))
+        #expect(jsonString.contains("Commands are suggestions only; the app will not execute them."))
+    }
+
+    @Test("blank pod prompt instructions fall back to default")
+    func blankPodPromptInstructionsFallBackToDefault() async throws {
+        let store = FakeAIProviderCredentialStore()
+        try? store.saveAPIKey("sk-test-secret", for: .openAI)
+        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nCause\n\n## 🛠️ **Actionable fixes**\nFix"))
+        let requester = AIPodDiagnosticRequester(credentialStore: store, httpClient: http)
+
+        _ = await requester.diagnose(
+            context: Self.sampleContext(),
+            config: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                podPromptInstructions: "   \n  "
+            ),
+            provider: .openAI
+        )
+
+        let body = try #require(http.lastRequest?.httpBody)
+        let jsonString = String(data: body, encoding: .utf8) ?? ""
+        #expect(jsonString.contains("Diagnose this Kubernetes Pod for a human operator."))
+    }
+
     @Test("diagnostic request limits logs to last fifty lines")
     func diagnosticRequestLimitsLogsToLastFiftyLines() async throws {
         let store = FakeAIProviderCredentialStore()

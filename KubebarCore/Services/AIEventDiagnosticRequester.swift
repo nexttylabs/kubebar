@@ -66,23 +66,31 @@ public struct AIEventDiagnosticRequester: Sendable {
         apiKey: String,
         context: AIEventDiagnosticContext
     ) -> URLRequest? {
+        let promptInstructions = config.effectiveEventPromptInstructions
         switch provider {
         case .openAI:
             return chatCompletionsRequest(
                 url: "https://api.openai.com/v1/chat/completions",
                 apiKey: apiKey,
                 model: config.modelID,
-                context: context
+                context: context,
+                promptInstructions: promptInstructions
             )
         case .anthropic:
             return anthropicRequest(
                 url: "https://api.anthropic.com/v1/messages",
                 apiKey: apiKey,
                 model: config.modelID,
-                context: context
+                context: context,
+                promptInstructions: promptInstructions
             )
         case .gemini:
-            return geminiRequest(model: config.modelID, apiKey: apiKey, context: context)
+            return geminiRequest(
+                model: config.modelID,
+                apiKey: apiKey,
+                context: context,
+                promptInstructions: promptInstructions
+            )
         case .openAICompatible:
             guard let baseURL = config.baseURL?.trimmingCharacters(in: .whitespacesAndNewlines), !baseURL.isEmpty else {
                 return nil
@@ -92,7 +100,8 @@ public struct AIEventDiagnosticRequester: Sendable {
                 url: "\(normalized)/chat/completions",
                 apiKey: apiKey,
                 model: config.modelID,
-                context: context
+                context: context,
+                promptInstructions: promptInstructions
             )
         }
     }
@@ -101,7 +110,8 @@ public struct AIEventDiagnosticRequester: Sendable {
         url: String,
         apiKey: String,
         model: String,
-        context: AIEventDiagnosticContext
+        context: AIEventDiagnosticContext,
+        promptInstructions: String
     ) -> URLRequest? {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 45)
@@ -113,7 +123,7 @@ public struct AIEventDiagnosticRequester: Sendable {
             "model": model,
             "messages": [
                 ["role": "system", "content": Self.systemPrompt],
-                ["role": "user", "content": diagnosticPrompt(from: context)]
+                ["role": "user", "content": diagnosticPrompt(from: context, promptInstructions: promptInstructions)]
             ],
             "temperature": 0.2,
             "max_tokens": 900
@@ -126,7 +136,8 @@ public struct AIEventDiagnosticRequester: Sendable {
         url: String,
         apiKey: String,
         model: String,
-        context: AIEventDiagnosticContext
+        context: AIEventDiagnosticContext,
+        promptInstructions: String
     ) -> URLRequest? {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url, timeoutInterval: 45)
@@ -139,13 +150,18 @@ public struct AIEventDiagnosticRequester: Sendable {
             "model": model,
             "system": Self.systemPrompt,
             "max_tokens": 900,
-            "messages": [["role": "user", "content": diagnosticPrompt(from: context)]]
+            "messages": [["role": "user", "content": diagnosticPrompt(from: context, promptInstructions: promptInstructions)]]
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         return request
     }
 
-    private func geminiRequest(model: String, apiKey: String, context: AIEventDiagnosticContext) -> URLRequest? {
+    private func geminiRequest(
+        model: String,
+        apiKey: String,
+        context: AIEventDiagnosticContext,
+        promptInstructions: String
+    ) -> URLRequest? {
         guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent") else {
             return nil
         }
@@ -156,7 +172,7 @@ public struct AIEventDiagnosticRequester: Sendable {
 
         let body: [String: Any] = [
             "contents": [[
-                "parts": [["text": "\(Self.systemPrompt)\n\n\(diagnosticPrompt(from: context))"]]
+                "parts": [["text": "\(Self.systemPrompt)\n\n\(diagnosticPrompt(from: context, promptInstructions: promptInstructions))"]]
             ]],
             "generationConfig": [
                 "temperature": 0.2,
@@ -167,7 +183,7 @@ public struct AIEventDiagnosticRequester: Sendable {
         return request
     }
 
-    private func diagnosticPrompt(from context: AIEventDiagnosticContext) -> String {
+    private func diagnosticPrompt(from context: AIEventDiagnosticContext, promptInstructions: String) -> String {
         let eventText = context.events
             .suffix(5)
             .enumerated()
@@ -186,8 +202,10 @@ public struct AIEventDiagnosticRequester: Sendable {
         let staleText = context.isStale ? "stale" : "fresh"
 
         return """
-        Diagnose these Kubernetes Warning Events for a human operator.
+        Prompt instructions:
+        \(promptInstructions)
 
+        Kubernetes diagnostic context supplied by Kubebar:
         Target warning group:
         - Context: \(context.target.contextName)
         - Namespace: \(context.target.namespace ?? "none")
@@ -199,13 +217,8 @@ public struct AIEventDiagnosticRequester: Sendable {
         Latest matching Warning Events, capped at 5 and redacted before submission:
         \(eventText.isEmpty ? "- No matching warning events returned" : eventText)
 
-        Return concise Markdown with exactly these sections:
-        ## 🔍 **Possible causes**
-        - 2-4 likely causes grounded only in the Warning Events above.
-
-        ## 🛠️ **Actionable fixes**
-        - 2-5 practical next actions.
-        - Include copy-ready kubectl command suggestions in fenced bash blocks when useful.
+        Safety reminders:
+        - Use only the supplied event context above.
         - Commands are suggestions only; the app will not execute them.
         """
     }

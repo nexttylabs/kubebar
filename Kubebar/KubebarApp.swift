@@ -33,6 +33,10 @@ struct KubebarApp: App {
                 onUpdateAIModelID: viewModel.updateAIModelID,
                 onUpdateAIBaseURL: viewModel.updateAIBaseURL,
                 onUpdateAIAPIKeyDraft: viewModel.updateAIAPIKeyDraft,
+                onUpdateAIPodPromptInstructions: viewModel.updateAIPodPromptInstructions,
+                onResetAIPodPromptInstructions: viewModel.resetAIPodPromptInstructions,
+                onUpdateAIEventPromptInstructions: viewModel.updateAIEventPromptInstructions,
+                onResetAIEventPromptInstructions: viewModel.resetAIEventPromptInstructions,
                 onTestAIConnection: viewModel.testAIConnection
             )
         }

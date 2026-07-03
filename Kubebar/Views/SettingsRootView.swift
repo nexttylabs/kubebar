@@ -21,6 +21,10 @@ struct SettingsRootView: View {
     let onUpdateAIModelID: (String) -> Void
     let onUpdateAIBaseURL: (String) -> Void
     let onUpdateAIAPIKeyDraft: (String) -> Void
+    let onUpdateAIPodPromptInstructions: (String) -> Void
+    let onResetAIPodPromptInstructions: () -> Void
+    let onUpdateAIEventPromptInstructions: (String) -> Void
+    let onResetAIEventPromptInstructions: () -> Void
     let onTestAIConnection: () -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -43,6 +47,10 @@ struct SettingsRootView: View {
             onUpdateAIModelID: onUpdateAIModelID,
             onUpdateAIBaseURL: onUpdateAIBaseURL,
             onUpdateAIAPIKeyDraft: onUpdateAIAPIKeyDraft,
+            onUpdateAIPodPromptInstructions: onUpdateAIPodPromptInstructions,
+            onResetAIPodPromptInstructions: onResetAIPodPromptInstructions,
+            onUpdateAIEventPromptInstructions: onUpdateAIEventPromptInstructions,
+            onResetAIEventPromptInstructions: onResetAIEventPromptInstructions,
             onTestAIConnection: onTestAIConnection
         )
         .frame(

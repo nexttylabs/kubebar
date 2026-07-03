@@ -4,54 +4,75 @@
     "1": {
       "number": 1,
       "step_id": "U1",
-      "result": "`Overview` `Recent Warnings` manually renders a safe AI diagnosis from the latest 5 fresh matching Warning Events.",
-      "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+      "result": "`AI Assistant` Settings supports safe prompt customization/reset for Pod/Event diagnosis.",
+      "verification": "swift test --filter AIPodDiagnosticRequesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter AppConfigTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIProviderConnectionTesterTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
       "test_scenarios": [
-        "Overview Recent Warnings exposes the AI action while Events tab rows do not",
-        "the diagnostic reader builds a fresh `kubectl --context <context> get events --all-namespaces --field-selector type=Warning -o json` style read with effective kubeconfig overrides",
-        "exact matching uses `namespace`, `objectKind`, `objectName`, and `reason` without substring fallback",
-        "provider input is sorted newest first and capped at 5 matching Warning Events",
-        "no matching fresh events produces a safe retryable failure",
-        "event messages are redacted before provider submission",
-        "missing provider model/key/base URL returns safe local failure",
-        "provider/network errors never expose API keys/Bearer tokens/raw response bodies",
-        "request body includes structured event context and required Markdown instructions but no Pod logs, kubeconfig content, raw cluster JSON, or raw kubectl transcript",
-        "diagnosis state supports loading, success, retryable failure, unavailable configuration, and stale-display disclosure",
-        "AI suggested commands remain text only and no mutation command is executed by Kubebar",
+        "existing configs without prompt fields decode and use defaults",
+        "saving config round-trips custom Pod and Event prompt overrides without API keys",
+        "blank custom prompt falls back to built-in default",
+        "reset clears a surface override rather than saving default text",
+        "Settings change detection includes prompt overrides",
+        "Pod diagnostic request body includes custom Pod prompt instructions plus fixed safety prompt, bounded redacted last-50 logs, and no-auto-execute disclosure",
+        "Event diagnostic request body includes custom Event prompt instructions plus fixed safety prompt, latest-5 matching events, and no Pod logs",
+        "Test Connection sends no custom prompt or Kubernetes data",
         "docs preserve Health category independence"
       ],
       "discovery_cache": [
         {
-          "path": "Kubebar/Views/OverviewTabView.swift",
-          "reason": "Overview Recent Warnings UI"
+          "path": "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "reason": "prompt override config and defaults"
         },
         {
-          "path": "Kubebar/Views/WarningEventsView.swift",
-          "reason": "shared warning row view and Events-tab separation risk"
+          "path": "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "reason": "Settings editing state helper surface"
         },
         {
-          "path": "KubebarCore/Models/MenuDisplayModel.swift",
-          "reason": "display-ready warnings and diagnostic target value"
+          "path": "KubebarCore/Models/SetupFlowState.swift",
+          "reason": "Settings mutation methods"
         },
         {
-          "path": "KubebarCore/Services/HealthEvaluator.swift",
-          "reason": "warning grouping key"
+          "path": "KubebarCore/Models/MenuRuntimeState.swift",
+          "reason": "config change detection"
         },
         {
-          "path": "KubebarCore/Services/KubectlClusterReader.swift",
-          "reason": "Warning Event kubectl decode/command pattern"
-        },
-        {
-          "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
-          "reason": "provider validation pattern"
+          "path": "KubebarCore/Services/AppConfigStore.swift",
+          "reason": "config encode/decode compatibility"
         },
         {
           "path": "KubebarCore/Services/AIPodDiagnosticRequester.swift",
-          "reason": "diagnostic requester/redaction pattern"
+          "reason": "Pod prompt request composition"
         },
         {
-          "path": "Kubebar/MenuBarViewModel.swift",
-          "reason": "transient AI state and app-owned config"
+          "path": "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "reason": "Event prompt request composition"
+        },
+        {
+          "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+          "reason": "unchanged Test Connection boundary"
+        },
+        {
+          "path": "Kubebar/Views/SetupView.swift",
+          "reason": "`AI Assistant` Settings UI"
+        },
+        {
+          "path": "KubebarTests/Models/AppConfigTests.swift",
+          "reason": "config compatibility tests"
+        },
+        {
+          "path": "KubebarTests/Models/SetupFlowStateTests.swift",
+          "reason": "Settings mutation tests"
+        },
+        {
+          "path": "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "reason": "change detection tests"
+        },
+        {
+          "path": "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "reason": "Pod request-body tests"
+        },
+        {
+          "path": "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "reason": "Event request-body tests"
         },
         {
           "path": "docs/architecture/runtime-invariants.md",
@@ -66,86 +87,112 @@
       "depends_on": [],
       "agent_hint": null,
       "state": "closed",
-      "activated_at": "2026-07-02T07:07:13Z",
+      "activated_at": "2026-07-03T06:52:23Z",
       "execution_evidence": {
         "changed_files": [
           "CONTEXT.md",
           "docs/architecture/runtime-invariants.md",
-          ".imm/specs/2026-07-02-ai-event-diagnostics.md",
-          "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
-          "changelog.d/ai-event-diagnostics.added.md",
-          "Kubebar.xcodeproj/project.pbxproj",
-          "KubebarCore/Models/AIEventDiagnosis.swift",
-          "KubebarCore/Models/MenuDisplayModel.swift",
-          "KubebarCore/Services/HealthEvaluator.swift",
-          "KubebarCore/Services/WarningEventDiagnosticReader.swift",
+          ".imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md",
+          "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md",
+          "changelog.d/ai-diagnostic-prompt-customization.added.md",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
           "KubebarCore/Services/AIEventDiagnosticRequester.swift",
           "Kubebar/MenuBarViewModel.swift",
-          "Kubebar/Views/MenuBarRootView.swift",
-          "Kubebar/Views/OverviewTabView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "Kubebar/Views/SettingsRootView.swift",
           "Kubebar/KubebarApp.swift",
-          "KubebarTests/Services/WarningEventDiagnosticReaderTests.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
           "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
-          "KubebarTests/Models/MenuDisplayModelTests.swift"
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift"
         ],
-        "verification_result": "passed: focused Swift tests, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check after UI review follow-up",
-        "verification_command": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
-        "notes": "Implemented Overview-only Recent Warnings AI event diagnosis. Addressed UI review follow-up by making each sparkles button accessible/help text include warning reason and location, and by adding a dismiss action to the transient diagnosis panel. Focused tests, swift build, quality gate, and diff check passed after follow-up.",
-        "recorded_at": "2026-07-02T07:44:12Z"
+        "verification_result": "passed: focused Swift tests for prompt requester/config/state/Test Connection, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check",
+        "verification_command": "swift test --filter AIPodDiagnosticRequesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter AppConfigTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIProviderConnectionTesterTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "notes": "Implemented per-surface Pod/Event AI diagnostic prompt overrides with default fallback and reset semantics. Requesters keep fixed system prompts and code-owned bounded context blocks; Test Connection remains prompt-free.",
+        "recorded_at": "2026-07-03T07:18:45Z"
       },
-      "closed_at": "2026-07-02T07:44:55Z"
+      "closed_at": "2026-07-03T07:20:41Z"
     }
   },
   "pending_follow_up": null,
   "last_review": {
     "decision": "pass",
-    "evidence": "Focused tests, swift build, full ./scripts/swift-quality-gate.sh local, and rtk git diff --check passed after implementation and UI follow-up. UI review findings fixed: distinctive warning-specific accessibility labels/help and dismiss control for inline diagnosis panel. Code review child returned no findings/output; main-thread verification checked fresh event read, exact matching, latest-5 cap, redaction, no Pod logs, and Events tab remains action-free.",
-    "artifacts": "CONTEXT.md; docs/architecture/runtime-invariants.md; .imm/specs/2026-07-02-ai-event-diagnostics.md; docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md; changelog.d/ai-event-diagnostics.added.md; KubebarCore/Models/AIEventDiagnosis.swift; KubebarCore/Services/WarningEventDiagnosticReader.swift; KubebarCore/Services/AIEventDiagnosticRequester.swift; Kubebar/MenuBarViewModel.swift; Kubebar/Views/OverviewTabView.swift; tests",
-    "notes": "Review closure after bounded same-boundary UI follow-up.",
-    "recorded_at": "2026-07-02T07:44:55Z"
+    "evidence": "Focused tests for Pod/Event requesters, AppConfig, SetupFlowState, MenuRuntimeState, and AIProviderConnectionTester passed; swift build passed; full ./scripts/swift-quality-gate.sh local passed; rtk git diff --check passed. RED phase captured missing prompt config/requester APIs before implementation.",
+    "artifacts": "CONTEXT.md; docs/architecture/runtime-invariants.md; .imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md; docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md; changelog.d/ai-diagnostic-prompt-customization.added.md; KubebarCore/Models/AIDiagnosticAssistantConfig.swift; KubebarCore/Models/AIDiagnosticAssistantState.swift; KubebarCore/Models/SetupFlowState.swift; KubebarCore/Services/AIPodDiagnosticRequester.swift; KubebarCore/Services/AIEventDiagnosticRequester.swift; Kubebar/MenuBarViewModel.swift; Kubebar/Views/SetupView.swift; Kubebar/Views/SettingsRootView.swift; Kubebar/KubebarApp.swift; focused tests",
+    "notes": "YAGNI check passed: changes are limited to per-surface prompt override config, Settings UI, request prompt composition, docs, and verification tests.",
+    "recorded_at": "2026-07-03T07:20:41Z"
   },
   "validated_plan_snapshot": {
-    "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
-    "plan_signature": "c1ec9e5dd5a6c872a34bef00ab6873313a8518edd3fcc217d9f100d849c1a7db",
+    "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md",
+    "plan_signature": "197958c7f012186428e47125f495f783e7bb44ee5390c6251658a219762c3dd2",
     "steps": [
       {
         "number": 1,
         "step_id": "U1",
-        "result": "`Overview` `Recent Warnings` manually renders a safe AI diagnosis from the latest 5 fresh matching Warning Events.",
-        "verification": "swift test --filter AIProviderConnectionTesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter WarningEventDiagnosticReaderTests && swift test --filter MenuDisplayModelTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
+        "result": "`AI Assistant` Settings supports safe prompt customization/reset for Pod/Event diagnosis.",
+        "verification": "swift test --filter AIPodDiagnosticRequesterTests && swift test --filter AIEventDiagnosticRequesterTests && swift test --filter AppConfigTests && swift test --filter SetupFlowStateTests && swift test --filter MenuRuntimeStateTests && swift test --filter AIProviderConnectionTesterTests && swift build && ./scripts/swift-quality-gate.sh local && rtk git diff --check",
         "depends_on": [],
         "discovery_cache": [
           {
-            "path": "Kubebar/Views/OverviewTabView.swift",
-            "reason": "Overview Recent Warnings UI"
+            "path": "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+            "reason": "prompt override config and defaults"
           },
           {
-            "path": "Kubebar/Views/WarningEventsView.swift",
-            "reason": "shared warning row view and Events-tab separation risk"
+            "path": "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+            "reason": "Settings editing state helper surface"
           },
           {
-            "path": "KubebarCore/Models/MenuDisplayModel.swift",
-            "reason": "display-ready warnings and diagnostic target value"
+            "path": "KubebarCore/Models/SetupFlowState.swift",
+            "reason": "Settings mutation methods"
           },
           {
-            "path": "KubebarCore/Services/HealthEvaluator.swift",
-            "reason": "warning grouping key"
+            "path": "KubebarCore/Models/MenuRuntimeState.swift",
+            "reason": "config change detection"
           },
           {
-            "path": "KubebarCore/Services/KubectlClusterReader.swift",
-            "reason": "Warning Event kubectl decode/command pattern"
-          },
-          {
-            "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
-            "reason": "provider validation pattern"
+            "path": "KubebarCore/Services/AppConfigStore.swift",
+            "reason": "config encode/decode compatibility"
           },
           {
             "path": "KubebarCore/Services/AIPodDiagnosticRequester.swift",
-            "reason": "diagnostic requester/redaction pattern"
+            "reason": "Pod prompt request composition"
           },
           {
-            "path": "Kubebar/MenuBarViewModel.swift",
-            "reason": "transient AI state and app-owned config"
+            "path": "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+            "reason": "Event prompt request composition"
+          },
+          {
+            "path": "KubebarCore/Services/AIProviderConnectionTester.swift",
+            "reason": "unchanged Test Connection boundary"
+          },
+          {
+            "path": "Kubebar/Views/SetupView.swift",
+            "reason": "`AI Assistant` Settings UI"
+          },
+          {
+            "path": "KubebarTests/Models/AppConfigTests.swift",
+            "reason": "config compatibility tests"
+          },
+          {
+            "path": "KubebarTests/Models/SetupFlowStateTests.swift",
+            "reason": "Settings mutation tests"
+          },
+          {
+            "path": "KubebarTests/Models/MenuRuntimeStateTests.swift",
+            "reason": "change detection tests"
+          },
+          {
+            "path": "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+            "reason": "Pod request-body tests"
+          },
+          {
+            "path": "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+            "reason": "Event request-body tests"
           },
           {
             "path": "docs/architecture/runtime-invariants.md",
@@ -159,17 +206,14 @@
         "parallel_probes": [],
         "agent_hint": null,
         "test_scenarios": [
-          "Overview Recent Warnings exposes the AI action while Events tab rows do not",
-          "the diagnostic reader builds a fresh `kubectl --context <context> get events --all-namespaces --field-selector type=Warning -o json` style read with effective kubeconfig overrides",
-          "exact matching uses `namespace`, `objectKind`, `objectName`, and `reason` without substring fallback",
-          "provider input is sorted newest first and capped at 5 matching Warning Events",
-          "no matching fresh events produces a safe retryable failure",
-          "event messages are redacted before provider submission",
-          "missing provider model/key/base URL returns safe local failure",
-          "provider/network errors never expose API keys/Bearer tokens/raw response bodies",
-          "request body includes structured event context and required Markdown instructions but no Pod logs, kubeconfig content, raw cluster JSON, or raw kubectl transcript",
-          "diagnosis state supports loading, success, retryable failure, unavailable configuration, and stale-display disclosure",
-          "AI suggested commands remain text only and no mutation command is executed by Kubebar",
+          "existing configs without prompt fields decode and use defaults",
+          "saving config round-trips custom Pod and Event prompt overrides without API keys",
+          "blank custom prompt falls back to built-in default",
+          "reset clears a surface override rather than saving default text",
+          "Settings change detection includes prompt overrides",
+          "Pod diagnostic request body includes custom Pod prompt instructions plus fixed safety prompt, bounded redacted last-50 logs, and no-auto-execute disclosure",
+          "Event diagnostic request body includes custom Event prompt instructions plus fixed safety prompt, latest-5 matching events, and no Pod logs",
+          "Test Connection sends no custom prompt or Kubernetes data",
           "docs preserve Health category independence"
         ]
       }
@@ -246,18 +290,225 @@
       "details": {
         "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md"
       }
+    },
+    {
+      "at": "2026-07-03T06:50:50Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md",
+        "plan_signature": "e82ce4ee6b70bd66a4133b3c86a4e4a9581d77d0d87545a58d6a0cefd1f4d5df",
+        "same_plan": false
+      }
+    },
+    {
+      "at": "2026-07-03T06:51:42Z",
+      "action": "sync_plan_from_imm_plan",
+      "details": {
+        "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md",
+        "plan_signature": "197958c7f012186428e47125f495f783e7bb44ee5390c6251658a219762c3dd2",
+        "same_plan": true
+      }
+    },
+    {
+      "at": "2026-07-03T07:20:41Z",
+      "action": "review_step",
+      "details": {
+        "step_number": 1,
+        "step_id": "U1",
+        "decision": "pass",
+        "target_kind": "plan_step"
+      }
+    },
+    {
+      "at": "2026-07-03T07:21:49Z",
+      "action": "finish_reset",
+      "details": {
+        "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+      }
+    },
+    {
+      "at": "2026-07-03T07:38:07Z",
+      "action": "review_gate_pass",
+      "details": {
+        "gate": "imm-code-review",
+        "reviewed_changed_files": [
+          "CONTEXT.md",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift",
+          "docs/architecture/runtime-invariants.md"
+        ],
+        "evidence_ref": "Solo code review: fixed safety/system prompt remains code-owned; prompt overrides are non-secret AppConfig fields with nil/blank default fallback; reset clears overrides; Test Connection stays prompt-free and sends no Kubernetes data; requester request bodies still include bounded/redacted Pod logs (last 50) and latest-5 Warning Events; API keys remain Keychain-only. Existing configs decode without prompt fields. Focused tests + swift build + full quality gate + rtk git diff --check passed."
+      }
+    },
+    {
+      "at": "2026-07-03T07:43:09Z",
+      "action": "review_gate_pass",
+      "details": {
+        "gate": "imm-code-review",
+        "reviewed_changed_files": [
+          ".imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md",
+          "CONTEXT.md",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift",
+          "changelog.d/ai-diagnostic-prompt-customization.added.md",
+          "docs/architecture/runtime-invariants.md",
+          "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+        ],
+        "evidence_ref": "Solo code review: fixed safety/system prompt remains code-owned; prompt overrides are non-secret AppConfig fields with nil/blank default fallback; reset clears overrides; Test Connection stays prompt-free and sends no Kubernetes data; requester request bodies still include bounded/redacted Pod logs (last 50) and latest-5 Warning Events; API keys remain Keychain-only. Existing configs decode without prompt fields. Focused tests + swift build + full quality gate + rtk git diff --check passed."
+      }
+    },
+    {
+      "at": "2026-07-03T07:44:44Z",
+      "action": "review_gate_pass",
+      "details": {
+        "gate": "imm-ui-review",
+        "reviewed_changed_files": [
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift"
+        ],
+        "evidence_ref": "Solo UI review: AI Assistant Settings adds a Diagnostic prompts section with two TextEditors (Pod/Event) initialized from effective defaults and Reset to default buttons. TextEditor and reset buttons carry accessibilityLabel; Settings detail is scrollable so two editors fit within fixed 620px window; effective-default binding returns default text when no override is saved, so reset clears the override and the editor returns to default; monospaced caption font keeps prompts readable. No color-only state, no menu-bar icon change, no health impact. Quality gate build passed."
+      }
+    },
+    {
+      "at": "2026-07-03T07:45:49Z",
+      "action": "review_gate_pass",
+      "details": {
+        "gate": "imm-ui-review",
+        "reviewed_changed_files": [
+          ".imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md",
+          "CONTEXT.md",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift",
+          "changelog.d/ai-diagnostic-prompt-customization.added.md",
+          "docs/architecture/runtime-invariants.md",
+          "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+        ],
+        "evidence_ref": "Solo UI review: AI Assistant Settings adds a Diagnostic prompts section with two TextEditors (Pod/Event) initialized from effective defaults and Reset to default buttons. TextEditor and reset buttons carry accessibilityLabel; Settings detail is scrollable so two editors fit within fixed 620px window; effective-default binding returns default text when no override is saved, so reset clears the override and the editor returns to default; monospaced caption font keeps prompts readable. No color-only state, no menu-bar icon change, no health impact. Quality gate build passed."
+      }
+    },
+    {
+      "at": "2026-07-03T07:50:09Z",
+      "action": "finish_reset",
+      "details": {
+        "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+      }
     }
   ],
   "requires_replan": false,
   "runtime_status": "idle",
-  "plan_path": "docs/plans/2026-07-02-002-feat-ai-event-diagnostics-plan.md",
-  "plan_summary": "Add a manual AI diagnosis action only to `Overview` `Recent Warnings` rows that rereads fresh Warning Events through `kubectl`, filters by exact `namespace`, `objectKind`, `objectName`, and `reason`, sends the latest 5 matching events to the configured AI Provider, and renders a transient Markdown diagnosis.",
-  "plan_signature": "c1ec9e5dd5a6c872a34bef00ab6873313a8518edd3fcc217d9f100d849c1a7db",
-  "plan_last_validated_at": "2026-07-02T07:00:23Z",
+  "plan_path": "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md",
+  "plan_summary": "Add per-surface AI diagnostic prompt customization in `AI Assistant` Settings so users can edit Pod and Warning Event diagnosis instructions from built-in defaults, reset either surface to default, and keep immutable safety/data boundaries in code.",
+  "plan_signature": "197958c7f012186428e47125f495f783e7bb44ee5390c6251658a219762c3dd2",
+  "plan_last_validated_at": "2026-07-03T06:51:42Z",
   "completed_steps": [
     1
   ],
   "active_step": null,
   "next_action": null,
-  "reset_reason": "intentional_reset"
+  "reset_reason": "intentional_reset",
+  "review_state": {
+    "gates": {
+      "imm-code-review": {
+        "gate": "imm-code-review",
+        "decision": "pass",
+        "reviewed_changed_files": [
+          ".imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md",
+          "CONTEXT.md",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift",
+          "changelog.d/ai-diagnostic-prompt-customization.added.md",
+          "docs/architecture/runtime-invariants.md",
+          "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+        ],
+        "changed_files_signature": "562f3e73c65f8d84034d0d59398ccc15993beda90f66105536cdc78e9c059d61",
+        "evidence_ref": "Solo code review: fixed safety/system prompt remains code-owned; prompt overrides are non-secret AppConfig fields with nil/blank default fallback; reset clears overrides; Test Connection stays prompt-free and sends no Kubernetes data; requester request bodies still include bounded/redacted Pod logs (last 50) and latest-5 Warning Events; API keys remain Keychain-only. Existing configs decode without prompt fields. Focused tests + swift build + full quality gate + rtk git diff --check passed.",
+        "reviewer_skill": "imm-code-review",
+        "reviewed_at": "2026-07-03T07:43:09Z"
+      },
+      "imm-ui-review": {
+        "gate": "imm-ui-review",
+        "decision": "pass",
+        "reviewed_changed_files": [
+          ".imm/specs/2026-07-03-ai-diagnostic-prompt-customization.md",
+          "CONTEXT.md",
+          "Kubebar/KubebarApp.swift",
+          "Kubebar/MenuBarViewModel.swift",
+          "Kubebar/Views/SettingsRootView.swift",
+          "Kubebar/Views/SetupView.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantConfig.swift",
+          "KubebarCore/Models/AIDiagnosticAssistantState.swift",
+          "KubebarCore/Models/SetupFlowState.swift",
+          "KubebarCore/Services/AIEventDiagnosticRequester.swift",
+          "KubebarCore/Services/AIPodDiagnosticRequester.swift",
+          "KubebarTests/Models/AppConfigTests.swift",
+          "KubebarTests/Models/MenuRuntimeStateTests.swift",
+          "KubebarTests/Models/SetupFlowStateTests.swift",
+          "KubebarTests/Services/AIEventDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIPodDiagnosticRequesterTests.swift",
+          "KubebarTests/Services/AIProviderConnectionTesterTests.swift",
+          "changelog.d/ai-diagnostic-prompt-customization.added.md",
+          "docs/architecture/runtime-invariants.md",
+          "docs/plans/2026-07-03-001-feat-ai-diagnostic-prompt-customization-plan.md"
+        ],
+        "changed_files_signature": "562f3e73c65f8d84034d0d59398ccc15993beda90f66105536cdc78e9c059d61",
+        "evidence_ref": "Solo UI review: AI Assistant Settings adds a Diagnostic prompts section with two TextEditors (Pod/Event) initialized from effective defaults and Reset to default buttons. TextEditor and reset buttons carry accessibilityLabel; Settings detail is scrollable so two editors fit within fixed 620px window; effective-default binding returns default text when no override is saved, so reset clears the override and the editor returns to default; monospaced caption font keeps prompts readable. No color-only state, no menu-bar icon change, no health impact. Quality gate build passed.",
+        "reviewer_skill": "imm-ui-review",
+        "reviewed_at": "2026-07-03T07:45:49Z"
+      }
+    }
+  }
 }

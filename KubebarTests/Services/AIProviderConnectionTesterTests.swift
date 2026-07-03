@@ -294,7 +294,12 @@ struct AIProviderConnectionTesterTests {
         let tester = AIProviderConnectionTester(credentialStore: store, httpClient: http)
 
         _ = await tester.testConnection(
-            config: AIDiagnosticAssistantConfig(provider: .openAI, modelID: "gpt-4o-mini"),
+            config: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                podPromptInstructions: "Custom Pod prompt should stay out of Test Connection",
+                eventPromptInstructions: "Custom Event prompt should stay out of Test Connection"
+            ),
             provider: .openAI
         )
 
@@ -307,6 +312,8 @@ struct AIProviderConnectionTesterTests {
         #expect(!jsonString.contains("warning"))
         #expect(!jsonString.contains("kubectl"))
         #expect(!jsonString.contains("pod"))
+        #expect(!jsonString.contains("Custom Pod prompt"))
+        #expect(!jsonString.contains("Custom Event prompt"))
     }
 }
 

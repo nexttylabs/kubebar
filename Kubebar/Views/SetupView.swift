@@ -19,6 +19,10 @@ struct SetupView: View {
     let onUpdateAIModelID: (String) -> Void
     let onUpdateAIBaseURL: (String) -> Void
     let onUpdateAIAPIKeyDraft: (String) -> Void
+    let onUpdateAIPodPromptInstructions: (String) -> Void
+    let onResetAIPodPromptInstructions: () -> Void
+    let onUpdateAIEventPromptInstructions: (String) -> Void
+    let onResetAIEventPromptInstructions: () -> Void
     let onTestAIConnection: () -> Void
 
     init(
@@ -39,6 +43,10 @@ struct SetupView: View {
         onUpdateAIModelID: @escaping (String) -> Void = { _ in },
         onUpdateAIBaseURL: @escaping (String) -> Void = { _ in },
         onUpdateAIAPIKeyDraft: @escaping (String) -> Void = { _ in },
+        onUpdateAIPodPromptInstructions: @escaping (String) -> Void = { _ in },
+        onResetAIPodPromptInstructions: @escaping () -> Void = {},
+        onUpdateAIEventPromptInstructions: @escaping (String) -> Void = { _ in },
+        onResetAIEventPromptInstructions: @escaping () -> Void = {},
         onTestAIConnection: @escaping () -> Void = {}
     ) {
         _state = state
@@ -58,6 +66,10 @@ struct SetupView: View {
         self.onUpdateAIModelID = onUpdateAIModelID
         self.onUpdateAIBaseURL = onUpdateAIBaseURL
         self.onUpdateAIAPIKeyDraft = onUpdateAIAPIKeyDraft
+        self.onUpdateAIPodPromptInstructions = onUpdateAIPodPromptInstructions
+        self.onResetAIPodPromptInstructions = onResetAIPodPromptInstructions
+        self.onUpdateAIEventPromptInstructions = onUpdateAIEventPromptInstructions
+        self.onResetAIEventPromptInstructions = onResetAIEventPromptInstructions
         self.onTestAIConnection = onTestAIConnection
     }
 
@@ -260,6 +272,29 @@ struct SetupView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                }
+            }
+
+            SettingsSection(title: "Diagnostic prompts") {
+                Text("Edit diagnosis instructions only. Kubebar still attaches bounded diagnostic context and fixed safety instructions.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                SettingsRow(label: "Pod diagnosis") {
+                    aiPromptEditor(
+                        text: aiPodPromptInstructionsBinding,
+                        resetAction: onResetAIPodPromptInstructions,
+                        accessibilityLabel: "AI Pod diagnosis prompt"
+                    )
+                }
+
+                SettingsRow(label: "Warning Events") {
+                    aiPromptEditor(
+                        text: aiEventPromptInstructionsBinding,
+                        resetAction: onResetAIEventPromptInstructions,
+                        accessibilityLabel: "AI Warning Event diagnosis prompt"
+                    )
                 }
             }
         }
@@ -507,6 +542,37 @@ struct SetupView: View {
             get: { state.aiDiagnosticAssistant.apiKeyDraft },
             set: { onUpdateAIAPIKeyDraft($0) }
         )
+    }
+
+    private var aiPodPromptInstructionsBinding: Binding<String> {
+        Binding(
+            get: { state.aiDiagnosticAssistant.config.effectivePodPromptInstructions },
+            set: { onUpdateAIPodPromptInstructions($0) }
+        )
+    }
+
+    private var aiEventPromptInstructionsBinding: Binding<String> {
+        Binding(
+            get: { state.aiDiagnosticAssistant.config.effectiveEventPromptInstructions },
+            set: { onUpdateAIEventPromptInstructions($0) }
+        )
+    }
+
+    private func aiPromptEditor(
+        text: Binding<String>,
+        resetAction: @escaping () -> Void,
+        accessibilityLabel: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            TextEditor(text: text)
+                .font(.system(.caption, design: .monospaced))
+                .frame(minHeight: 118)
+                .accessibilityLabel(Text(accessibilityLabel))
+
+            Button("Reset to default", action: resetAction)
+                .buttonStyle(.bordered)
+                .accessibilityLabel(Text("Reset \(accessibilityLabel) to default"))
+        }
     }
 
     private var kubeconfigPathsHelpText: String {

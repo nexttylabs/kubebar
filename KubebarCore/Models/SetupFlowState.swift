@@ -352,12 +352,28 @@ public struct SetupFlowState: Equatable, Sendable {
     }
 
     public mutating func updateAIDiagnosticAssistant(provider: AIProvider) {
-        aiDiagnosticAssistant.config = AIDiagnosticAssistantConfig(
-            provider: provider,
-            modelID: aiDiagnosticAssistant.config.modelID,
-            baseURL: aiDiagnosticAssistant.config.baseURL
-        )
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(provider: provider)
         aiDiagnosticAssistant.testConnectionResult = nil
+        configurationMessage = nil
+    }
+
+    public mutating func updateAIPodDiagnosticPromptInstructions(_ instructions: String) {
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(podPromptInstructions: instructions)
+        configurationMessage = nil
+    }
+
+    public mutating func updateAIEventDiagnosticPromptInstructions(_ instructions: String) {
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(eventPromptInstructions: instructions)
+        configurationMessage = nil
+    }
+
+    public mutating func resetAIPodDiagnosticPromptInstructions() {
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(podPromptInstructions: nil)
+        configurationMessage = nil
+    }
+
+    public mutating func resetAIEventDiagnosticPromptInstructions() {
+        aiDiagnosticAssistant.config = aiDiagnosticAssistant.config.with(eventPromptInstructions: nil)
         configurationMessage = nil
     }
 

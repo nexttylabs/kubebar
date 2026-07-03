@@ -82,6 +82,55 @@ struct AIEventDiagnosticRequesterTests {
         #expect(!jsonString.contains("Secret object"))
     }
 
+    @Test("custom event prompt instructions are included with fixed safety context")
+    func customEventPromptInstructionsAreIncludedWithFixedSafetyContext() async throws {
+        let store = FakeAIProviderCredentialStore()
+        try? store.saveAPIKey("sk-test-secret", for: .openAI)
+        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nCause\n\n## 🛠️ **Actionable fixes**\nFix"))
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: http)
+
+        _ = await requester.diagnose(
+            context: Self.sampleContext(),
+            config: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                eventPromptInstructions: "Custom Event instructions: focus on the newest warning."
+            ),
+            provider: .openAI
+        )
+
+        let body = try #require(http.lastRequest?.httpBody)
+        let jsonString = String(data: body, encoding: .utf8) ?? ""
+        #expect(jsonString.contains("Custom Event instructions: focus on the newest warning."))
+        #expect(!jsonString.contains("Diagnose these Kubernetes Warning Events for a human operator."))
+        #expect(jsonString.contains("Use only the provided event context"))
+        #expect(jsonString.contains("Latest matching Warning Events, capped at 5 and redacted before submission"))
+        #expect(jsonString.contains("Commands are suggestions only; the app will not execute them."))
+        #expect(!jsonString.contains("Last 50 log lines"))
+    }
+
+    @Test("blank event prompt instructions fall back to default")
+    func blankEventPromptInstructionsFallBackToDefault() async throws {
+        let store = FakeAIProviderCredentialStore()
+        try? store.saveAPIKey("sk-test-secret", for: .openAI)
+        let http = FakeHTTPClient(statusCode: 200, body: Self.openAIResponse("## 🔍 **Possible causes**\nCause\n\n## 🛠️ **Actionable fixes**\nFix"))
+        let requester = AIEventDiagnosticRequester(credentialStore: store, httpClient: http)
+
+        _ = await requester.diagnose(
+            context: Self.sampleContext(),
+            config: AIDiagnosticAssistantConfig(
+                provider: .openAI,
+                modelID: "gpt-4o-mini",
+                eventPromptInstructions: "   \n  "
+            ),
+            provider: .openAI
+        )
+
+        let body = try #require(http.lastRequest?.httpBody)
+        let jsonString = String(data: body, encoding: .utf8) ?? ""
+        #expect(jsonString.contains("Diagnose these Kubernetes Warning Events for a human operator."))
+    }
+
     @Test("diagnostic request limits event payload to latest five")
     func diagnosticRequestLimitsEventsToLatestFive() async throws {
         let store = FakeAIProviderCredentialStore()

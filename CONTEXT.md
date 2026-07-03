@@ -24,8 +24,13 @@
   explaining user-approved Kubernetes diagnostic context. It is display/help
   behavior only and must not change `Health category`.
 - **AI Provider configuration**: non-secret app-wide provider metadata such as
-  provider kind, `Model ID`, and an `OpenAI-compatible` `Base URL`. It belongs
-  in App Settings and may be persisted in local app config.
+  provider kind, `Model ID`, an `OpenAI-compatible` `Base URL`, and custom AI
+  diagnostic prompt instructions. It belongs in App Settings and may be
+  persisted in local app config.
+- **AI diagnostic prompt instructions**: optional user-authored Pod/Event
+  diagnosis instructions edited in `AI Assistant` Settings. They start from
+  built-in defaults, reset by clearing the custom override, and cannot replace
+  Kubebar's fixed safety prompt or code-owned diagnostic context payload.
 - **AI Provider API key**: the secret credential for an AI provider. It must be
   stored in macOS Keychain, never in `AppConfig`, command output, diagnostics,
   or visible raw error text.
@@ -133,3 +138,9 @@ explicitly changes that scope.
   the `Overview` `Recent Warnings` entry point. `Kubebar/Views/WarningEventsView.swift`
   remains a shared row renderer and must not infer diagnostic targets in the
   Events tab.
+- AI diagnostic prompt customization: `KubebarCore/Models/AIDiagnosticAssistantConfig.swift`
+  owns non-secret Pod/Event prompt overrides plus built-in defaults,
+  `KubebarCore/Models/SetupFlowState.swift` owns Settings mutations/reset,
+  `Kubebar/Views/SetupView.swift` owns the editors, and the Pod/Event
+  diagnostic requesters combine effective prompt instructions with code-owned
+  safety prompts and bounded diagnostic context.

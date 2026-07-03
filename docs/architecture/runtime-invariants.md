@@ -118,6 +118,10 @@ These are the rules Kubebar must keep true at runtime.
   icon category.
 - AI Provider API keys must be stored in macOS Keychain, never in `AppConfig`,
   `config.json`, command output, diagnostics, or visible error text.
+- AI diagnostic prompt instructions are non-secret local settings. They may be
+  persisted in `AppConfig`, but they must not replace Kubebar's fixed safety
+  prompt, expand submitted Kubernetes context, affect Health category, or enable
+  automatic command execution.
 - AI Test Connection is manually triggered. It sends a minimal provider probe
   with no Kubernetes data: no warning text, Pod logs, kubeconfig content, raw
   `kubectl` output, or cluster JSON.

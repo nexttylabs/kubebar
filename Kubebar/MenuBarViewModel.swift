@@ -383,6 +383,26 @@ final class MenuBarViewModel: ObservableObject {
         publishRuntimeState()
     }
 
+    func updateAIPodPromptInstructions(_ instructions: String) {
+        runtimeState.setupState.updateAIPodDiagnosticPromptInstructions(instructions)
+        publishRuntimeState()
+    }
+
+    func resetAIPodPromptInstructions() {
+        runtimeState.setupState.resetAIPodDiagnosticPromptInstructions()
+        publishRuntimeState()
+    }
+
+    func updateAIEventPromptInstructions(_ instructions: String) {
+        runtimeState.setupState.updateAIEventDiagnosticPromptInstructions(instructions)
+        publishRuntimeState()
+    }
+
+    func resetAIEventPromptInstructions() {
+        runtimeState.setupState.resetAIEventDiagnosticPromptInstructions()
+        publishRuntimeState()
+    }
+
     func testAIConnection() {
         guard let tester = aiConnectionTester else {
             return
