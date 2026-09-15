@@ -1,1 +1,0 @@
-- Fix high CPU usage that continued after the menu was closed while a watched Pod was still starting up.
