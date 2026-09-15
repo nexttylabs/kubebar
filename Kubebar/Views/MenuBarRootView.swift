@@ -23,9 +23,11 @@ struct MenuBarRootView: View {
     @State private var selectedTab: MenuTab = .overview
     @State private var selectedTabContentHeight: CGFloat = 0
     @State private var screenVisibleHeight = Layout.defaultScreenVisibleHeight
+    @State private var panelIsVisible = true
 
     var body: some View {
         menuContent
+            .environment(\.menuPanelIsVisible, panelIsVisible)
     }
 
     private var menuContent: some View {
@@ -48,6 +50,7 @@ struct MenuBarRootView: View {
         .frame(width: Layout.menuWidth)
         .padding(16)
         .background(VisibleScreenHeightReader(onChange: updateScreenVisibleHeight))
+        .background(MenuPanelVisibilityReader(onChange: updatePanelVisibility))
         .onAppear {
             selectedTab = .overview
             onRefreshContextList()
@@ -185,6 +188,14 @@ struct MenuBarRootView: View {
         onPrepareSettings()
         openSettings()
         SettingsWindowPresenter.bringToFrontAfterOpening()
+    }
+
+    private func updatePanelVisibility(_ isVisible: Bool) {
+        guard panelIsVisible != isVisible else {
+            return
+        }
+
+        panelIsVisible = isVisible
     }
 
     private func updateScreenVisibleHeight(_ height: CGFloat) {
@@ -452,6 +463,89 @@ private final class VisibleScreenHeightProbeView: NSView {
             screen.frame.contains(pointerLocation)
         }
     }
+}
+
+/// Reports whether the menu panel window is on screen.
+///
+/// SwiftUI keeps `MenuBarExtra` content alive after the panel closes, so
+/// anything that only needs to run while the panel is visible (repeat-forever
+/// animations, for example) is gated on this value.
+private struct MenuPanelVisibilityReader: NSViewRepresentable {
+    let onChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> MenuPanelVisibilityProbeView {
+        MenuPanelVisibilityProbeView(onChange: onChange)
+    }
+
+    func updateNSView(_ nsView: MenuPanelVisibilityProbeView, context: Context) {
+        nsView.onChange = onChange
+        nsView.reportVisibility()
+    }
+}
+
+private final class MenuPanelVisibilityProbeView: NSView {
+    var onChange: (Bool) -> Void
+
+    init(onChange: @escaping (Bool) -> Void) {
+        self.onChange = onChange
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) {
+        self.onChange = { _ in }
+        super.init(coder: coder)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+
+        NotificationCenter.default.removeObserver(self)
+
+        if let window {
+            for name in [
+                NSWindow.didChangeOcclusionStateNotification,
+                NSWindow.didBecomeKeyNotification,
+                NSWindow.didResignKeyNotification
+            ] {
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(windowVisibilityChanged),
+                    name: name,
+                    object: window
+                )
+            }
+        }
+
+        reportVisibility()
+    }
+
+    @objc private func windowVisibilityChanged() {
+        reportVisibility()
+    }
+
+    func reportVisibility() {
+        guard let window else {
+            onChange(false)
+            return
+        }
+
+        onChange(window.isVisible && window.occlusionState.contains(.visible))
+    }
+}
+
+extension EnvironmentValues {
+    var menuPanelIsVisible: Bool {
+        get { self[MenuPanelVisibilityKey.self] }
+        set { self[MenuPanelVisibilityKey.self] = newValue }
+    }
+}
+
+private struct MenuPanelVisibilityKey: EnvironmentKey {
+    static let defaultValue = true
 }
 
 private struct MeasuredHeightPreferenceKey: PreferenceKey {

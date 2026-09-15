@@ -189,10 +189,16 @@ private struct PodNamespaceSectionView: View {
 private struct PodRowView: View {
     let row: PodItemDisplay
     let onOpenPodLogs: (PodLogTarget) -> Void
-    @State private var isPulsing = false
+    @Environment(\.menuPanelIsVisible) private var menuPanelIsVisible
 
-    private var shouldPulse: Bool {
-        row.state == .watch
+    /// The pulsing dot only exists while the menu panel is on screen.
+    ///
+    /// SwiftUI keeps `MenuBarExtra` content alive after the panel closes, and an
+    /// unbounded `.repeatForever()` animation keeps rendering that invisible
+    /// panel at display refresh rate. Removing the animated view - instead of
+    /// only changing its opacity - is what actually stops the animation.
+    private var isPulseActive: Bool {
+        row.state == .watch && menuPanelIsVisible
     }
 
     private var statusColor: Color {
@@ -209,18 +215,7 @@ private struct PodRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 7, height: 7)
-                    .opacity(shouldPulse && isPulsing ? 0.4 : 1.0)
-                    .animation(shouldPulse ? Animation.easeInOut(duration: 0.8).repeatForever() : .default, value: isPulsing)
-                    .onAppear {
-                        updatePulse()
-                    }
-                    .onChange(of: shouldPulse) { _, _ in
-                        updatePulse()
-                    }
-                    .accessibilityHidden(true)
+                statusDot
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -289,10 +284,37 @@ private struct PodRowView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func updatePulse() {
-        isPulsing = shouldPulse
+    @ViewBuilder
+    private var statusDot: some View {
+        if isPulseActive {
+            PulsingStatusDot(color: statusColor)
+        } else {
+            Circle()
+                .fill(statusColor)
+                .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
+        }
     }
+}
 
+/// Transitional pods pulse while the menu is open. The view is created when the
+/// panel appears and discarded when it closes, so the `repeatForever` animation
+/// cannot outlive the panel and keep rendering it off screen.
+private struct PulsingStatusDot: View {
+    let color: Color
+    @State private var isDimmed = false
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 7, height: 7)
+            .opacity(isDimmed ? 0.4 : 1.0)
+            .animation(.easeInOut(duration: 0.8).repeatForever(), value: isDimmed)
+            .onAppear {
+                isDimmed = true
+            }
+            .accessibilityHidden(true)
+    }
 }
 
 private struct ResourceProgressPair: View {

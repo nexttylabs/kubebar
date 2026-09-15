@@ -23,6 +23,11 @@ These are the rules Kubebar must keep true at runtime.
   footer does not hug the short content.
 - The menu tab bar must read as horizontally balanced with equal visual spacing
   to the menu edges.
+- Menu content that animates must stop while the menu panel is hidden. SwiftUI
+  keeps `MenuBarExtra` content alive after the panel closes, so an unbounded
+  animation keeps rendering the invisible menu and burns CPU. Animated views are
+  removed while the panel is hidden (`menuPanelIsVisible`), not merely set to a
+  static value.
 - Deep troubleshooting stays out of version 1.
 
 ## Data Rules
