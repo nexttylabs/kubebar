@@ -13,5 +13,6 @@ xcuserdata/
 !.env.example
 .skill-archive/
 DerivedDataLayoutCheck/
+DerivedDataLayoutPolish/
 DerivedDataRelease/
 /DerivedData-Launch
