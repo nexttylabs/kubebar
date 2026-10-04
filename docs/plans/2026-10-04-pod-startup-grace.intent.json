@@ -1,0 +1,57 @@
+{
+  "contract": "assurance_kernel/task_intent/v1",
+  "task_id": "2026-10-04-pod-startup-grace",
+  "owner": "user",
+  "goal": "Kubebar must stop treating a young, still-initializing Pod as a readiness failure, so a routine Pod start no longer flips the cluster out of OK, no longer pulses the menu bar icon, and no longer sends a Health State Shift Alert. Pods inside a fixed 120 second startup grace that carry no failure signal are classified as starting, keep their honest non-ready row, report an N pods starting reason, and contribute zero to the cluster readiness deficit. Pods past the grace, and any Pod with a bad waiting reason, a CrashLoopBackOff, or a failed terminated container, keep their current Bad and Watch treatment. The Pods card keeps showing real ready over total, the OK/Watch/Bad/Stale vocabulary is unchanged, and no Settings surface is added.",
+  "acceptance": [
+    {
+      "id": "A1",
+      "assertion": "A Pod inside the startup grace with no failure signal is classified as starting, so its watched target reports OK with a starting reason.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/podInsideStartupGraceIsStartingNotNotReady\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A2",
+      "assertion": "A not-ready Pod past the startup grace keeps its Watch classification with a not ready reason.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/notReadyPodPastGraceKeepsNotReadyClassification\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A3",
+      "assertion": "A Pod inside the startup grace that has a bad waiting reason is still Bad.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/badWaitingReasonInsideGraceStaysBad\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A4",
+      "assertion": "A Pod inside the startup grace that has a failed terminated container is still Bad.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/failedTerminatedContainerInsideGraceStaysBad\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A5",
+      "assertion": "A Pod with no startTime and no creationTimestamp is treated as not-ready rather than starting.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/podWithoutAgeFieldsIsNotStarting\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A6",
+      "assertion": "A watched target with only starting Pods reports OK while a target with a genuinely not-ready Pod reports Watch, and only the genuine case raises the alert severity.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"HealthEvaluatorStartupGraceTests/startingPodsKeepClusterOKAndSilent\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A7",
+      "assertion": "The startup classification uses status.startTime with a metadata.creationTimestamp fallback and a fixed 120 second grace.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/startupGraceUsesStartTimeWithCreationTimestampFallback\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 600000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    }
+  ],
+  "scope_hint": [
+    ".imm/specs/2026-10-04-pod-startup-grace.md",
+    "CONTEXT.md",
+    "KubebarCore/Models/ClusterSnapshot.swift",
+    "KubebarCore/Services/HealthEvaluator.swift",
+    "KubebarCore/Services/KubectlClusterReader.swift",
+    "KubebarTests/Models/HealthEvaluatorStartupGraceTests.swift",
+    "KubebarTests/Services/KubectlClusterReaderTests.swift",
+    "changelog.d/pod-startup-grace.fixed.md",
+    "docs/architecture/runtime-invariants.md",
+    "docs/plans/managed-task-routing-policy.json"
+  ],
+  "risk": "material",
+  "revision": 1
+}
