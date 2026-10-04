@@ -1,0 +1,45 @@
+{
+  "contract": "assurance_kernel/task_intent/v1",
+  "task_id": "2026-10-04-watchlist-pod-scope",
+  "owner": "user",
+  "goal": "The Pods card and the cluster readiness deficit must count only active Pods that match the current watchlist, the same set the Pods tab already shows. A not-ready Pod outside that set must not change the card, must not move the cluster to Watch, and must not send a Health State Shift Alert. A Pod that matches more than one watch target is counted once. A not-ready Pod that does match still counts. An empty watchlist still shows the existing configuration-required state and does not become a healthy zero-pod cluster. Nodes, Warning Events, completed-Job handling, and the startup grace stay unchanged.",
+  "acceptance": [
+    {
+      "id": "A1",
+      "assertion": "A not-ready Pod that matches no current watch target is excluded from PodSummary, and the watched target stays OK.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/unwatchedNotReadyPodIsExcludedFromPodSummary\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A2",
+      "assertion": "A not-ready Pod that matches a current watch target still counts toward the readiness deficit and the target stays Watch.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/watchedNotReadyPodStillCountsInPodSummary\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A3",
+      "assertion": "A Pod that matches two current watch targets is counted once in PodSummary.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/podMatchingTwoWatchTargetsIsCountedOnce\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A4",
+      "assertion": "An empty watchlist refresh still returns the configuration-required display and no snapshot.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"RefreshCoordinatorTests/emptyWatchlistStaysConfigurationRequired\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    },
+    {
+      "id": "A5",
+      "assertion": "An unwatched not-ready Pod does not move the cluster to Watch and does not produce a Health State Shift Alert.",
+      "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"HealthEvaluatorWatchlistScopeTests/unwatchedNotReadyPodDoesNotAlert\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+    }
+  ],
+  "scope_hint": [
+    ".imm/specs/2026-10-04-watchlist-pod-scope.md",
+    "CONTEXT.md",
+    "KubebarCore/Services/KubectlClusterReader.swift",
+    "KubebarTests/Models/MenuDisplayModelTests.swift",
+    "KubebarTests/Services/KubectlClusterReaderTests.swift",
+    "KubebarTests/Services/RefreshCoordinatorTests.swift",
+    "changelog.d/watchlist-pod-scope.fixed.md",
+    "docs/architecture/runtime-invariants.md"
+  ],
+  "risk": "material",
+  "revision": 1
+}
