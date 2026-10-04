@@ -169,7 +169,7 @@ public struct HealthEvaluator: Sendable {
             return .bad
         }
 
-        if snapshot.podsSection.value.map({ $0.ready < $0.total }) == true ||
+        if snapshot.podsSection.value.map({ $0.notReady > 0 }) == true ||
             snapshot.warningEventsSection.value.map({ !$0.isEmpty }) == true ||
             snapshot.trackedItems.contains(where: { $0.state == .watch }) ||
             !snapshot.sectionFailures.isEmpty {
@@ -825,6 +825,16 @@ public struct HealthEvaluator: Sendable {
         return .ready
     }
 
+    /// A starting Pod is honestly not ready, but it is initializing rather than
+    /// failing, so its row must not read as a fault.
+    private func podIssueText(from detail: PodDetail, state: PodItemState) -> String? {
+        if detail.isStarting {
+            return "starting"
+        }
+
+        return podFaultIssueText(from: detail, state: state)
+    }
+
     private func podAttentionPriority(for state: PodItemState) -> Int {
         switch state {
         case .bad:
@@ -848,7 +858,7 @@ public struct HealthEvaluator: Sendable {
         return "\(ready)/\(total)"
     }
 
-    private func podIssueText(from detail: PodDetail, state: PodItemState) -> String? {
+    private func podFaultIssueText(from detail: PodDetail, state: PodItemState) -> String? {
         guard state != .ready else {
             return nil
         }
@@ -1068,24 +1078,11 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func isBadWaitingReason(_ reason: String?) -> Bool {
-        guard let reason = normalizedText(reason)?.lowercased() else {
-            return false
-        }
-
-        return reason == "crashloopbackoff" ||
-            reason == "imagepullbackoff" ||
-            reason == "errimagepull" ||
-            reason == "invalidimagename" ||
-            reason.hasPrefix("createcontainer") ||
-            reason.hasPrefix("runcontainer")
+        PodFailureSignal.isBadWaitingReason(reason)
     }
 
     private func isBadTerminatedReason(_ reason: String?) -> Bool {
-        guard let reason = normalizedText(reason)?.lowercased() else {
-            return false
-        }
-
-        return reason != "completed"
+        PodFailureSignal.isBadTerminatedReason(reason)
     }
 
     private func makeEventsTab(
@@ -1506,7 +1503,7 @@ public struct HealthEvaluator: Sendable {
     }
 
     private func podDeficit(from snapshot: ClusterSnapshot) -> Int? {
-        snapshot.podsSection.value.map { max(0, $0.total - $0.ready) }
+        snapshot.podsSection.value.map(\.notReady)
     }
 
     private func staleBanner(

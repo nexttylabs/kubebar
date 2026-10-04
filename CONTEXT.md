@@ -19,6 +19,14 @@
   directionally worse Health category or watchlist attention changes. They are
   local app behavior, consume `MenuDisplayModel`, and must not add new health
   rules.
+- **Pod startup grace**: the fixed 120 second window after a Pod's
+  `status.startTime` (falling back to `metadata.creationTimestamp`) during which
+  a not-ready Pod with no failure signal is classified `starting` rather than
+  `not ready`. Starting Pods stay visible and keep their real ready/all counts,
+  but contribute nothing to the readiness deficit, so a routine Pod start
+  cannot move the cluster out of `OK` or produce a Health State Shift Alert.
+  The grace is a code constant, never a setting, and it never excuses a bad
+  waiting reason or a failed terminated container, in any container of the Pod.
 - **AI Diagnostic Assistant**: an optional app-wide feature for manually testing
   a configured AI provider and, from explicit troubleshooting surfaces,
   explaining user-approved Kubernetes diagnostic context. It is display/help
@@ -118,6 +126,12 @@ explicitly changes that scope.
   `Kubebar/Views/SetupView.swift`, `Kubebar/Views/SettingsRootView.swift`, and
   `Kubebar/MenuBarViewModel.swift` own the App Settings UI and selected-file
   flow.
+- Pod startup grace: `KubebarCore/Services/KubectlClusterReader.swift` owns the
+  Pod age decode and the `isStarting` classification, `PodSummary.starting`
+  carries the count into the display model, `HealthEvaluator` owns the
+  readiness-deficit and Pod row consequences, and
+  `KubebarCore/Models/ClusterSnapshot.swift` owns the shared `PodFailureSignal`
+  predicate so the grace and the row state cannot drift.
 - Pod Micro-Logs Drawer: `KubebarCore/Models/MenuDisplayModel.swift` carries
   display-ready Pod row identity, `KubebarCore/Services/HealthEvaluator.swift`
   maps `PodDetail` into `PodItemDisplay`, `KubebarCore/Services/CommandRunner.swift`

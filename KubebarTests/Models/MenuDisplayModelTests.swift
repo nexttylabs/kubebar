@@ -2128,6 +2128,110 @@ private func sameNamedWorkloadKindsDisplay(
     return HealthEvaluator().evaluate(snapshot: snapshot, now: Date(timeIntervalSince1970: 120))
 }
 
+@Suite("Pod startup grace")
+struct HealthEvaluatorStartupGraceTests {
+    @Test("starting pods keep the cluster OK and stay silent")
+    func startingPodsKeepClusterOKAndSilent() throws {
+        // A watched target whose only not-ready Pod is inside the startup grace
+        // must not move the cluster out of OK, so the alert tracker - which
+        // alerts on any severity increase - produces nothing.
+        let startingSnapshot = try snapshotWithPods(
+            podsJSON: """
+            {"items": [{"metadata": {"namespace": "api", "name": "runner-4gmbl", "creationTimestamp": "1970-01-01T00:01:00Z"}, "status": {"phase": "Pending", "startTime": "1970-01-01T00:01:00Z", "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}]}}]}
+            """,
+            watchTargets: [.namespace("api")]
+        )
+
+        let startingDisplay = HealthEvaluator().evaluate(snapshot: startingSnapshot, now: now)
+        #expect(startingDisplay.state == .ok)
+
+        var tracker = HealthShiftAlertTracker()
+        #expect(tracker.record(startingDisplay) == nil)
+        #expect(tracker.record(startingDisplay) == nil)
+
+        // The same shape past the grace is a genuine failure: the cluster moves
+        // to Watch and the tracker reports the deterioration.
+        let notReadySnapshot = try snapshotWithPods(
+            podsJSON: """
+            {"items": [{"metadata": {"namespace": "api", "name": "checkout-stuck", "creationTimestamp": "1969-12-31T23:50:00Z"}, "status": {"phase": "Running", "startTime": "1969-12-31T23:50:00Z", "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}], "containerStatuses": [{"ready": false, "restartCount": 0, "state": {"running": {}}}]}}]}
+            """,
+            watchTargets: [.namespace("api")]
+        )
+
+        let notReadyDisplay = HealthEvaluator().evaluate(snapshot: notReadySnapshot, now: now)
+        #expect(notReadyDisplay.state == .watch)
+
+        var genuineTracker = HealthShiftAlertTracker()
+        _ = genuineTracker.record(HealthEvaluator().evaluate(snapshot: healthySnapshot(), now: now))
+        let maybeAlert = genuineTracker.record(notReadyDisplay)
+        let alert = try #require(maybeAlert)
+        #expect(alert.title == "Kubebar: prod is Watch")
+    }
+
+    @Test("a starting pod row reads as starting rather than as a fault")
+    func startingPodRowReadsAsStarting() throws {
+        let snapshot = try snapshotWithPods(
+            podsJSON: """
+            {"items": [{"metadata": {"namespace": "api", "name": "runner-4gmbl", "creationTimestamp": "1970-01-01T00:01:00Z"}, "status": {"phase": "Pending", "startTime": "1970-01-01T00:01:00Z", "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}]}}]}
+            """,
+            watchTargets: [.namespace("api")]
+        )
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: now)
+        let row = try #require(display.podTab.sections.first?.rows.first)
+
+        #expect(row.state == .watch)
+        #expect(row.issueText == "starting")
+        // No container statuses in the fixture, so the ready label is the
+        // unavailable placeholder rather than a misleading 0/0.
+        #expect(row.readyLabel == "-")
+    }
+
+    private var now: Date {
+        Date(timeIntervalSince1970: 100)
+    }
+
+    private func healthySnapshot() -> ClusterSnapshot {
+        ClusterSnapshot(
+            contextName: "prod",
+            nodeSummary: NodeSummary(ready: 1, total: 1),
+            podSummary: PodSummary(running: 0, total: 0),
+            warningEventCount: 0,
+            trackedItems: [
+                TrackedItemStatus(target: .namespace("api"), state: .ok, reason: "no matching pods")
+            ],
+            capturedAt: now
+        )
+    }
+
+    private func snapshotWithPods(podsJSON: String, watchTargets: [WatchTarget]) throws -> ClusterSnapshot {
+        let reader = KubectlClusterReader(runner: StartupGraceCommandRunner(podsJSON: podsJSON))
+
+        return try reader.readSnapshot(
+            contextName: "prod",
+            watchTargets: watchTargets,
+            now: now
+        )
+    }
+}
+
+/// Answers the reader's concurrent `kubectl` reads with a Pod list plus empty
+/// answers for every other resource, so the evaluator test can drive the real
+/// decode and summary path instead of hand-building a `PodSummary`.
+private struct StartupGraceCommandRunner: CommandRunning {
+    let podsJSON: String
+
+    func run(_ request: CommandRequest) throws -> CommandResult {
+        // `.pods` is the only read whose arguments carry both `pods` and
+        // `--all-namespaces`; the pod-metrics read also contains `pods`.
+        if request.arguments.contains("pods"), request.arguments.contains("--all-namespaces") {
+            return CommandResult(output: podsJSON, error: "", exitCode: 0)
+        }
+
+        return CommandResult(output: "{\"items\": []}", error: "", exitCode: 0)
+    }
+}
+
 private func watchItem(
     id: String,
     title: String,

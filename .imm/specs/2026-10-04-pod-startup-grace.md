@@ -35,6 +35,12 @@ Spec prose is written in English. Code identifiers, file paths, enum cases,
   starting when it is restarting (`CrashLoopBackOff`), has a failed terminated
   container, or has a bad waiting reason (`CrashLoopBackOff`, `ImagePullBackOff`,
   `ErrImagePull`, `InvalidImageName`, `CreateContainer*`, `RunContainer*`).
+  Failure signals are evaluated across every container — regular and init — so
+  container order, count, and kind never decide health; a failing Pod row names
+  the container state that explains the failure rather than the first listed
+  container. Readiness counts stay on the regular containers only, and the
+  completed-Job eligibility predicate stays regular-container-only because
+  native sidecars legitimately end with `Error` during shutdown.
 - R5: A watched target whose only not-ready Pods are starting reports `OK` with a
   `N pods starting` reason instead of `Watch` with `N pods not ready`.
 - R6: A watched target that also has a genuinely not-ready Pod past the grace still
@@ -203,14 +209,25 @@ stateDiagram-v2
 
 ## Verification
 
-- `KubectlClusterReaderTests`: starting Pod inside the grace produces an `OK` tracked
+- `KubebarTests/Services/KubectlClusterReaderTests.swift`: starting Pod inside the grace produces an `OK` tracked
   item with a `starting` reason and `podSummary.starting == 1`; a not-ready Pod past
   the grace produces a `Watch` tracked item with a `not ready` reason and
-  `starting == 0`; a `CrashLoopBackOff` Pod inside the grace produces `Bad`; a Pod
-  with a failed terminated container inside the grace produces `Bad`; a Pod with no
-  age fields is not starting.
-- `MenuDisplayModelTests`: `HealthEvaluator` returns `OK` for a starting-only Pod
-  deficit and `Watch` when a genuine deficit remains; the health-shift tracker
-  produces no alert for the starting-only case and produces an alert for the genuine
-  case.
+  `starting == 0`; a `CrashLoopBackOff` Pod inside the grace produces `Bad`; a
+  multi-container Pod with a bad waiting reason on a later container is not starting
+  and its row names the failing container's reason; a Pod with a crash-looping init
+  container is `Bad` and not starting; a successfully completed Job Pod with a native
+  sidecar whose init container ended `Error` stays excluded from the active summary
+  while another Pod is starting; a Pod with a failed terminated container inside the
+  grace is not starting; a Pod with no age fields and a Pod with an unparsable age are
+  not starting; the 120 s boundary is exclusive.
+- `KubebarTests/Models/MenuDisplayModelTests.swift`: `HealthEvaluator` returns `OK`
+  for a starting-only Pod deficit and `Watch` when a genuine deficit remains; the
+  health-shift tracker produces no alert for the starting-only case and produces an
+  alert for the genuine case; a starting Pod row reads `starting` instead of `Pod is
+  not ready`.
+- Both evaluator cases live in the existing
+  `KubebarTests/Models/MenuDisplayModelTests.swift` rather than a new file, because
+  `Kubebar.xcodeproj` is XcodeGen-generated and XcodeGen is not installed in this
+  environment, so a new file could not be added to the Xcode test target. That is
+  why `scope_hint` names this path instead of a dedicated evaluator test file.
 - `./scripts/swift-quality-gate.sh local` passes.

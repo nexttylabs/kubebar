@@ -1,0 +1,394 @@
+{
+  "contract": "assurance_kernel/task_record/v4",
+  "task_id": "2026-10-04-pod-startup-grace",
+  "intent_snapshot": {
+    "contract": "assurance_kernel/task_intent/v1",
+    "task_id": "2026-10-04-pod-startup-grace",
+    "goal": "Kubebar must stop treating a young, still-initializing Pod as a readiness failure, so a routine Pod start no longer flips the cluster out of OK, no longer pulses the menu bar icon, and no longer sends a Health State Shift Alert. Pods inside a fixed 120 second startup grace that carry no failure signal are classified as starting, keep their honest non-ready row, report an N pods starting reason, and contribute zero to the cluster readiness deficit. Pods past the grace, and any Pod with a bad waiting reason, a CrashLoopBackOff, or a failed terminated container, keep their current Bad and Watch treatment. The Pods card keeps showing real ready over total, the OK/Watch/Bad/Stale vocabulary is unchanged, and no Settings surface is added.",
+    "acceptance": [
+      {
+        "id": "A1",
+        "assertion": "A Pod inside the startup grace with no failure signal is classified as starting, so its watched target reports OK with a starting reason.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/podInsideStartupGraceIsStartingNotNotReady\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A2",
+        "assertion": "A not-ready Pod past the startup grace keeps its Watch classification with a not ready reason.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/notReadyPodPastGraceKeepsNotReadyClassification\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A3",
+        "assertion": "A Pod inside the startup grace that has a bad waiting reason is still Bad.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/badWaitingReasonInsideGraceStaysBad\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A4",
+        "assertion": "A Pod inside the startup grace that has a failed terminated container is still not-ready rather than starting.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/failedTerminatedContainerInsideGraceStaysBad\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A5",
+        "assertion": "A Pod with no startTime and no creationTimestamp is treated as not-ready rather than starting.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/podWithoutAgeFieldsIsNotStarting\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A6",
+        "assertion": "A watched target with only starting Pods reports OK while a target with a genuinely not-ready Pod reports Watch, and only the genuine case raises the alert severity.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"HealthEvaluatorStartupGraceTests/startingPodsKeepClusterOKAndSilent\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      },
+      {
+        "id": "A7",
+        "assertion": "The startup classification uses status.startTime with a metadata.creationTimestamp fallback, a fixed 120 second grace, and a not-starting result for an unparsable age.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\"test\", \"--filter\", \"KubectlClusterReaderTests/startupGraceUsesStartTimeWithCreationTimestampFallback\", \"--quiet\"],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\"prepare\": null, \"writable_paths\": [\".build\"]}\n}\n"
+      }
+    ],
+    "scope_hint": [
+      ".imm/specs/2026-10-04-pod-startup-grace.md",
+      "CONTEXT.md",
+      "KubebarCore/Models/ClusterSnapshot.swift",
+      "KubebarCore/Services/HealthEvaluator.swift",
+      "KubebarCore/Services/KubectlClusterReader.swift",
+      "KubebarTests/Models/MenuDisplayModelTests.swift",
+      "KubebarTests/Services/KubectlClusterReaderTests.swift",
+      "changelog.d/pod-startup-grace.fixed.md",
+      "docs/architecture/runtime-invariants.md",
+      "docs/plans/managed-task-routing-policy.json"
+    ],
+    "risk": "material",
+    "revision": 3,
+    "owner": "user"
+  },
+  "intent_ref": {
+    "path": "docs/plans/2026-10-04-pod-startup-grace.intent.json",
+    "content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c"
+  },
+  "lifecycle": "done",
+  "artifact_state": "frozen",
+  "baseline": "sha256:5a3971c34143674767c05117cba534ea9053e7bc2372f6871337f265bd67a430",
+  "git_base_head": "0d7ec1677a065ed279adb3a2a198b91c849b757c",
+  "attestations": [
+    {
+      "id": "approval-qa-37a3d7d7",
+      "kind": "qa",
+      "authority_role": "qa",
+      "task_revision": 3,
+      "intent_content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c",
+      "diff_hash": "sha256:366df08d516355588118331bcb4e47886c48a1ca2582a1320c79fe294b159d97",
+      "actor_id": "deterministic-qa",
+      "summary": "all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe",
+      "acceptance_results": [
+        {
+          "acceptance_id": "A1",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A2",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A3",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A4",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A5",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A6",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        },
+        {
+          "acceptance_id": "A7",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:3bf88785b87d344b134ba0a4ff5830315eded64e2c8fae0a437e850adb0644fe"
+        }
+      ]
+    },
+    {
+      "id": "approval-qa-be70b7e0",
+      "kind": "qa",
+      "authority_role": "qa",
+      "task_revision": 3,
+      "intent_content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c",
+      "diff_hash": "sha256:e8c5a03d5109b94dd19d192f59e83cc3e67652988ce8665dcfbdff8d1e47706e",
+      "actor_id": "deterministic-qa",
+      "summary": "all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a",
+      "acceptance_results": [
+        {
+          "acceptance_id": "A1",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A2",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A3",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A4",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A5",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A6",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        },
+        {
+          "acceptance_id": "A7",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c8c7b0a4377b408c1765fd378833d24035e720f4bb2e403325ce7e439aab4e1a"
+        }
+      ]
+    },
+    {
+      "id": "approval-qa-6314e90f",
+      "kind": "qa",
+      "authority_role": "qa",
+      "task_revision": 3,
+      "intent_content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c",
+      "diff_hash": "sha256:a180511608ab21af236fb9c96a5fbde58fef4f36b54067e0a41fb5cdac24432c",
+      "actor_id": "deterministic-qa",
+      "summary": "all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d",
+      "acceptance_results": [
+        {
+          "acceptance_id": "A1",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A2",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A3",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A4",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A5",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A6",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        },
+        {
+          "acceptance_id": "A7",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:c203ddea616108a8ca5a13d76fb23e9d09e4db954d883eb67b43564abb96707d"
+        }
+      ]
+    },
+    {
+      "id": "approval-qa-39aa990c",
+      "kind": "qa",
+      "authority_role": "qa",
+      "task_revision": 3,
+      "intent_content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c",
+      "diff_hash": "sha256:07f2303f50d9fe1d858f725d770166cb2d5c892c791632b9d0df950184e35db6",
+      "actor_id": "deterministic-qa",
+      "summary": "all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764",
+      "acceptance_results": [
+        {
+          "acceptance_id": "A1",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A2",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A3",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A4",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A5",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A6",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        },
+        {
+          "acceptance_id": "A7",
+          "status": "passed",
+          "summary": "host-attested QA: all 7 project verification check(s) passed; execution=sha256:819cde55936be69e5ca2cbadd2fbbdf10a3bc65e538f224195cfa20ced794764"
+        }
+      ]
+    },
+    {
+      "id": "approval-review-e94b1792",
+      "kind": "review",
+      "authority_role": "reviewer",
+      "task_revision": 3,
+      "intent_content_hash": "sha256:43fc40bedb26c83684ccf97c7a180e0686478f689f658a40b0bba83a1a4ef86c",
+      "diff_hash": "sha256:07f2303f50d9fe1d858f725d770166cb2d5c892c791632b9d0df950184e35db6",
+      "actor_id": "parent-mediated-review",
+      "summary": "Verified base, review commit parent, tree, manifest digest, and all changed paths; immutable code matches Kernel QA evidence for A1-A7 with no blocking correctness, security, or regression issues.",
+      "acceptance_results": [],
+      "review_revision": {
+        "contract": "assurance_kernel/review_revision_identity/v1",
+        "base_head": "0d7ec1677a065ed279adb3a2a198b91c849b757c",
+        "review_commit": "e4cae114e832343e71f9119c0f6c8c7f35fb962b",
+        "review_tree": "2af08563892ca096c3a1be158444d08e4331beb3",
+        "manifest_digest": "sha256:ab6d12619c93522a30d566f534f28ceab46484cb97aa12c4e31a7dc8ffd1b0ce"
+      }
+    }
+  ],
+  "findings": [],
+  "history": [
+    {
+      "id": "approve_breaking_intent_revision:2026-10-04-pod-startup-grace:2026-10-04T07:55:53.558Z",
+      "at": "2026-10-04T07:55:53.558Z",
+      "type": "approve_breaking_intent_revision",
+      "from_state": "active:active",
+      "to_state": "active:active",
+      "reason": "intent_revision_2\naction_v2_sha256:969952495f817c145c0ed19a0f15b0cf47a3abd7a8082e07779987314296fe45",
+      "authority": {
+        "authority_kind": "user",
+        "actor_id": "literal-user",
+        "confirmation_ref": "pi-confirm-657d384fa4d99b5d",
+        "issued_at": "2026-10-04T07:55:53.930Z",
+        "expires_at": "2026-10-04T08:05:53.930Z"
+      }
+    },
+    {
+      "id": "freeze_artifacts:2026-10-04-pod-startup-grace:2026-10-04T07:56:40.158Z",
+      "at": "2026-10-04T07:56:40.158Z",
+      "type": "freeze_artifacts",
+      "from_state": "active:active",
+      "to_state": "active:frozen",
+      "reason": "TaskIntent frozen in place at docs/plans/2026-10-04-pod-startup-grace.intent.json"
+    },
+    {
+      "id": "revise_intent:2026-10-04-pod-startup-grace:2026-10-04T07:56:51.737Z",
+      "at": "2026-10-04T07:56:51.737Z",
+      "type": "revise_intent",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "intent_revision_3\naction_v2_sha256:49b1a5e78309fa6d71d6722418b36aa225bd38c4c9963b8bd19e6b8b9c3eeb91"
+    },
+    {
+      "id": "record_approval:2026-10-04-pod-startup-grace:2026-10-04T07:57:25.996Z",
+      "at": "2026-10-04T07:57:25.996Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-qa-37a3d7d7\naction_v2_sha256:74ae7c7f074fdad426e0dc755dc0d87408ce75d2820d617b3510934aca1e8822",
+      "authority": {
+        "authority_kind": "qa",
+        "actor_id": "deterministic-qa",
+        "confirmation_ref": "pi-confirm-001dd94ede533265",
+        "issued_at": "2026-10-04T07:57:25.996Z",
+        "expires_at": "2026-10-04T08:07:25.996Z"
+      }
+    },
+    {
+      "id": "record_approval:2026-10-04-pod-startup-grace:2026-10-04T08:05:40.901Z",
+      "at": "2026-10-04T08:05:40.901Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-qa-be70b7e0\naction_v2_sha256:298718f1fba18c2996c75b6dd37b08353617331f1ddbed99a12fafb46fc4b0a3",
+      "authority": {
+        "authority_kind": "qa",
+        "actor_id": "deterministic-qa",
+        "confirmation_ref": "pi-confirm-e0a4ab9a718f714f",
+        "issued_at": "2026-10-04T08:05:40.902Z",
+        "expires_at": "2026-10-04T08:15:40.902Z"
+      }
+    },
+    {
+      "id": "record_approval:2026-10-04-pod-startup-grace:2026-10-04T08:12:02.871Z",
+      "at": "2026-10-04T08:12:02.871Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-qa-6314e90f\naction_v2_sha256:c2c76f73bdb03a993908ae4dd777f41a052d9d87252b7a201091c77857cbf9b6",
+      "authority": {
+        "authority_kind": "qa",
+        "actor_id": "deterministic-qa",
+        "confirmation_ref": "pi-confirm-d1c629e3340dfa8f",
+        "issued_at": "2026-10-04T08:12:02.872Z",
+        "expires_at": "2026-10-04T08:22:02.872Z"
+      }
+    },
+    {
+      "id": "record_approval:2026-10-04-pod-startup-grace:2026-10-04T08:20:13.882Z",
+      "at": "2026-10-04T08:20:13.882Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-qa-39aa990c\naction_v2_sha256:1ec870fa8219b30765b5a495e110004ce496f1e36b0a105797f9f045fd4d9bfd",
+      "authority": {
+        "authority_kind": "qa",
+        "actor_id": "deterministic-qa",
+        "confirmation_ref": "pi-confirm-f40c362688585fdc",
+        "issued_at": "2026-10-04T08:20:13.882Z",
+        "expires_at": "2026-10-04T08:30:13.882Z"
+      }
+    },
+    {
+      "id": "record_approval:2026-10-04-pod-startup-grace:2026-10-04T08:24:11.674Z",
+      "at": "2026-10-04T08:24:11.674Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-review-e94b1792\naction_v2_sha256:8881025f760f5498a28b85b74c366c07e92525fc7adfb360eb137c6a36e37967",
+      "authority": {
+        "authority_kind": "review",
+        "actor_id": "parent-mediated-review",
+        "confirmation_ref": "pi-confirm-805cdda73ae3e22f",
+        "issued_at": "2026-10-04T08:24:11.674Z",
+        "expires_at": "2026-10-04T08:34:11.674Z"
+      }
+    },
+    {
+      "id": "complete:2026-10-04-pod-startup-grace:2026-10-04T08:24:13.067Z",
+      "at": "2026-10-04T08:24:13.067Z",
+      "type": "complete",
+      "from_state": "active:frozen",
+      "to_state": "done:frozen",
+      "reason": "action_v2_sha256:5cbfbf96fc8023a8eec65d09c2c174442a6d69fc3def0e1feb56e9ba9d689561"
+    }
+  ]
+}

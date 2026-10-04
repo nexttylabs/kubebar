@@ -58,7 +58,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             metricsRecordsSection: metricsRecordsSection
         )
         let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
-        let podsSection = mappedSection(podRecordsSection, transform: makePodSummary)
+        let podsSection = mappedSection(podRecordsSection) { makePodSummary(from: $0, now: now) }
         let metricsSection = makeMetricsSection(
             nodeRecordsSection: nodeRecordsSection,
             metricsRecordsSection: metricsRecordsSection
@@ -69,7 +69,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
             podMetricsSection: podMetricsSection,
-            watchTargets: watchTargets
+            watchTargets: watchTargets,
+            now: now
         )
         let hasCompletedWatchedPods = containsCompletedWatchedPods(
             podRecordsSection: podRecordsSection,
@@ -80,7 +81,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
             warningEvents: warningEventsSection.value ?? [],
-            watchTargets: watchTargets
+            watchTargets: watchTargets,
+            now: now
         )
 
         guard nodesSection.isAvailable || podsSection.isAvailable || warningEventsSection.isAvailable || workloadsSection.isAvailable else {
@@ -234,13 +236,14 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         NodeSummary(ready: nodes.filter(\.isReady).count, total: nodes.count)
     }
 
-    private func makePodSummary(from pods: [PodRecord]) -> PodSummary {
+    private func makePodSummary(from pods: [PodRecord], now: Date) -> PodSummary {
         let activePods = pods.filter(\.isActive)
 
         return PodSummary(
             ready: activePods.filter { !$0.isNotReady }.count,
             running: activePods.filter(\.isRunning).count,
-            total: activePods.count
+            total: activePods.count,
+            starting: activePods.filter { $0.isStarting(now: now) }.count
         )
     }
 
@@ -354,7 +357,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         podRecordsSection: SnapshotSection<[PodRecord]>,
         workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
         podMetricsSection: SnapshotSection<[PodMetricsRecord]>,
-        watchTargets: [WatchTarget]
+        watchTargets: [WatchTarget],
+        now: Date
     ) -> SnapshotSection<[PodDetail]> {
         guard let pods = podRecordsSection.value else {
             return .unavailable(reason: podRecordsSection.unavailableReason ?? "invalid pod JSON")
@@ -385,7 +389,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
                 let resourceSummary = resourceSummaryByPod[id] ?? PodResourceSummary(
                     resourceAvailabilityMessage: podMetricsSection.unavailableReason
                 )
-                details.append(pod.makeDetail(resourceSummary: resourceSummary))
+                details.append(pod.makeDetail(resourceSummary: resourceSummary, now: now))
             }
         }
 
@@ -585,7 +589,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         podRecordsSection: SnapshotSection<[PodRecord]>,
         workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
         warningEvents: [WarningEventRecord],
-        watchTargets: [WatchTarget]
+        watchTargets: [WatchTarget],
+        now: Date
     ) -> SnapshotSection<[TrackedItemStatus]> {
         guard let pods = podRecordsSection.value else {
             return .unavailable(reason: podRecordsSection.unavailableReason ?? "invalid pod JSON")
@@ -601,7 +606,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
                     for: target,
                     pods: pods,
                     warningEvents: warningEvents,
-                    workloadSelectors: workloadSelectors
+                    workloadSelectors: workloadSelectors,
+                    now: now
                 )
             }
         )
@@ -611,7 +617,8 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         for target: WatchTarget,
         pods: [PodRecord],
         warningEvents: [WarningEventRecord],
-        workloadSelectors: [WorkloadIdentity: [String: String]]
+        workloadSelectors: [WorkloadIdentity: [String: String]],
+        now: Date
     ) -> TrackedItemStatus {
         let matchingPods = pods.filter { pod in
             pod.matches(target: target, workloadSelectors: workloadSelectors)
@@ -653,13 +660,19 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
         }
 
         let notReadyPods = activePods.filter(\.isNotReady)
-        if !notReadyPods.isEmpty {
+        // A young Pod that is still initializing is not a readiness failure. It
+        // stays out of the not-ready count so a routine Pod start cannot move
+        // the target - or the cluster - out of OK.
+        let startingPods = notReadyPods.filter { $0.isStarting(now: now) }
+        let genuinelyNotReadyPods = notReadyPods.filter { !$0.isStarting(now: now) }
+
+        if !genuinelyNotReadyPods.isEmpty {
             return TrackedItemStatus(
                 target: target,
                 state: .watch,
-                reason: podReason(count: notReadyPods.count, suffix: "not ready"),
-                affectedPodCount: notReadyPods.count,
-                examplePodNames: examplePodNames(from: notReadyPods),
+                reason: podReason(count: genuinelyNotReadyPods.count, suffix: "not ready"),
+                affectedPodCount: genuinelyNotReadyPods.count,
+                examplePodNames: examplePodNames(from: genuinelyNotReadyPods),
                 latestWarning: latestWarning
             )
         }
@@ -669,6 +682,19 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
                 target: target,
                 state: .watch,
                 reason: "latest warning: \(latestWarning.reason)",
+                latestWarning: latestWarning
+            )
+        }
+
+        // Only after the warning rule: a starting Pod with a related Warning
+        // Event still raises Watch, because the warning is real signal.
+        if !startingPods.isEmpty {
+            return TrackedItemStatus(
+                target: target,
+                state: .ok,
+                reason: podReason(count: startingPods.count, suffix: "starting"),
+                affectedPodCount: startingPods.count,
+                examplePodNames: examplePodNames(from: startingPods),
                 latestWarning: latestWarning
             )
         }
@@ -762,14 +788,7 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
     }
 
     private func parsedTimestamp(_ value: String) -> Date? {
-        let standardFormatter = ISO8601DateFormatter()
-        if let date = standardFormatter.date(from: value) {
-            return date
-        }
-
-        let fractionalFormatter = ISO8601DateFormatter()
-        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return fractionalFormatter.date(from: value)
+        parseISODate(value)
     }
 
     private func normalizedText(_ value: String?) -> String? {
@@ -1126,6 +1145,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         let name: String
         let labels: [String: String]?
         let ownerReferences: [OwnerReference]?
+        let creationTimestamp: String?
     }
 
     struct ID: Hashable, Sendable {
@@ -1152,6 +1172,8 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         let message: String?
         let conditions: [PodCondition]?
         let containerStatuses: [ContainerStatus]?
+        let initContainerStatuses: [ContainerStatus]?
+        let startTime: String?
     }
 
     let metadata: Metadata
@@ -1167,9 +1189,79 @@ private struct PodRecord: Decodable, Equatable, Sendable {
     }
 
     var isRestarting: Bool {
-        status.containerStatuses?.contains { containerStatus in
+        allContainerStatuses.contains { containerStatus in
             normalizedReason(containerStatus.state?.waiting?.reason) == "crashloopbackoff"
-        } ?? false
+        }
+    }
+
+    /// Every container whose failure must be able to override the startup
+    /// grace: regular containers plus init containers.
+    ///
+    /// Failure signals must be evaluated across all of them, because a Pod
+    /// whose init container is crash-looping or cannot pull its image is
+    /// broken, not starting, no matter how the regular containers look.
+    /// Readiness counts deliberately stay on the regular containers only.
+    ///
+    /// Ephemeral containers are intentionally excluded: Kubernetes does not
+    /// count them toward Pod readiness, they are debug-only, and they are only
+    /// ever added to an already-running Pod, so they cannot explain a startup.
+    var allContainerStatuses: [ContainerStatus] {
+        (status.containerStatuses ?? []) + (status.initContainerStatuses ?? [])
+    }
+
+    /// A young, still-initializing Pod with no failure signal.
+    ///
+    /// The age comes from `status.startTime` with a `metadata.creationTimestamp`
+    /// fallback. An unparsable age is never starting: an unknown age must fail
+    /// loud as not-ready rather than silently hide a real failure. Failure
+    /// signals always win over the grace window, so a Pod that is already
+    /// crash-looping or failing to pull its image is never excused.
+    func isStarting(now: Date) -> Bool {
+        guard isNotReady, !isFailed else {
+            return false
+        }
+
+        // Failure signals are evaluated across every container, not just the
+        // first waiting one: a multi-container Pod with `ContainerCreating` on
+        // one container and `ImagePullBackOff` on another is broken, not
+        // starting.
+        guard !isRestarting,
+              !hasFailedTerminatedContainer,
+              !hasBadWaitingReason else {
+            return false
+        }
+
+        guard let start = startDate else {
+            return false
+        }
+
+        let age = now.timeIntervalSince(start)
+        return age >= 0 && age < PodRecord.startupGraceSeconds
+    }
+
+    /// The fixed startup grace. Not user-configurable: it exists to absorb a
+    /// normal container start, not to tune alerting.
+    static let startupGraceSeconds: TimeInterval = 120
+
+    var startDate: Date? {
+        if let raw = Self.trimmed(status.startTime), let date = parseISODate(raw) {
+            return date
+        }
+
+        if let raw = Self.trimmed(metadata.creationTimestamp) {
+            return parseISODate(raw)
+        }
+
+        return nil
+    }
+
+    private static func trimmed(_ value: String?) -> String? {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let text, !text.isEmpty else {
+            return nil
+        }
+
+        return text
     }
 
     var isNotReady: Bool {
@@ -1199,7 +1291,12 @@ private struct PodRecord: Decodable, Equatable, Sendable {
     }
 
     var isSuccessfullyCompleted: Bool {
-        if isFailed || isPending || isUnknown || currentWaitingState != nil || hasFailedTerminatedContainer {
+        // Completion eligibility intentionally looks at the regular containers
+        // only. Native sidecars are reported in `initContainerStatuses` and end
+        // with a non-`Completed` reason during normal shutdown, so including
+        // them here would turn every successfully completed Job Pod with a
+        // sidecar into a readiness failure.
+        if isFailed || isPending || isUnknown || currentWaitingState != nil || hasFailedRegularTerminatedContainer {
             return false
         }
 
@@ -1234,6 +1331,28 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         status.containerStatuses?.compactMap { $0.state?.terminated }.first
     }
 
+    /// Any container in a bad waiting state. Container order, count, and
+    /// container kind must not matter.
+    var hasBadWaitingReason: Bool {
+        allContainerStatuses.contains { containerStatus in
+            PodFailureSignal.isBadWaitingReason(containerStatus.state?.waiting?.reason)
+        }
+    }
+
+    /// The waiting state that actually explains the failure, so a row shows the
+    /// real cause instead of whichever container happened to be listed first.
+    var failingWaitingState: ContainerStateWaiting? {
+        allContainerStatuses
+            .compactMap { $0.state?.waiting }
+            .first { PodFailureSignal.isBadWaitingReason($0.reason) }
+    }
+
+    var failingTerminatedState: ContainerStateTerminated? {
+        allContainerStatuses
+            .compactMap { $0.state?.terminated }
+            .first { PodFailureSignal.isBadTerminatedReason($0.reason) }
+    }
+
     var allContainersTerminatedCompleted: Bool {
         guard let containerStatuses = status.containerStatuses, !containerStatuses.isEmpty else {
             return false
@@ -1244,14 +1363,22 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         }
     }
 
-    var hasFailedTerminatedContainer: Bool {
+    /// A failed terminated regular container. This is a completion-eligibility
+    /// predicate: it must stay on the regular containers so successfully
+    /// completed Job Pods with native sidecars keep their completed treatment.
+    var hasFailedRegularTerminatedContainer: Bool {
         status.containerStatuses?.contains { containerStatus in
-            guard let reason = normalizedReason(containerStatus.state?.terminated?.reason) else {
-                return false
-            }
-
-            return reason != "completed"
+            PodFailureSignal.isBadTerminatedReason(containerStatus.state?.terminated?.reason)
         } ?? false
+    }
+
+    /// A failed terminated container in any container the Pod runs. This is the
+    /// startup-failure predicate: an init container that died is a failure, so
+    /// it must be able to override the startup grace.
+    var hasFailedTerminatedContainer: Bool {
+        allContainerStatuses.contains { containerStatus in
+            PodFailureSignal.isBadTerminatedReason(containerStatus.state?.terminated?.reason)
+        }
     }
 
     private func normalizedReason(_ value: String?) -> String? {
@@ -1269,9 +1396,11 @@ private struct PodRecord: Decodable, Equatable, Sendable {
         }
     }
 
-    func makeDetail(resourceSummary: PodResourceSummary) -> PodDetail {
-        let waitingState = currentWaitingState
-        let terminatedState = currentTerminatedState
+    func makeDetail(resourceSummary: PodResourceSummary, now: Date) -> PodDetail {
+        // Prefer the state that explains a failure over the first container's
+        // state, so a multi-container Pod surfaces the real cause.
+        let waitingState = failingWaitingState ?? currentWaitingState
+        let terminatedState = failingTerminatedState ?? currentTerminatedState
         let condition = notReadyCondition
 
         return PodDetail(
@@ -1293,6 +1422,7 @@ private struct PodRecord: Decodable, Equatable, Sendable {
             isPending: isPending,
             isUnknown: isUnknown,
             isNotReady: isNotReady,
+            isStarting: isStarting(now: now),
             resourceSummary: resourceSummary
         )
     }

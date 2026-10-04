@@ -46,10 +46,22 @@ public struct PodSummary: Equatable, Sendable {
     public let running: Int
     public let total: Int
 
-    public init(ready: Int? = nil, running: Int, total: Int) {
+    /// Active Pods inside the startup grace that carry no failure signal. They
+    /// are not ready yet, but they are not a readiness failure either, so they
+    /// never contribute to the readiness deficit.
+    public let starting: Int
+
+    public init(ready: Int? = nil, running: Int, total: Int, starting: Int = 0) {
         self.ready = ready ?? running
         self.running = running
         self.total = total
+        self.starting = starting
+    }
+
+    /// The active Pods that are neither ready nor merely starting. This is the
+    /// only count that may move the cluster out of `OK`.
+    public var notReady: Int {
+        max(0, total - ready - starting)
     }
 }
 
@@ -100,6 +112,10 @@ public struct PodDetail: Equatable, Sendable {
     public let isPending: Bool
     public let isUnknown: Bool
     public let isNotReady: Bool
+    /// True while the Pod is young enough to still be initializing and shows no
+    /// failure signal. A starting Pod is honestly not ready, but it is not a
+    /// readiness failure and must not raise cluster severity.
+    public let isStarting: Bool
     public let resourceSummary: PodResourceSummary
 
     public init(
@@ -121,6 +137,7 @@ public struct PodDetail: Equatable, Sendable {
         isPending: Bool = false,
         isUnknown: Bool = false,
         isNotReady: Bool = false,
+        isStarting: Bool = false,
         resourceSummary: PodResourceSummary = PodResourceSummary()
     ) {
         self.namespace = namespace
@@ -141,6 +158,7 @@ public struct PodDetail: Equatable, Sendable {
         self.isPending = isPending
         self.isUnknown = isUnknown
         self.isNotReady = isNotReady
+        self.isStarting = isStarting
         self.resourceSummary = resourceSummary
     }
 }
@@ -377,5 +395,53 @@ public struct ClusterSnapshot: Equatable, Sendable {
         }
 
         return SnapshotSectionFailure(section: section, reason: reason)
+    }
+}
+
+/// One ISO-8601 timestamp parser shared by the reader and `PodRecord`, which
+/// live in separate types and therefore cannot share a private method.
+func parseISODate(_ value: String) -> Date? {
+    let standardFormatter = ISO8601DateFormatter()
+    if let date = standardFormatter.date(from: value) {
+        return date
+    }
+
+    let fractionalFormatter = ISO8601DateFormatter()
+    fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return fractionalFormatter.date(from: value)
+}
+
+/// The single source of truth for "this waiting reason means the Pod is broken,
+/// not merely starting". Shared by the startup-grace classification and the Pod
+/// row state so the two can never drift apart.
+enum PodFailureSignal {
+    static func isBadWaitingReason(_ reason: String?) -> Bool {
+        guard let reason = normalized(reason) else {
+            return false
+        }
+
+        return reason == "crashloopbackoff" ||
+            reason == "imagepullbackoff" ||
+            reason == "errimagepull" ||
+            reason == "invalidimagename" ||
+            reason.hasPrefix("createcontainer") ||
+            reason.hasPrefix("runcontainer")
+    }
+
+    static func isBadTerminatedReason(_ reason: String?) -> Bool {
+        guard let reason = normalized(reason) else {
+            return false
+        }
+
+        return reason != "completed"
+    }
+
+    private static func normalized(_ value: String?) -> String? {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard let text, !text.isEmpty else {
+            return nil
+        }
+
+        return text
     }
 }

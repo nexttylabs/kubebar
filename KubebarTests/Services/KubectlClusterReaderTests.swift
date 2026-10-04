@@ -729,6 +729,226 @@ struct KubectlClusterReaderTests {
         #expect(detail.notReadyConditionReason == "ContainersNotReady")
     }
 
+    @Test("pod inside the startup grace is starting, not not-ready")
+    func podInsideStartupGraceIsStartingNotNotReady() throws {
+        let snapshot = try readSnapshot(
+            pods: startingPodJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.total == 1)
+        #expect(summary.ready == 0)
+        #expect(summary.starting == 1)
+        #expect(summary.notReady == 0)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .ok)
+        #expect(item.reason == "1 pod starting")
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isNotReady == true)
+        #expect(detail.isStarting == true)
+    }
+
+    @Test("not-ready pod past the grace keeps its not-ready classification")
+    func notReadyPodPastGraceKeepsNotReadyClassification() throws {
+        let snapshot = try readSnapshot(
+            pods: notReadyPodPastGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+        #expect(summary.notReady == 1)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .watch)
+        #expect(item.reason == "1 pod not ready")
+        #expect(item.affectedPodCount == 1)
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+    }
+
+    @Test("bad waiting reason inside the grace stays bad")
+    func badWaitingReasonInsideGraceStaysBad() throws {
+        let snapshot = try readSnapshot(
+            pods: crashLoopingPodInsideGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .bad)
+        #expect(item.reason == "1 pod restarting")
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+    }
+
+    @Test("completed job pods with native sidecars stay excluded")
+    func completedJobPodsWithNativeSidecarsStayExcluded() throws {
+        // A native sidecar is reported in `initContainerStatuses` and ends with a
+        // non-`Completed` reason during normal shutdown. That must not turn a
+        // successfully completed Job Pod into a readiness failure, and it must
+        // not make a healthy watched namespace report Watch just because a
+        // different Pod is starting.
+        let snapshot = try readSnapshot(
+            pods: completedJobWithSidecarAndStartingPodJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.total == 1)
+        #expect(summary.starting == 1)
+        #expect(summary.notReady == 0)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .ok)
+        #expect(item.reason == "1 pod starting")
+        #expect(snapshot.hasCompletedWatchedPods == true)
+    }
+
+    @Test("a bad waiting reason on any container beats the grace")
+    func badWaitingReasonOnAnyContainerBeatsTheGrace() throws {
+        // Container order must not decide health: a Pod whose first container
+        // is still creating and whose second cannot pull its image is broken,
+        // not starting.
+        let snapshot = try readSnapshot(
+            pods: imagePullBackOffSecondContainerJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+        #expect(summary.notReady == 1)
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+        // The row must name the real cause, not the first container's state.
+        #expect(detail.waitingReason == "ImagePullBackOff")
+    }
+
+    @Test("a failing init container beats the grace")
+    func failingInitContainerBeatsTheGrace() throws {
+        // Init containers are a separate status array. A Pod whose init
+        // container is crash-looping is broken even when every regular
+        // container is merely creating.
+        let snapshot = try readSnapshot(
+            pods: crashLoopingInitContainerInsideGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+        #expect(summary.notReady == 1)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .bad)
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+        #expect(detail.waitingReason == "CrashLoopBackOff")
+    }
+
+    @Test("failed terminated container inside the grace stays not-ready")
+    func failedTerminatedContainerInsideGraceStaysBad() throws {
+        let snapshot = try readSnapshot(
+            pods: failedTerminatedContainerInsideGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+        #expect(summary.notReady == 1)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .watch)
+        #expect(item.reason == "1 pod not ready")
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+    }
+
+    @Test("pod without age fields is not starting")
+    func podWithoutAgeFieldsIsNotStarting() throws {
+        let snapshot = try readSnapshot(
+            pods: podWithoutAgeFieldsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.starting == 0)
+        #expect(summary.notReady == 1)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .watch)
+        #expect(item.reason == "1 pod not ready")
+
+        let detail = try #require(snapshot.podDetailsSection.value?.first)
+        #expect(detail.isStarting == false)
+    }
+
+    @Test("startup grace uses startTime with a creationTimestamp fallback")
+    func startupGraceUsesStartTimeWithCreationTimestampFallback() throws {
+        let fromStartTime = try readSnapshot(
+            pods: startingPodJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let startTimeDetail = try #require(fromStartTime.podDetailsSection.value?.first)
+        #expect(startTimeDetail.isStarting == true)
+
+        let fromCreationTimestamp = try readSnapshot(
+            pods: startingPodWithOnlyCreationTimestampJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let fallbackDetail = try #require(fromCreationTimestamp.podDetailsSection.value?.first)
+        #expect(fallbackDetail.isStarting == true)
+        #expect(fromCreationTimestamp.podsSection.value?.starting == 1)
+
+        let unparsable = try readSnapshot(
+            pods: podWithUnparsableAgeJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let unparsableDetail = try #require(unparsable.podDetailsSection.value?.first)
+        #expect(unparsableDetail.isStarting == false)
+
+        // `now` is epoch + 100s, so a Pod that started at 23:59:40Z is exactly
+        // 120s old and no longer starting, while one started a second later is
+        // still inside the window.
+        let atBoundary = try readSnapshot(
+            pods: podAgedExactlyGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let boundaryDetail = try #require(atBoundary.podDetailsSection.value?.first)
+        #expect(boundaryDetail.isStarting == false)
+        #expect(atBoundary.podsSection.value?.notReady == 1)
+
+        let justInside = try readSnapshot(
+            pods: podJustInsideGraceJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+        let insideDetail = try #require(justInside.podDetailsSection.value?.first)
+        #expect(insideDetail.isStarting == true)
+        #expect(justInside.podsSection.value?.starting == 1)
+    }
+
     @Test("pod detail failures preserve safe unavailable reasons")
     func podDetailFailuresPreserveSafeUnavailableReasons() throws {
         let invalidPods = try readSnapshot(
@@ -929,7 +1149,8 @@ private func readSnapshot(
     warningEvents: String,
     podMetrics: String = emptyPodMetricsJSON,
     workloadMetadata: String = deploymentMetadataJSON,
-    watchTargets: [WatchTarget]
+    watchTargets: [WatchTarget],
+    now: Date = Date(timeIntervalSince1970: 100)
 ) throws -> ClusterSnapshot {
     let runner = FakeMultiCommandRunner(results: [
         nodesCommand: CommandResult(output: nodesJSON, error: "", exitCode: 0),
@@ -942,7 +1163,7 @@ private func readSnapshot(
     return try KubectlClusterReader(runner: runner).readSnapshot(
         contextName: "prod",
         watchTargets: watchTargets,
-        now: Date(timeIntervalSince1970: 100)
+        now: now
     )
 }
 
@@ -1228,6 +1449,298 @@ private let podsWithoutResourceDeclarationsJSON = """
 private let emptyListJSON = """
 {
   "items": []
+}
+"""
+
+// The reader is always called with `now` = 100s after the epoch, so a Pod that
+// started at 60s is 40s old (inside the 120s grace) and one that started at 0s
+// is 100s old (still inside), while a Pod that started 10 minutes earlier is
+// past it.
+
+private let startingPodJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-4gmbl",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ContainerCreating"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let startingPodWithOnlyCreationTimestampJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-fallback",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let podWithUnparsableAgeJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-no-age",
+        "creationTimestamp": "not-a-timestamp"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "also-not-a-timestamp",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let podWithoutAgeFieldsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "runner-no-fields"},
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let podAgedExactlyGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-boundary",
+        "creationTimestamp": "1969-12-31T23:59:40Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1969-12-31T23:59:40Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let podJustInsideGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-just-inside",
+        "creationTimestamp": "1969-12-31T23:59:41Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1969-12-31T23:59:41Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let imagePullBackOffSecondContainerJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-multi-container",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ],
+        "containerStatuses": [
+          {"name": "sidecar", "ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ContainerCreating"}}},
+          {"name": "app", "ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ImagePullBackOff", "message": "back-off pulling image"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let completedJobWithSidecarAndStartingPodJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "report-succeeded",
+        "creationTimestamp": "1969-12-31T23:00:00Z"
+      },
+      "status": {
+        "phase": "Succeeded",
+        "startTime": "1969-12-31T23:00:00Z",
+        "conditions": [{"type": "Ready", "status": "False"}],
+        "containerStatuses": [
+          {"name": "app", "ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Completed"}}}
+        ],
+        "initContainerStatuses": [
+          {"name": "sidecar", "ready": false, "restartCount": 0, "state": {"terminated": {"reason": "Error", "message": "sidecar shut down"}}}
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-4gmbl",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}],
+        "containerStatuses": [
+          {"name": "app", "ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ContainerCreating"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let crashLoopingInitContainerInsideGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-init-failing",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Pending",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ],
+        "containerStatuses": [
+          {"name": "app", "ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ContainerCreating"}}}
+        ],
+        "initContainerStatuses": [
+          {"name": "migrate", "ready": false, "restartCount": 4, "state": {"waiting": {"reason": "CrashLoopBackOff", "message": "back-off 20s"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let notReadyPodPastGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "checkout-stuck",
+        "creationTimestamp": "1969-12-31T23:50:00Z"
+      },
+      "status": {
+        "phase": "Running",
+        "startTime": "1969-12-31T23:50:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady", "message": "containers with unready status"}
+        ],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 0, "state": {"running": {}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let crashLoopingPodInsideGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-crashing",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Running",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 3, "state": {"waiting": {"reason": "CrashLoopBackOff", "message": "back-off 10s"}}}
+        ]
+      }
+    }
+  ]
+}
+"""
+
+private let failedTerminatedContainerInsideGraceJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "runner-failed-container",
+        "creationTimestamp": "1970-01-01T00:01:00Z"
+      },
+      "status": {
+        "phase": "Running",
+        "startTime": "1970-01-01T00:01:00Z",
+        "conditions": [
+          {"type": "Ready", "status": "False", "reason": "ContainersNotReady"}
+        ],
+        "containerStatuses": [
+          {"ready": false, "restartCount": 1, "state": {"terminated": {"reason": "Error", "message": "exit code 1"}}}
+        ]
+      }
+    }
+  ]
 }
 """
 

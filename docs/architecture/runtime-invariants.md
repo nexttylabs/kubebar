@@ -89,6 +89,9 @@ These are the rules Kubebar must keep true at runtime.
   scrolls vertically while the Pods tab summary remains visible.
 - Pod row status must not rely on color alone. Help and accessibility text must
   include the row status.
+- A starting Pod row uses the issue text `starting` instead of `Pod is not
+  ready`, so a yellow row from a normal container start reads as initialization
+  rather than as a fault.
 - Missing per-Pod container totals show unavailable values such as `-`; missing
   values must not be rendered as `0`.
 - Pod resource visualization keeps CPU and memory progress separate because
@@ -117,6 +120,31 @@ These are the rules Kubebar must keep true at runtime.
   completed treatment.
 - A watched target with no matching Pods is a normal OK condition with a clear
   row reason, not a Watch or Bad Pod failure.
+- A Pod inside the fixed 120 second startup grace with no failure signal is
+  `starting`, not `not ready`. Starting Pods are honestly not ready and keep a
+  visible `Watch` row whose issue text reads `starting`, but they do not
+  contribute to the readiness deficit, do not move a watched target or the
+  cluster out of `OK`, and therefore do not produce a Health State Shift Alert.
+- The startup grace never excuses a failure signal. A Pod with a bad waiting
+  reason (`CrashLoopBackOff`, `ImagePullBackOff`, `ErrImagePull`,
+  `InvalidImageName`, `CreateContainer*`, `RunContainer*`) or a failed
+  terminated container is a failure at any age. Failure signals are evaluated
+  across every container — regular and init — so container order, count, and
+  kind must never decide health: a Pod whose first container is still creating
+  and whose second cannot pull its image is broken, not starting, and so is a
+  Pod whose init container is crash-looping while every regular container is
+  merely creating. A failing Pod row names the container state that explains the
+  failure rather than whichever container is listed first.
+- The all-container failure predicate must not be reused as the completed-Job-Pod
+  eligibility predicate. Native sidecars are reported in `initContainerStatuses`
+  and end with a non-`Completed` reason during normal shutdown, so completion
+  eligibility stays on the regular containers; otherwise every successfully
+  completed Job Pod with a sidecar would become a readiness failure.
+- Startup age comes from `status.startTime` with a `metadata.creationTimestamp`
+  fallback. When neither is present or parsable, the Pod is not starting: an
+  unknown age fails loud as not-ready rather than silently hiding a failure.
+- The startup grace is a fixed code constant. It is not user-configurable and
+  has no Settings surface.
 - Kubebar does not query Kubernetes Secrets.
 - AI Diagnostic Assistant is display/help behavior only. It must not affect
   `HealthEvaluator`, `MenuDisplayModel` health categorization, or the menu bar
