@@ -1,1 +1,0 @@
-- Stop alerting on Pods that are still starting: a Pod inside its first 120 seconds with no failure signal is now `starting` instead of `not ready`, so a routine Pod start no longer flips the menu bar to `Watch` or sends a Health State Shift Alert.

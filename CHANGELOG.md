@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.6.2] - 2026-10-04
+
+### Fixed
+- Stop alerting on Pods that are still starting: a Pod inside its first 120 seconds with no failure signal is now `starting` instead of `not ready`, so a routine Pod start no longer flips the menu bar to `Watch` or sends a Health State Shift Alert.
+- Count only watchlist Pods in the Pods card and cluster readiness, so a Pod starting or failing outside the watchlist no longer turns the menu bar yellow or sends a health shift alert.
+
 ## [0.6.1] - 2026-09-15
 
 ### Fixed
