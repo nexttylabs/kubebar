@@ -1,0 +1,3 @@
+- finish v3 layout retirement and stage the pod startup grace TaskIntent
+- migrate retired v3 storage layout to the Kernel authority store
+- prepare v0.6.2 notes

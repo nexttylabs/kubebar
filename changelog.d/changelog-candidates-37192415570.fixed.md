@@ -1,0 +1,1 @@
+- count only watchlist pods in the pods card and readiness
