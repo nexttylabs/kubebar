@@ -145,6 +145,14 @@ These are the rules Kubebar must keep true at runtime.
   unknown age fails loud as not-ready rather than silently hiding a failure.
 - The startup grace is a fixed code constant. It is not user-configurable and
   has no Settings surface.
+- The Pods card and the cluster readiness deficit count only the Pods the active
+  watchlist selects, using the same match predicate the Pods tab uses. A Pod
+  selected by several watch targets is counted once. A not-ready Pod outside the
+  watchlist must not change the card, the menu bar state, or produce a Health
+  State Shift Alert. Nodes, Warning Events, and workload availability stay
+  cluster-wide.
+- An empty watchlist stays configuration-required. It never becomes a healthy
+  cluster with zero Pods, and it never performs a cluster read.
 - Kubebar does not query Kubernetes Secrets.
 - AI Diagnostic Assistant is display/help behavior only. It must not affect
   `HealthEvaluator`, `MenuDisplayModel` health categorization, or the menu bar

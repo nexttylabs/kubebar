@@ -27,6 +27,12 @@
   cannot move the cluster out of `OK` or produce a Health State Shift Alert.
   The grace is a code constant, never a setting, and it never excuses a bad
   waiting reason or a failed terminated container, in any container of the Pod.
+- **Watchlist Pod scope**: the Pods card and the cluster readiness deficit count
+  only the Pods the active watchlist selects, the same set the Pods tab shows,
+  with each Pod counted once. A not-ready Pod outside the watchlist cannot move
+  the menu bar state or produce a Health State Shift Alert. Nodes, Warning
+  Events, and workload availability stay cluster-wide, and an empty watchlist
+  stays configuration-required rather than becoming a healthy zero-Pod cluster.
 - **AI Diagnostic Assistant**: an optional app-wide feature for manually testing
   a configured AI provider and, from explicit troubleshooting surfaces,
   explaining user-approved Kubernetes diagnostic context. It is display/help

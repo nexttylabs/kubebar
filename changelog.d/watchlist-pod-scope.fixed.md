@@ -1,0 +1,1 @@
+- Count only watchlist Pods in the Pods card and cluster readiness, so a Pod starting or failing outside the watchlist no longer turns the menu bar yellow or sends a health shift alert.

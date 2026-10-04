@@ -24,7 +24,9 @@ struct KubectlClusterReaderTests {
 
         #expect(snapshot.contextName == "prod")
         #expect(snapshot.nodeSummary == NodeSummary(ready: 1, total: 2))
-        #expect(snapshot.podSummary == PodSummary(running: 1, total: 3))
+        // The Pods card counts the watchlist's Pods: the two `checkout` Pods.
+        // `checkout-worker-1` matches no watch target.
+        #expect(snapshot.podSummary == PodSummary(running: 1, total: 2))
         #expect(snapshot.warningEventCount == 1)
         #expect(snapshot.metricsSection.value?.cpuUsageNanocores == 750_000_000)
         #expect(snapshot.metricsSection.value?.cpuAllocatableNanocores == 3_500_000_000)
@@ -771,6 +773,61 @@ struct KubectlClusterReaderTests {
 
         let detail = try #require(snapshot.podDetailsSection.value?.first)
         #expect(detail.isStarting == false)
+    }
+
+    @Test("unwatched not ready pod is excluded from the pods card")
+    func unwatchedNotReadyPodIsExcludedFromPodSummary() throws {
+        let snapshot = try readSnapshot(
+            pods: watchedAndUnwatchedPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api")]
+        )
+
+        // Only `api/checkout-ready` is in scope. The stuck `kube-system` Pod is
+        // not counted, so it cannot move the icon, the card, or the alerts.
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.total == 1)
+        #expect(summary.ready == 1)
+        #expect(summary.notReady == 0)
+
+        let item = try #require(snapshot.trackedItems.first)
+        #expect(item.state == .ok)
+        #expect(item.reason == "1/1 pods running")
+    }
+
+    @Test("watched not ready pod still counts in the pods card")
+    func watchedNotReadyPodStillCountsInPodSummary() throws {
+        let snapshot = try readSnapshot(
+            pods: watchedAndUnwatchedPodsJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [.namespace("api"), .namespace("kube-system")]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.total == 2)
+        #expect(summary.ready == 1)
+        #expect(summary.notReady == 1)
+
+        let item = try #require(snapshot.trackedItems.first(where: { $0.target == .namespace("kube-system") }))
+        #expect(item.state == .watch)
+        #expect(item.reason == "1 pod not ready")
+    }
+
+    @Test("pod selected by two watch targets is counted once")
+    func podMatchingTwoWatchTargetsIsCountedOnce() throws {
+        let snapshot = try readSnapshot(
+            pods: doubleMatchPodJSON,
+            warningEvents: emptyListJSON,
+            watchTargets: [
+                .namespace("api"),
+                .workload(namespace: "api", name: "checkout")
+            ]
+        )
+
+        let summary = try #require(snapshot.podsSection.value)
+        #expect(summary.total == 1)
+        #expect(summary.ready == 1)
+        #expect(summary.notReady == 0)
     }
 
     @Test("bad waiting reason inside the grace stays bad")
@@ -1639,6 +1696,53 @@ private let completedJobWithSidecarAndStartingPodJSON = """
         "containerStatuses": [
           {"name": "app", "ready": false, "restartCount": 0, "state": {"waiting": {"reason": "ContainerCreating"}}}
         ]
+      }
+    }
+  ]
+}
+"""
+
+private let watchedAndUnwatchedPodsJSON = """
+{
+  "items": [
+    {
+      "metadata": {"namespace": "api", "name": "checkout-ready"},
+      "status": {
+        "phase": "Running",
+        "conditions": [{"type": "Ready", "status": "True"}],
+        "containerStatuses": [{"ready": true, "restartCount": 0, "state": {"running": {}}}]
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "kube-system",
+        "name": "coredns-stuck",
+        "creationTimestamp": "1969-12-31T23:00:00Z"
+      },
+      "status": {
+        "phase": "Running",
+        "startTime": "1969-12-31T23:00:00Z",
+        "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}],
+        "containerStatuses": [{"ready": false, "restartCount": 0, "state": {"running": {}}}]
+      }
+    }
+  ]
+}
+"""
+
+private let doubleMatchPodJSON = """
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "api",
+        "name": "checkout-only",
+        "labels": {"app.kubernetes.io/name": "checkout"}
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [{"type": "Ready", "status": "True"}],
+        "containerStatuses": [{"ready": true, "restartCount": 0, "state": {"running": {}}}]
       }
     }
   ]

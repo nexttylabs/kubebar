@@ -217,6 +217,26 @@ struct RefreshCoordinatorTests {
         #expect(result.display.state == .stale)
         #expect(result.display.contextName == "Not configured")
     }
+
+    @Test("empty watchlist stays configuration required")
+    func emptyWatchlistStaysConfigurationRequired() {
+        // A selected context with no watch targets must still ask for a
+        // watchlist and must not read the cluster, so it can never be mistaken
+        // for a healthy zero-pod cluster.
+        let reader = RecordingClusterReader(result: .failure(KubectlCommandError.failed("should not run")))
+        let coordinator = RefreshCoordinator(reader: reader)
+
+        let result = coordinator.refresh(
+            config: AppConfig(selectedContext: "prod", watchTargets: []),
+            previousSnapshot: nil,
+            now: Date(timeIntervalSince1970: 100)
+        )
+
+        #expect(result.snapshot == nil)
+        #expect(result.display.state == .stale)
+        #expect(result.display.primaryStatusReason == "Choose a cluster context and watchlist to begin")
+        #expect(reader.lastContextName == nil)
+    }
 }
 
 private struct FakeClusterReader: ClusterReading {

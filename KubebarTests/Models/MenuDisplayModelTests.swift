@@ -2216,7 +2216,7 @@ struct HealthEvaluatorStartupGraceTests {
 }
 
 /// Answers the reader's concurrent `kubectl` reads with a Pod list plus empty
-/// answers for every other resource, so the evaluator test can drive the real
+/// answers for every other resource, so the evaluator tests can drive the real
 /// decode and summary path instead of hand-building a `PodSummary`.
 private struct StartupGraceCommandRunner: CommandRunning {
     let podsJSON: String
@@ -2229,6 +2229,39 @@ private struct StartupGraceCommandRunner: CommandRunning {
         }
 
         return CommandResult(output: "{\"items\": []}", error: "", exitCode: 0)
+    }
+}
+
+@Suite("Pod watchlist scope")
+struct HealthEvaluatorWatchlistScopeTests {
+    @Test("an unwatched not ready pod does not alert")
+    func unwatchedNotReadyPodDoesNotAlert() throws {
+        // The stuck Pod lives in `kube-system`, which is not watched. Because the
+        // Pods card and the readiness deficit now both read the watchlist-scoped
+        // summary, this Pod must leave the cluster at OK and produce no alert.
+        let now = Date(timeIntervalSince1970: 100)
+        let podsJSON = """
+        {"items": [{"metadata": {"namespace": "kube-system", "name": "coredns-stuck", "creationTimestamp": "1969-12-31T23:00:00Z"}, "status": {"phase": "Running", "startTime": "1969-12-31T23:00:00Z", "conditions": [{"type": "Ready", "status": "False", "reason": "ContainersNotReady"}], "containerStatuses": [{"ready": false, "restartCount": 0, "state": {"running": {}}}]}}]}
+        """
+        let snapshot = try KubectlClusterReader(runner: StartupGraceCommandRunner(podsJSON: podsJSON))
+            .readSnapshot(contextName: "prod", watchTargets: [.namespace("api")], now: now)
+
+        let display = HealthEvaluator().evaluate(snapshot: snapshot, now: now)
+        #expect(display.state == .ok)
+
+        var tracker = HealthShiftAlertTracker()
+        #expect(tracker.record(display) == nil)
+        #expect(tracker.record(display) == nil)
+
+        // Watching that namespace is a genuine failure and does alert.
+        let watchedSnapshot = try KubectlClusterReader(runner: StartupGraceCommandRunner(podsJSON: podsJSON))
+            .readSnapshot(contextName: "prod", watchTargets: [.namespace("kube-system")], now: now)
+        let watchedDisplay = HealthEvaluator().evaluate(snapshot: watchedSnapshot, now: now)
+        #expect(watchedDisplay.state == .watch)
+
+        var watchedTracker = HealthShiftAlertTracker()
+        _ = watchedTracker.record(display)
+        #expect(watchedTracker.record(watchedDisplay) != nil)
     }
 }
 

@@ -58,13 +58,22 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
             metricsRecordsSection: metricsRecordsSection
         )
         let podRecordsSection = decodedSection(rawSnapshot.result(for: .pods), decode: decodePods)
-        let podsSection = mappedSection(podRecordsSection) { makePodSummary(from: $0, now: now) }
+        let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
+        let scopedPodRecordsSection = scopedPodRecords(
+            podRecordsSection: podRecordsSection,
+            workloadSelectorsSection: workloadSelectorsSection,
+            watchTargets: watchTargets
+        )
+        // The Pods card, the readiness deficit, and therefore cluster severity and
+        // Health State Shift Alerts read this one summary, and it must count the
+        // same Pod set the Pods tab shows: active Pods matching a current watch
+        // target. Node, Warning Event, and workload sections stay cluster-wide.
+        let podsSection = mappedSection(scopedPodRecordsSection) { makePodSummary(from: $0, now: now) }
         let metricsSection = makeMetricsSection(
             nodeRecordsSection: nodeRecordsSection,
             metricsRecordsSection: metricsRecordsSection
         )
         let warningEventsSection = decodedSection(rawSnapshot.result(for: .warningEvents), decode: decodeWarningEvents)
-        let workloadSelectorsSection = decodeWorkloadSelectors(from: rawSnapshot, watchTargets: watchTargets)
         let podDetailsSection = makePodDetailsSection(
             podRecordsSection: podRecordsSection,
             workloadSelectorsSection: workloadSelectorsSection,
@@ -234,6 +243,38 @@ public struct KubectlClusterReader: ClusterReading, Sendable {
 
     private func makeNodeSummary(from nodes: [NodeRecord]) -> NodeSummary {
         NodeSummary(ready: nodes.filter(\.isReady).count, total: nodes.count)
+    }
+
+    /// Keeps only the Pods a current watch target selects, so the Pods card and
+    /// the cluster readiness deficit agree with the Pods tab.
+    ///
+    /// Each Pod appears once no matter how many targets select it, and an empty
+    /// watchlist yields an empty set - the setup gate, not this filter, is what
+    /// reports the missing watchlist.
+    private func scopedPodRecords(
+        podRecordsSection: SnapshotSection<[PodRecord]>,
+        workloadSelectorsSection: SnapshotSection<[WorkloadIdentity: [String: String]]>,
+        watchTargets: [WatchTarget]
+    ) -> SnapshotSection<[PodRecord]> {
+        guard let pods = podRecordsSection.value else {
+            return .unavailable(reason: podRecordsSection.unavailableReason ?? "invalid pod JSON")
+        }
+
+        guard let workloadSelectors = workloadSelectorsSection.value else {
+            return .unavailable(reason: workloadSelectorsSection.unavailableReason ?? "invalid workload JSON")
+        }
+
+        guard !watchTargets.isEmpty else {
+            return .available([])
+        }
+
+        return .available(
+            pods.filter { pod in
+                watchTargets.contains { target in
+                    pod.matches(target: target, workloadSelectors: workloadSelectors)
+                }
+            }
+        )
     }
 
     private func makePodSummary(from pods: [PodRecord], now: Date) -> PodSummary {

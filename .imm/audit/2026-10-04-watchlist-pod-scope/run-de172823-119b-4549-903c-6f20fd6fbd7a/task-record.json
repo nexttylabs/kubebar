@@ -1,0 +1,163 @@
+{
+  "contract": "assurance_kernel/task_record/v4",
+  "task_id": "2026-10-04-watchlist-pod-scope",
+  "intent_snapshot": {
+    "contract": "assurance_kernel/task_intent/v1",
+    "task_id": "2026-10-04-watchlist-pod-scope",
+    "goal": "The Pods card and the cluster readiness deficit must count only active Pods that match the current watchlist, the same set the Pods tab already shows. A not-ready Pod outside that set must not change the card, must not move the cluster to Watch, and must not send a Health State Shift Alert. A Pod that matches more than one watch target is counted once. A not-ready Pod that does match still counts. An empty watchlist still shows the existing configuration-required state and does not become a healthy zero-pod cluster. Nodes, Warning Events, completed-Job handling, and the startup grace stay unchanged.",
+    "acceptance": [
+      {
+        "id": "A1",
+        "assertion": "A not-ready Pod that matches no current watch target is excluded from PodSummary, and the watched target stays OK.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/unwatchedNotReadyPodIsExcludedFromPodSummary\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+      },
+      {
+        "id": "A2",
+        "assertion": "A not-ready Pod that matches a current watch target still counts toward the readiness deficit and the target stays Watch.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/watchedNotReadyPodStillCountsInPodSummary\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+      },
+      {
+        "id": "A3",
+        "assertion": "A Pod that matches two current watch targets is counted once in PodSummary.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"KubectlClusterReaderTests/podMatchingTwoWatchTargetsIsCountedOnce\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+      },
+      {
+        "id": "A4",
+        "assertion": "An empty watchlist refresh still returns the configuration-required display and no snapshot.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"RefreshCoordinatorTests/emptyWatchlistStaysConfigurationRequired\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+      },
+      {
+        "id": "A5",
+        "assertion": "An unwatched not-ready Pod does not move the cluster to Watch and does not produce a Health State Shift Alert.",
+        "verification": "{\n  \"contract\": \"assurance_kernel/verification_descriptor/v2\",\n  \"command\": {\n    \"executable\": \"swift\",\n    \"argv\": [\n      \"test\",\n      \"--filter\",\n      \"HealthEvaluatorWatchlistScopeTests/unwatchedNotReadyPodDoesNotAlert\",\n      \"--quiet\"\n    ],\n    \"cwd\": \".\",\n    \"timeout_ms\": 240000,\n    \"max_output_bytes\": 262144\n  },\n  \"environment\": {\n    \"prepare\": null,\n    \"writable_paths\": [\n      \".build\"\n    ]\n  }\n}\n"
+      }
+    ],
+    "scope_hint": [
+      ".imm/specs/2026-10-04-watchlist-pod-scope.md",
+      "CONTEXT.md",
+      "KubebarCore/Services/KubectlClusterReader.swift",
+      "KubebarTests/Models/MenuDisplayModelTests.swift",
+      "KubebarTests/Services/KubectlClusterReaderTests.swift",
+      "KubebarTests/Services/RefreshCoordinatorTests.swift",
+      "changelog.d/watchlist-pod-scope.fixed.md",
+      "docs/architecture/runtime-invariants.md"
+    ],
+    "risk": "material",
+    "revision": 1,
+    "owner": "user"
+  },
+  "intent_ref": {
+    "path": "docs/plans/2026-10-04-watchlist-pod-scope.intent.json",
+    "content_hash": "sha256:5fa1b57b0062768d9621178d1f98f908cf311cfb526b9605f26ebfb030661060"
+  },
+  "lifecycle": "done",
+  "artifact_state": "frozen",
+  "baseline": "sha256:5fa1b57b0062768d9621178d1f98f908cf311cfb526b9605f26ebfb030661060",
+  "git_base_head": "b8e9c30aa646ef88338aedcb925045d4e3860658",
+  "attestations": [
+    {
+      "id": "approval-qa-a354deb5",
+      "kind": "qa",
+      "authority_role": "qa",
+      "task_revision": 1,
+      "intent_content_hash": "sha256:5fa1b57b0062768d9621178d1f98f908cf311cfb526b9605f26ebfb030661060",
+      "diff_hash": "sha256:97df98a89b836f4f5812a45c7dc44bca17de6056530780e21ba7795a403066eb",
+      "actor_id": "deterministic-qa",
+      "summary": "all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366",
+      "acceptance_results": [
+        {
+          "acceptance_id": "A1",
+          "status": "passed",
+          "summary": "host-attested QA: all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366"
+        },
+        {
+          "acceptance_id": "A2",
+          "status": "passed",
+          "summary": "host-attested QA: all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366"
+        },
+        {
+          "acceptance_id": "A3",
+          "status": "passed",
+          "summary": "host-attested QA: all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366"
+        },
+        {
+          "acceptance_id": "A4",
+          "status": "passed",
+          "summary": "host-attested QA: all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366"
+        },
+        {
+          "acceptance_id": "A5",
+          "status": "passed",
+          "summary": "host-attested QA: all 5 project verification check(s) passed; execution=sha256:8ce7b1f6788c8b1f41a061348aaec0b0aec3a5bf5f036fcb4bb3103b51b0f366"
+        }
+      ]
+    },
+    {
+      "id": "approval-review-b864e2f6",
+      "kind": "review",
+      "authority_role": "reviewer",
+      "task_revision": 1,
+      "intent_content_hash": "sha256:5fa1b57b0062768d9621178d1f98f908cf311cfb526b9605f26ebfb030661060",
+      "diff_hash": "sha256:97df98a89b836f4f5812a45c7dc44bca17de6056530780e21ba7795a403066eb",
+      "actor_id": "parent-mediated-review",
+      "summary": "Verified immutable revision identity, single parent, tree, manifest digest, and changed-path metadata; watchlist-scoped PodSummary preserves matching, overlap counting, startup grace, completion handling, and the empty-watchlist gate. Kernel-attested A1-A5 passed; no blocking correctness, security, or regression findings.",
+      "acceptance_results": [],
+      "review_revision": {
+        "contract": "assurance_kernel/review_revision_identity/v1",
+        "base_head": "b8e9c30aa646ef88338aedcb925045d4e3860658",
+        "review_commit": "487821b0bcbc5acf8fe6aeb3aca7e98278c9a497",
+        "review_tree": "bd8f0c069be352194fb7d1775fe8ae66cba4627a",
+        "manifest_digest": "sha256:2dde55f7d7e5ffa95697679adaf77f086c8077f68644a4673c2fb43156e55886"
+      }
+    }
+  ],
+  "findings": [],
+  "history": [
+    {
+      "id": "freeze_artifacts:2026-10-04-watchlist-pod-scope:2026-10-04T08:41:20.798Z",
+      "at": "2026-10-04T08:41:20.798Z",
+      "type": "freeze_artifacts",
+      "from_state": "active:active",
+      "to_state": "active:frozen",
+      "reason": "TaskIntent frozen in place at docs/plans/2026-10-04-watchlist-pod-scope.intent.json"
+    },
+    {
+      "id": "record_approval:2026-10-04-watchlist-pod-scope:2026-10-04T08:42:05.507Z",
+      "at": "2026-10-04T08:42:05.507Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-qa-a354deb5\naction_v2_sha256:1ae5736f41274794eace3c47ab3c75a0073a60b0595e7d6b5dc8ac8ef240c7f4",
+      "authority": {
+        "authority_kind": "qa",
+        "actor_id": "deterministic-qa",
+        "confirmation_ref": "pi-confirm-91ae2b1a592a9bd7",
+        "issued_at": "2026-10-04T08:42:05.508Z",
+        "expires_at": "2026-10-04T08:52:05.508Z"
+      }
+    },
+    {
+      "id": "record_approval:2026-10-04-watchlist-pod-scope:2026-10-04T08:45:04.192Z",
+      "at": "2026-10-04T08:45:04.192Z",
+      "type": "record_approval",
+      "from_state": "active:frozen",
+      "to_state": "active:frozen",
+      "reason": "approval-review-b864e2f6\naction_v2_sha256:7fffe183dc92a34d3fc2865be8fba0a5b30b20600381a29739d0defab1f659cd",
+      "authority": {
+        "authority_kind": "review",
+        "actor_id": "parent-mediated-review",
+        "confirmation_ref": "pi-confirm-53f14031c0fcbaf5",
+        "issued_at": "2026-10-04T08:45:04.192Z",
+        "expires_at": "2026-10-04T08:55:04.192Z"
+      }
+    },
+    {
+      "id": "complete:2026-10-04-watchlist-pod-scope:2026-10-04T08:45:05.357Z",
+      "at": "2026-10-04T08:45:05.357Z",
+      "type": "complete",
+      "from_state": "active:frozen",
+      "to_state": "done:frozen",
+      "reason": "action_v2_sha256:316ebac3e4fce3368f5be4bd4c45dad0f80d7e1eb2b31b469eb08f52a7d5324d"
+    }
+  ]
+}
